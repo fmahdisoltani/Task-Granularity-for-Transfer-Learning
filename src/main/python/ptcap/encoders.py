@@ -12,7 +12,7 @@ class FullyConnectedEncoder(Encoder):
 
     def __init__(self, video_dims, repr_dim):
         super(FullyConnectedEncoder, self).__init__()
-        C, T, W, H = video_dims
+        C, T, W, H = video_dims  # TODO:check the dims of real data
         self.linear = nn.Linear(C*T*W*H, repr_dim)
 
     def forward(self, video_batch):
