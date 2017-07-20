@@ -10,9 +10,9 @@ class Mapper(nn.Module):
 
 class FullyConnectedMapper(Mapper):
 
-    def __init__(self, encoded_dim, mapped_dim):
+    def __init__(self, input_dim, output_dim):
         super(FullyConnectedMapper, self).__init__()
-        self.linear = nn.Linear(encoded_dim, mapped_dim)
+        self.linear = nn.Linear(input_dim, output_dim)
 
     def forward(self, data_batch):
         return self.linear(data_batch)

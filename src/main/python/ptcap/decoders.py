@@ -10,12 +10,20 @@ class Decoder(nn.Module):
 
 class FullyConnectedDecoder(Decoder):
 
-    def __init__(self, mapped_dim, decoded_dim):
+    def __init__(self, input_dim, output_dim):
         super(FullyConnectedDecoder, self).__init__()
-        max_len, self.vocab_size = decoded_dim
-        self.linear = nn.Linear(mapped_dim, max_len*self.vocab_size)
+        self.max_len, self.vocab_size = output_dim
+        self.input_mapping = nn.Linear(input_dim,
+                                       self.max_len * self.vocab_size)
+        self.caption_mapping = nn.Linear(self.max_len * self.vocab_size,
+                                         self.max_len * self.vocab_size)
 
-    def forward(self, data_batch):
+    def forward(self, data_batch, teacher_captions=None):
         batch_size = data_batch.size()[0]
-        fc_layer = self.linear(data_batch)
-        return fc_layer.view(batch_size, -1, self.vocab_size)
+        if teacher_captions is not None:
+            predictions = self.caption_mapping(
+                teacher_captions.view(batch_size, -1)) + \
+                          self.input_mapping(data_batch)
+        else:
+            predictions = self.input_mapping(data_batch)
+        return predictions.view(batch_size, -1, self.vocab_size)
