@@ -10,25 +10,25 @@ class Encoder(nn.Module):
 
 class FullyConnectedEncoder(Encoder):
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, video_dims, num_features):
         super(FullyConnectedEncoder, self).__init__()
-        C, T, W, H = input_dim
-        self.linear = nn.Linear(C * T * W * H, output_dim)
-
-    def forward(self, data_batch):
-        batch_size = data_batch.size()[0]
-        return self.linear(data_batch.view(batch_size, -1))
-
-class RTN_Encoder(Encoder):
-    def __init__(self):
-        return False
+        C, T, W, H = video_dims
+        self.linear = nn.Linear(C * T * W * H, num_features)
 
     def forward(self, video_batch):
-        return False
+        batch_size = video_batch.size()[0]
+        return self.linear(video_batch.view(batch_size, -1))
 
-class RTN_LSTM_Encoder(Encoder):
-    def __init__(self):
-        return False
-
-    def forward(self, video_batch):
-        return False
+# class RTN_Encoder(Encoder):
+#     def __init__(self):
+#         return False
+#
+#     def forward(self, video_batch):
+#         return False
+#
+# class RTN_LSTM_Encoder(Encoder):
+#     def __init__(self):
+#         return False
+#
+#     def forward(self, video_batch):
+#         return False

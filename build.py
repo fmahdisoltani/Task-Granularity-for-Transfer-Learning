@@ -17,3 +17,4 @@ default_task = "publish"
 def set_properties(project):
     project.depends_on('pyfackel')
     project.set_property('flake8_verbose_output', "True")
+    project.set_property('coverage_threshold_warn', 50)
