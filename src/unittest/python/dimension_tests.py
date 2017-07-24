@@ -8,7 +8,6 @@ from ptcap.model import mappers
 from ptcap.model import decoders
 
 
-
 class TestDimensions(unittest.TestCase):
 
     def setUp(self):

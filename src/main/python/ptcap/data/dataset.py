@@ -1,6 +1,6 @@
-import pandas as pd
-import gzip
-import os
+import numpy as np
+from ptcap.data.annotation_parser import AnnotationParser
+import glob
 
 from collections import namedtuple
 from torch.utils.data import Dataset
@@ -10,18 +10,33 @@ CaptionedVideo = namedtuple('CaptionedVideo', ['video', 'caption'])
 
 class VideoDataset(Dataset):
 
-    def __init__(self, path):
-        self.annotations = self.open_annotations(path)
+    def __init__(self, annotation, tokenizer_obj):
+        self.annotation = annotation
+        self.tokenizer = tokenizer_obj
+        self.video_paths = list(annotation[AnnotationParser.FILE_FIELD])
+        self.captions = list(annotation[AnnotationParser.CAPTION_FIELD])
+
 
     def __len__(self):
-        return len(self.video_files)
+        return len(self.video_paths)
 
     def __getitem__(self, index):
-        video = self.open_video(index)
-        raise NotImplementedError('This should actually be implemented')
-        return CaptionedVideo('video_tensor_of_size_CxTxWxH',
-                              'encoded_caption_of_size_K')
+        """
+        Return a Tuple like
+        ('video_tensor_of_size_CxTxWxH', 'encoded_caption_of_size_K')
+        """
 
-    def get_video_files(annotations, root):
-        files = list(annotations.file)
-        return [os.path.join(root, str(name)) for name in files]
+        video = self.get_video(index)
+        tokenized_caption = self._get_tokenized_caption(index)
+        return CaptionedVideo(video, tokenized_caption)
+
+    def get_video(self, index):
+        """
+           Open bursted frames saved in JPG files. This class does on-the-fly resizing
+           using PIL and requires the size of frames ([128, 128] e.g.) as one extra-parameter.
+        """
+        video_path = self.video_paths[index]
+        return []
+
+    def _get_tokenized_caption(self, index):
+        return self.tokenizer.encode_caption(self.captions[index])
