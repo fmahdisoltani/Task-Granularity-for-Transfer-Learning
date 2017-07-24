@@ -8,7 +8,9 @@ from torch.utils.data import DataLoader
 if __name__ == '__main__':
 
     #Build a dictionary that contains fields of config file
-    ConfigParser.load_config_dict("path/to/config/file")
+    ConfigParser.load_config_dict("/Users/farzaneh/PycharmProjects/TwentyBN"
+                                  "/pytorch-captioning/src/main/configs"
+                                  "/video2caption.yaml")
 
     #Find paths to training, validation and test sets
     training_path = ConfigParser.get_value(ConfigParser.TRAINING_SET)

@@ -1,13 +1,13 @@
 paths:
-  videos_path: &vidpath /data/20bn-gestures/videos
-  annot_path: /data/20bn-gestures/json
+  videos_folder: &vidpath /data/20bn-gestures/videos
+  annot_folder: /data/20bn-gestures/json
   train_annot: train_20170517.json.gz
   validation_annot: validation_20170517.json.gz
   test_annot: test_20170517.json.gz
   checkpoint: &ckpt /model_checkpoints/vid2caption_001
 
 training:
-  nb_epochs: 200
+  num_epochs: 200
   learning_rate: &lr 0.001
   patience: &pat 10
   resume: False
@@ -19,24 +19,8 @@ device:
   synchronize_gpu: &sync True
   gpus: [0]
 
-preparers:
-  type: JsonPreparer
-  label_preparation:
-    type: phrase_preparation
-    args: [label, !!python/object/apply:os.path.join [*ckpt, tokenizer_dictionaries.pkl]]
-  video_preparation:
-    type: get_video_files
-    args: [*vidpath]
-
 datasets:
-  type: NumpyVideoDataset
-  label_preprocessing:
-    nb_classes: &nb_classes 35
-    train: &train_label_prep
-      type: shift_caption
-      args: ~
-    validation: *train_label_prep
-    test: *train_label_prep
+  token_min_count: 1
   video_preprocessing:
     train:
       type: random_crop_preprocessing
@@ -47,19 +31,15 @@ datasets:
     test: *val_vid_prep
   kwargs: {}
 
-gatherer:
-  type: VideoCaptioningDataset
-  args: []
-
 dataloaders:
   batch_size: &b 16
-  nb_batches_per_epoch: 2500
+  num_batches_per_epoch: 2500
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
-  type: captioning.vid2caption
-  args: [*nb_classes]
-  kwargs: {use_cuda: *use_cuda}
+  encoder: FullyConnected
+  mapper: FullyConnected
+  decoder: FullyConnected
 
 loss:
   type: SequenceCrossEntropy
@@ -68,13 +48,3 @@ loss:
 optimizer:
   type: Adam
   kwargs: {lr: *lr}
-
-metrics:
-  [first_step_top1, stepwise_top1]
-
-callbacks:
-  print_every_nsteps: 1
-  monitor: &mon val_loss
-  min_is_best: &min True
-  type: [HistoryCheckpoint, ModelCheckpoint, EarlyStopping]
-  args: [[*ckpt, ~], [*ckpt, *mon, *min], [*mon, 10, *min]]
