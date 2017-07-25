@@ -14,19 +14,15 @@ class ConfigParser(object):
         with open(path, 'r') as f:
             cls.config_dict = yaml.load(f.read())
 
-        pprint.pprint(cls.config_dict)
-
     @classmethod
     def get_value(cls, key):
         """
         Return the value of the given key in the config dictionary
         """
+
         split_key = key.split(".")
         hdict = cls.config_dict
         for hkey in split_key:
-            pprint.pprint (hdict)
-            pprint.pprint (hdict[hkey])
-            print("*"*100)
             hdict = hdict[hkey]
 
         return hdict

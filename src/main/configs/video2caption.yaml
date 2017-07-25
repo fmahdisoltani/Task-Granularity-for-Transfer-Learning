@@ -1,9 +1,10 @@
 paths:
-  videos_folder: &vidpath /data/20bn-gestures/videos
-  annot_folder: /data/20bn-gestures/json
-  train_annot: train_20170517.json.gz
-  validation_annot: validation_20170517.json.gz
-  test_annot: test_20170517.json.gz
+  videos_folder: &vidpath /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json
+
+  annot_folder: /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json
+  train_annot: &train_annot /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json/training_sample.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
   checkpoint: &ckpt /model_checkpoints/vid2caption_001
 
 training:

@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader
 
 if __name__ == '__main__':
 
+
+
     #Build a dictionary that contains fields of config file
     ConfigParser.load_config_dict("/Users/farzaneh/PycharmProjects/TwentyBN"
                                   "/pytorch-captioning/src/main/configs"
@@ -23,14 +25,13 @@ if __name__ == '__main__':
     test_annot = AnnotationParser.open_annotation(test_path)
 
     #Build a tokenizer that contains all captions from annotation files
-    tokenizer_obj = Tokenizer([training_annot]) #TODO: ask Roland
+    tokenizer_obj = Tokenizer(training_annot) #TODO: ask Roland
 
     training_set = VideoDataset(training_annot, tokenizer_obj)
 
     dataloader = DataLoader(training_set, batch_size=4,
                             shuffle=True, num_workers=4)
 
-    for i_batch, sample_batched in enumerate(dataloader):
-        print(i_batch, sample_batched['image'].size(),
-              sample_batched['landmarks'].size())
-
+    # for i_batch, sample_batched in enumerate(dataloader):
+    #     print(i_batch, sample_batched['image'].size(),
+    #           sample_batched['landmarks'].size())

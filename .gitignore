@@ -101,7 +101,7 @@ ENV/
 .mypy_cache/
 
 # sample data
-data/
+sample_data/
 
 # pycharm idea
 .idea/
