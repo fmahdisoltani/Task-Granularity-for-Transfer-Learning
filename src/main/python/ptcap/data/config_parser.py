@@ -2,9 +2,9 @@ import yaml
 import pprint
 
 class ConfigParser(object):
-    TRAINING_SET = "train"
-    VALIDATION_SET = "validation"
-    TEST_SET = "test"
+    TRAINING_SET = "paths.train_annot"
+    VALIDATION_SET = "paths.validation_annot"
+    TEST_SET = "paths.test_annot"
     EXPANDED_CAPTION = "label"
     TEMPLATE = "template"
     config_dict = {}
@@ -21,8 +21,15 @@ class ConfigParser(object):
         """
         Return the value of the given key in the config dictionary
         """
-        key = ""
-        return cls.config_dict[key]
+        split_key = key.split(".")
+        hdict = cls.config_dict
+        for hkey in split_key:
+            pprint.pprint (hdict)
+            pprint.pprint (hdict[hkey])
+            print("*"*100)
+            hdict = hdict[hkey]
+
+        return hdict
 
     def save(self, path):
         with open(path, 'w') as f:
