@@ -3,10 +3,10 @@
 A repo containing video captioning models written in PyTorch. To understand the code structure of this repo, the inheritance and data flow diagrams are provided below.
 
 The inheritance diagram of this repo looks as follows:
-![Alt text](pytorch-captioning/images/Data Flow Diagram.jpg?raw=true "Inheritance Diagram")
+![Alt text](pytorch-captioning/images/Inheritance_Diagram.jpg?raw=true "Inheritance Diagram")
 
 The data flow diagram is: 
-![Alt text](pytorch-captioning/images/Data Flow Diagram.jpg?raw=true "Data Flow Diagram")
+![Alt text](pytorch-captioning/images/Data_Flow_Diagram.jpg?raw=true "Data Flow Diagram")
 
 #### How to Solve Unresolved Reference Issue in Pycharm with pybuilder
 
