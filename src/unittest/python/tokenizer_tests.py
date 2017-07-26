@@ -28,8 +28,8 @@ class TestTokenizer(unittest.TestCase):
         }
         annot = self.arguments['Annotation']
         json_annot = pd.read_json(annot)
-        self.captions = [p for p in json_annot[ConfigParser.EXPANDED_CAPTION]]
-        self.tokenizer = Tokenizer(json_annot)
+        self.captions = [p for p in json_annot["label"]]
+        self.tokenizer = Tokenizer(self.captions)
         self.captions_vocab = {'THERE', 'HAND', 'ARE', 'AND', 'ON', 'TILTING',
                               'IT', 'TABLE', 'DOESNT', 'THREE', 'THE',
                               'COFFEE', 'CUP', 'SLIGHTLY', 'WITH', 'SO',
@@ -50,9 +50,9 @@ class TestTokenizer(unittest.TestCase):
         phrase = "THERE IS ONE HAND"
         phrase_encoded = self.tokenizer.encode_caption(phrase)
         phrase_decoded = self.tokenizer.decode_caption(phrase_encoded)
-        self.assertEqual(phrase_decoded[:6], [self.tokenizer.go,'THERE',
-                                          self.tokenizer.unk, 'ONE',
-                                         'HAND', self.tokenizer.end])
+        self.assertEqual(phrase_decoded[:6], [Tokenizer.GO,'THERE',
+                                              Tokenizer.UNK, 'ONE',
+                                             'HAND', Tokenizer.END])
 
 if __name__ == '__main__':
     tt = TestTokenizer()

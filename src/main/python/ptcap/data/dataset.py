@@ -2,12 +2,7 @@ import numpy as np
 import glob
 from PIL import Image
 
-from ptcap.data.annotation_parser import AnnotationParser
-from collections import namedtuple
 from torch.utils.data import Dataset
-
-CaptionedVideo = namedtuple('CaptionedVideo', ['video', 'original_caption',
-                                               'tokenized_caption'])
 
 
 class VideoDataset(Dataset):
@@ -29,7 +24,7 @@ class VideoDataset(Dataset):
 
         video = self._get_video(index)
         tokenized_caption = self._get_tokenized_caption(index)
-        return CaptionedVideo(video, self.captions[index], tokenized_caption)
+        return video, self.captions[index], np.array(tokenized_caption)
 
     def _get_video(self, index):
         pass
@@ -55,4 +50,4 @@ class JpegVideoDataset(VideoDataset):
         frames = [np.array(Image.open(path).convert('RGB').
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
-        return np.array(frames, "uint8")
+        return np.array(frames, "uint8")[0:5]

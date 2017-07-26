@@ -1,3 +1,5 @@
+import pprint
+
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import JpegVideoDataset
 from ptcap.data.config_parser import ConfigParser
@@ -31,16 +33,8 @@ if __name__ == '__main__':
     training_set = JpegVideoDataset(annotation_obj=training_annot,
                                     tokenizer_obj=tokenizer_obj)
 
-    sample = training_set.__getitem__(1)
+    dataloader = DataLoader(training_set, batch_size=2,
+                            shuffle=True, num_workers=1)
 
-    print("sample: ")
-    for e in sample:
-        print("-"*20)
-        print(e)
-
-    dataloader = DataLoader(training_set, batch_size=4,
-                            shuffle=True, num_workers=4)
-
-    # for i_batch, sample_batched in enumerate(dataloader):
-    #     print(i_batch, sample_batched['image'].size(),
-    #           sample_batched['landmarks'].size())
+    for it, sample_batch in enumerate(dataloader):
+        video, string_caption, tokenized_caption = sample_batch
