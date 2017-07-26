@@ -1,13 +1,16 @@
 import yaml
 import pprint
 
+
 class ConfigParser(object):
     TRAINING_SET = "paths.train_annot"
     VALIDATION_SET = "paths.validation_annot"
     TEST_SET = "paths.test_annot"
-    EXPANDED_CAPTION = "label"
-    TEMPLATE = "template"
+    CAPTION = "label"
     config_dict = {}
+
+    def __init__(self, path):
+        self.load_config_dict(path)
 
     @classmethod
     def load_config_dict(cls, path):

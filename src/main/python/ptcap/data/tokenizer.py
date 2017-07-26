@@ -2,31 +2,33 @@ import pickle
 import re
 import numpy as np
 
-from ptcap.data.config_parser import ConfigParser
-
 
 class Tokenizer(object):
 
-    def __init__(self, annotations):
+    GO = '<GO>'
+    END = '<END>'
+    UNK = '<UNK>'
+
+    def __init__(self, captions):
         """
-        Build captions from all the expanded labels in all annotation files
+            Build captions from all the expanded labels in all annotation files
         Args:
             annotations: list of paths to annotation files
         """
-        self.go = '<GO>'
-        self.end = '<END>'
-        self.unk = '<UNK>'
-        self.captions = []
-        # for annot in annotations:
-        self.captions = [p for p in annotations[ConfigParser.EXPANDED_CAPTION]]
+
+        self.captions = captions
         self.set_captions()
 
-
     def set_captions(self):
+        """
+            Creates two dictionaries: One that maps from tokens to ints, and
+            another that maps from ints back to tokens.
+        """
+
         self.maxlen = np.max([len(caption.split())
                               for caption in self.captions]) + 1
         print('\nBuilding dictionary for captions...')
-        extra_tokens = [self.go, self.end, self.unk]
+        extra_tokens = [self.GO, self.END, self.UNK]
         all_tokens = [self.tokenize(p) for p in self.captions]
         all_tokens = [item for sublist in all_tokens for item in sublist]
         tokens = extra_tokens + list(set(all_tokens))
@@ -43,12 +45,12 @@ class Tokenizer(object):
 
     def encode_caption(self, caption):
         tokenized_caption = self.tokenize(caption)
-        encoded_caption = [self.caption_dict[self.go]]
+        encoded_caption = [self.caption_dict[self.GO]]
         encoded_caption += [(self.caption_dict[token]
                             if token in self.caption_dict
-                            else self.caption_dict[self.unk])
+                            else self.caption_dict[self.UNK])
                            for token in tokenized_caption]
-        encoded_caption += [self.caption_dict[self.end]] * \
+        encoded_caption += [self.caption_dict[self.END]] * \
                            (self.maxlen - len(tokenized_caption))
         return encoded_caption
 

@@ -1,15 +1,33 @@
 import gzip
 import os
 import pandas as pd
+import pprint
 
 
 class AnnotationParser(object):
-    FILE_FIELD = "file"
-    CAPTION_FIELD = "label"
 
-    def __init__(self, path):
-        self.annotations = self.open_annotation(path)
+    def __init__(self, annot_path, video_root,
+                 file_path="file", caption_type="label"):
+        self.video_root = video_root
+        self.file_path = file_path
+        self.caption_type = caption_type
+        self.annotations = self.open_annotation(annot_path)
 
+    @classmethod
+    def open_annotation(cls, path):
+        pass
+
+    def get_video_paths(self):
+        print("*"*100)
+        files = self.annotations[self.file_path]
+        return [os.path.join(self.video_root, name.split("/")[0])
+                for name in files]
+
+    def get_captions(self):
+        return [p for p in self.annotations[self.caption_type]]
+
+
+class JsonParser(AnnotationParser):
 
     @classmethod
     def open_annotation(cls, path):
@@ -20,6 +38,3 @@ class AnnotationParser(object):
             json = pd.read_json(path)
         return json
 
-    def get_video_paths(self, annotations, root):
-        files = list(annotations[self.FILE])
-        return [os.path.join(root, str(name)) for name in files]

@@ -1,5 +1,5 @@
 paths:
-  videos_folder: &vidpath /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json
+  videos_folder: &vidpath /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/frames
 
   annot_folder: /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json
   train_annot: &train_annot /Users/farzaneh/PycharmProjects/TwentyBN/pytorch-captioning/sample_data/json/training_sample.json
