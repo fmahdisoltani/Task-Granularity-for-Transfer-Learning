@@ -28,5 +28,3 @@ class ConfigParser(object):
     def save(self, path):
         with open(path, 'w') as f:
             yaml.dump(self.config_dict, f)
-
-

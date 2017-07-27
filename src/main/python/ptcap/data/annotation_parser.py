@@ -37,4 +37,3 @@ class JsonParser(AnnotationParser):
         else:
             json = pd.read_json(path)
         return json
-
