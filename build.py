@@ -17,8 +17,8 @@ default_task = "publish"
 def set_properties(project):
     project.depends_on('pyfackel')
     project.depends_on('pandas')
-    project.depends_on('rtorchn', url=('git+http://github.com/TwentyBN/'
-                                       '20bn-rtorchn.git@captioning'))
+    # project.depends_on('rtorchn', url=('git+http://github.com/TwentyBN/'
+    #                                    '20bn-rtorchn.git@captioning'))
 
     # "https://github.com/TwentyBN/20bn-rtorchn.git"
     # "git+ssh://git@github.com/TwentyBN/20bn-rtorchn.git@captioning"
