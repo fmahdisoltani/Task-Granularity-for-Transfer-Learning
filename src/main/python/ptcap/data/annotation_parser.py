@@ -18,7 +18,6 @@ class AnnotationParser(object):
         pass
 
     def get_video_paths(self):
-        print("*"*100)
         files = self.annotations[self.file_path]
         return [os.path.join(self.video_root, name.split("/")[0])
                 for name in files]

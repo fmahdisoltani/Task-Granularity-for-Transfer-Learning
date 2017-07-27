@@ -2,24 +2,22 @@ import yaml
 
 
 class ConfigParser(object):
-    config_dict = {}
 
     def __init__(self, path):
-        self.load_config_dict(path)
+        self.config_dict = self.read_yaml(path)
 
-    @classmethod
-    def load_config_dict(cls, path):
+    def read_yaml(self, path):
         with open(path, 'r') as f:
-            cls.config_dict = yaml.load(f.read())
+            config_dict = yaml.load(f.read())
+        return config_dict
 
-    @classmethod
-    def get_value(cls, key):
+    def get_value(self, key):
         """
         Return the value of the given key in the config dictionary
         """
 
         split_key = key.split(".")
-        hdict = cls.config_dict
+        hdict = self.config_dict
         for hkey in split_key:
             hdict = hdict[hkey]
 

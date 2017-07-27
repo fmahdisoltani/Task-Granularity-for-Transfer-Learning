@@ -8,11 +8,10 @@ from torch.utils.data import Dataset
 
 class VideoDataset(Dataset):
 
-    def __init__(self, annotation_obj, tokenizer_obj):
-        self.annotation = annotation_obj
-        self.tokenizer = tokenizer_obj
-        self.video_paths = annotation_obj.get_video_paths()
-        self.captions = tokenizer_obj.captions
+    def __init__(self, annotation_parser, tokenizer):
+        self.tokenizer = tokenizer
+        self.video_paths = annotation_parser.get_video_paths()
+        self.captions = annotation_parser.get_captions()
 
     def __len__(self):
         return len(self.video_paths)

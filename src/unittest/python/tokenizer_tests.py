@@ -26,8 +26,8 @@ class TestTokenizer(unittest.TestCase):
         "placeholders":["the table","coffee cup"],
         "external_worker_id":"A2YD53VKHR3BED"}
         ]"""
-        annot = self.arguments
-        json_annot = pd.read_json(annot)
+
+        json_annot = pd.read_json(self.arguments)
         self.captions = [p for p in json_annot["label"]]
         self.tokenizer = Tokenizer(self.captions)
         self.captions_vocab = {'THERE', 'HAND', 'ARE', 'AND', 'ON', 'TILTING',
@@ -36,12 +36,10 @@ class TestTokenizer(unittest.TestCase):
                                '<UNK>'}
 
     def test_set_captions_vocab(self):
-        self.tokenizer.build_dictionaries()
         self.assertEqual(set(self.tokenizer.caption_dict.keys()),
                          self.captions_vocab)
 
     def test_set_captions_len(self):
-        self.tokenizer.build_dictionaries()
         self.assertEqual(len(self.tokenizer.caption_dict),
                          len(self.captions_vocab))
 

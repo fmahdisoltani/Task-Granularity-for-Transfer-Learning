@@ -15,9 +15,7 @@ class Tokenizer(object):
         Args:
             annotations: list of paths to annotation files
         """
-
-        self.captions = captions
-        self.build_dictionaries()
+        self.build_dictionaries(captions)
 
     def build_dictionaries(self):
         """
@@ -46,16 +44,18 @@ class Tokenizer(object):
     def encode_caption(self, caption):
         tokenized_caption = self.tokenize(caption)
         encoded_caption = [self.caption_dict[self.GO]]
-        encoded_caption += [(self.caption_dict[token]
-                            if token in self.caption_dict
-                            else self.caption_dict[self.UNK])
-                           for token in tokenized_caption]
-        return self.pad_extra_tokens(encoded_caption)
+        encoded_caption += [self.encode_token(token)
+                            for token in tokenized_caption]
+        return self.pad_with_end(encoded_caption)
+
+    def encode_token(self, token):
+        return self.caption_dict[token] if token in self.caption_dict else \
+            self.caption_dict[self.UNK]
 
     def decode_caption(self, indices):
         return [self.inv_caption_dict[index] for index in indices]
 
-    def pad_extra_tokens(self, encoded_caption):
+    def pad_with_end(self, encoded_caption):
         num_end = self.maxlen - len(encoded_caption)
         return encoded_caption + num_end * [self.caption_dict[self.END]]
 
