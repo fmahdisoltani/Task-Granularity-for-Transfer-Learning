@@ -31,10 +31,9 @@ class TestTokenizer(unittest.TestCase):
         self.captions = [p for p in json_annot["label"]]
         self.tokenizer = Tokenizer(self.captions)
         self.captions_vocab = {'THERE', 'HAND', 'ARE', 'AND', 'ON', 'TILTING',
-                              'IT', 'TABLE', 'DOESNT', 'THREE', 'THE',
-                              'COFFEE', 'CUP', 'SLIGHTLY', 'WITH', 'SO',
-                              'HANDS', 'ONE', 'OTHER', 'FALL', 'DOWN', '<GO>',
-                              '<END>', '<UNK>'}
+                               'IT', 'TABLE', 'THREE', 'THE', 'COFFEE', 'CUP',
+                               'WITH', 'HANDS', 'ONE', 'OTHER', '<GO>', '<END>',
+                               '<UNK>'}
 
     def test_set_captions_vocab(self):
         self.tokenizer.build_dictionaries()
