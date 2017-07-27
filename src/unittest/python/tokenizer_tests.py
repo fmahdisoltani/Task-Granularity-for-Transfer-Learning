@@ -8,26 +8,24 @@ from ptcap.data.tokenizer import Tokenizer
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
         self.arguments = """[{"id":1,"file":"11/vid1.mp4",
-                     "duration":"5.4","width":720,"height":480,
-                     "label":"ONE HAND AND THE OTHER ",
-                     "template":"ONE HAND AND THE OTHER",
-                     "placeholders":["the table","coffee cup"],
-                     "external_worker_id":"A2YD53VKHR3BED"},
-                     {"id":2,"file":"21/vid2.mp4",
-                     "duration":"5.4","width":720,"height":480,
-                     "label":"Tilting the table with coffee cup on it slightly 
-                     so it doesn’t fall down",
-                     "template":"Tilting [something] with [something] on it 
-                     slightly so it doesn’t fall down",
-                     "placeholders":["the table","coffee cup"],
-                     "external_worker_id":"A2YD53VKHR3BED"},
-                     {"id":1,"file":"31/vid3.mp4",
-                     "duration":"5.4","width":720,"height":480,
-                     "label":"THREE HANDS ARE THERE",
-                     "template":"THREE HANDS ARE THERE",
-                     "placeholders":["the table","coffee cup"],
-                     "external_worker_id":"A2YD53VKHR3BED"}
-                   ]"""
+        "duration":"5.4","width":720,"height":480,
+        "label":"ONE HAND AND THE OTHER ", 
+        "template":"ONE HAND AND THE OTHER",
+        "placeholders":["the table","coffee cup"],
+        "external_worker_id":"A2YD53VKHR3BED"},
+        {"id":2,"file":"21/vid2.mp4",
+        "duration":"5.4","width":720,"height":480,
+        "label":"Tilting the table with coffee cup on it",
+        "template":"Tilting [something] with [something] on it",
+        "placeholders":["the table","coffee cup"],
+        "external_worker_id":"A2YD53VKHR3BED"},
+        {"id":1,"file":"31/vid3.mp4",
+        "duration":"5.4","width":720,"height":480,
+        "label":"THREE HANDS ARE THERE",
+        "template":"THREE HANDS ARE THERE",
+        "placeholders":["the table","coffee cup"],
+        "external_worker_id":"A2YD53VKHR3BED"}
+        ]"""
         annot = self.arguments
         json_annot = pd.read_json(annot)
         self.captions = [p for p in json_annot["label"]]
