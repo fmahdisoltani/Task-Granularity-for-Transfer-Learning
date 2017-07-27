@@ -39,8 +39,8 @@ if __name__ == '__main__':
     training_set = JpegVideoDataset(annotation_obj=training_annot,
                                     tokenizer_obj=tokenizer_obj)
 
-    dataloader = DataLoader(training_set, batch_size=2,
-                            shuffle=True, num_workers=1)
+    dataloader = DataLoader(training_set, shuffle=True,
+                            **config_obj.config_dict['dataloaders']['kwargs'])
 
     for it, sample_batch in enumerate(dataloader):
         video, string_caption, tokenized_caption = sample_batch
