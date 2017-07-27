@@ -1,7 +1,7 @@
 import gzip
 import os
+
 import pandas as pd
-import pprint
 
 
 class AnnotationParser(object):

@@ -18,17 +18,3 @@ class FullyConnectedEncoder(Encoder):
     def forward(self, video_batch):
         batch_size = video_batch.size()[0]
         return self.linear(video_batch.view(batch_size, -1))
-
-# class RTN_Encoder(Encoder):
-#     def __init__(self):
-#         return False
-#
-#     def forward(self, video_batch):
-#         return False
-#
-# class RTN_LSTM_Encoder(Encoder):
-#     def __init__(self):
-#         return False
-#
-#     def forward(self, video_batch):
-#         return False

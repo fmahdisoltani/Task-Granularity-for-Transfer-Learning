@@ -17,11 +17,11 @@ class Tokenizer(object):
         """
 
         self.captions = captions
-        self.set_captions()
+        self.build_dictionaries()
 
-    def set_captions(self):
+    def build_dictionaries(self):
         """
-            Creates two dictionaries: One that maps from tokens to ints, and
+            Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
         """
 
@@ -29,11 +29,11 @@ class Tokenizer(object):
                               for caption in self.captions]) + 1
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
-        all_tokens = [self.tokenize(p) for p in self.captions]
-        all_tokens = [item for sublist in all_tokens for item in sublist]
-        tokens = extra_tokens + list(set(all_tokens))
-        print('Number of different tokens:', len(tokens))
-        self.caption_dict = {k: idx for idx, k in enumerate(tokens)}
+        tokens = [self.tokenize(p) for p in self.captions]
+        tokens = [item for sublist in tokens for item in sublist]
+        all_tokens = extra_tokens + list(set(tokens))
+        print('Number of different tokens: ', len(all_tokens))
+        self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
         print(self.caption_dict)
         print(self.inv_caption_dict)
@@ -50,12 +50,14 @@ class Tokenizer(object):
                             if token in self.caption_dict
                             else self.caption_dict[self.UNK])
                            for token in tokenized_caption]
-        encoded_caption += [self.caption_dict[self.END]] * \
-                           (self.maxlen - len(tokenized_caption))
-        return encoded_caption
+        return self.pad_extra_tokens(encoded_caption)
 
     def decode_caption(self, indices):
         return [self.inv_caption_dict[index] for index in indices]
+
+    def pad_extra_tokens(self, encoded_caption):
+        num_end = self.maxlen - len(encoded_caption)
+        return encoded_caption + num_end * [self.caption_dict[self.END]]
 
     def save_dictionaries(self, path):
         with open(path, 'wb') as f:
