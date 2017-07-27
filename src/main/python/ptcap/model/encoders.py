@@ -20,12 +20,3 @@ class FullyConnectedEncoder(Encoder):
     def forward(self, video_batch):
         batch_size = video_batch.size()[0]
         return self.linear(video_batch.view(batch_size, -1))
-
-
-class RtorchnEncoder(Encoder):
-
-    def __init__(self, video_dims, num_features):
-        super(RtorchnEncoder).__init__()
-
-    def forward(self, video_batch):
-        return gesture_net_rnn.forward()

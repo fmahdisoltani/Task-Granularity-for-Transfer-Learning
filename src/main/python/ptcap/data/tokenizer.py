@@ -17,17 +17,17 @@ class Tokenizer(object):
         """
         self.build_dictionaries(captions)
 
-    def build_dictionaries(self):
+    def build_dictionaries(self, captions):
         """
             Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
         """
 
         self.maxlen = np.max([len(caption.split())
-                              for caption in self.captions]) + 1
+                              for caption in captions]) + 1
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
-        tokens = [self.tokenize(p) for p in self.captions]
+        tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
         all_tokens = extra_tokens + list(set(tokens))
         print('Number of different tokens: ', len(all_tokens))

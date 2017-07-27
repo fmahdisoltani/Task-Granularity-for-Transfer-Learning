@@ -33,11 +33,10 @@ if __name__ == '__main__':
                             config_obj.config_dict['paths']['videos_folder'])
 
     #Build a tokenizer that contains all captions from annotation files
-    training_captions = training_annot.get_captions()
-    tokenizer_obj = Tokenizer(training_captions)
+    tokenizer = Tokenizer(training_annot.get_captions())
 
     training_set = JpegVideoDataset(annotation_obj=training_annot,
-                                    tokenizer_obj=tokenizer_obj)
+                                    tokenizer_obj=tokenizer)
 
     dataloader = DataLoader(training_set, shuffle=True,
                             **config_obj.config_dict['dataloaders']['kwargs'])
