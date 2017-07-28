@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
             for caption_index in range(batch_size):
                 print(string_captions[caption_index])
-                model_generations = output_tokens[caption_index].view(-1)\
+                model_generations = output_tokens[caption_index].view(-1)
                 model_generations_as_numpy = model_generations.data.numpy()
                 print(tokenizer.get_string(model_generations_as_numpy))
 
