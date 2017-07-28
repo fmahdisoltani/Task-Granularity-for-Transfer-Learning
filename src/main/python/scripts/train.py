@@ -19,6 +19,7 @@ from ptcap.data.dataset import JpegVideoDataset
 from ptcap.data.config_parser import ConfigParser
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import RtorchnCaptioner
+from ptcap.losses import SequenceCrossEntropy
 
 
 if __name__ == '__main__':
@@ -77,16 +78,18 @@ if __name__ == '__main__':
             first_part = tokenized_captions[:,1:]
             targets = Variable(torch.cat([first_part, end_tensor], 1))
 
-            # compute loss
-            loss = 0
-            for t in range(timesteps):
-                loss += criterion(outputs[:,t], targets[:,t])
-            loss /= (timesteps * batch_size)
-            print("loss at iteration {}: {}".format(it+1, loss.data))
+            # # compute loss
+            # loss = 0
+            # for t in range(timesteps):
+            #     loss += criterion(outputs[:,t], targets[:,t])
+            # loss /= (timesteps * batch_size)
+            # print("loss at iteration {}: {}".format(it+1, loss.data))
+
+            loss = SequenceCrossEntropy.forward(outputs, targets)
 
             # compute accuracy
             max_probs, output_tokens = torch.max(outputs,2)
-            #output_tokens = output_tokens.view(-1)
+            #output_tokens = output_tokens.ppp[['[ =9view(-1)
             #targets = targets.view(-1)
             equal_values = targets.eq(output_tokens).sum().float()
             accuracy = equal_values*100.0/(batch_size*timesteps)
