@@ -59,6 +59,17 @@ class Tokenizer(object):
         num_end = self.maxlen - len(encoded_caption)
         return encoded_caption + num_end * [self.caption_dict[self.END]]
 
+    def get_vocab_size(self):
+        return len(self.caption_dict)
+
+    def get_string(self, predictions):
+        output_tokens = self.decode_caption(predictions)
+        if self.END in output_tokens:
+            end_index = output_tokens.index(self.END)
+        else:
+            end_index = len(predictions)
+        return " ".join(output_tokens[:end_index]).lower()
+
     def save_dictionaries(self, path):
         with open(path, 'wb') as f:
             pickle.dump(self.caption_dict, f)

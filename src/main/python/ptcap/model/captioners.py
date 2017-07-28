@@ -1,6 +1,6 @@
 from torch import nn
 
-from rtorchn.models.captioning import vid2caption
+from rtorchn.models.captioning.vid2caption import DeepNet
 
 class Captioner(nn.Module):
 
@@ -10,10 +10,10 @@ class Captioner(nn.Module):
 
 
 class RtorchnCaptioner(Captioner):
-
-    def __init__(self):
+    # **kwargs: is_training=True, use_cuda=False, gpus=[0]
+    def __init__(self, vocab_size, batchnorm=True, stateful=False, **kwargs):
         super(RtorchnCaptioner, self).__init__()
-        self.captioner = vid2caption()
+        self.captioner = DeepNet(vocab_size, batchnorm, stateful,**kwargs)
 
     def forward(self, video_batch):
-        self.captioner.forward(video_batch)
+        return self.captioner.forward(video_batch)

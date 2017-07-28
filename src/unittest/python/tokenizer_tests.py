@@ -40,7 +40,7 @@ class TestTokenizer(unittest.TestCase):
                          self.captions_vocab)
 
     def test_set_captions_len(self):
-        self.assertEqual(len(self.tokenizer.caption_dict),
+        self.assertEqual(self.tokenizer.get_vocab_size(),
                          len(self.captions_vocab))
 
     def test_encode_decode(self):

@@ -40,7 +40,7 @@ class JpegVideoDataset(VideoDataset):
     as one extra-parameter.
     """
 
-    def __init__(self, size=[128,128], resample=Image.BICUBIC, *args, **kwargs):
+    def __init__(self, size=[96,96], resample=Image.BICUBIC, *args, **kwargs):
         super(JpegVideoDataset, self).__init__(*args, **kwargs)
         self.size = size
         self.resample = resample
@@ -50,4 +50,4 @@ class JpegVideoDataset(VideoDataset):
         frames = [np.array(Image.open(path).convert('RGB').
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
-        return np.array(frames, "uint8")[0:5]
+        return np.array(frames, "float32")[0:5].transpose((3, 0, 1, 2))
