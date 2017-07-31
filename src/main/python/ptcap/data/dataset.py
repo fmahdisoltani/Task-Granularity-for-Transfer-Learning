@@ -6,7 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-class VideoDataset(Dataset):
+class VideoDataset(Dataset): 
 
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
