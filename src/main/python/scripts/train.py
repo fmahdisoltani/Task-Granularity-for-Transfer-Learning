@@ -64,43 +64,4 @@ if __name__ == '__main__':
 
     for epoch in range(config_obj.config_dict['training']['num_epochs']):
         print("Epoch {}:".format(epoch+1))
-        for it, sample_batch in enumerate(dataloader):
-            videos, string_captions, tokenized_captions = sample_batch
-            captioner.zero_grad()
-
-            outputs = captioner((Variable(videos), Variable(tokenized_captions)))
-
-            # prepare targets
-            batch_size, timesteps, vocab_size = outputs.size()
-            end_tensor = torch.LongTensor(
-                [tokenizer.caption_dict[tokenizer.END]]*batch_size)
-            end_tensor = end_tensor.view(-1,1)
-            first_part = tokenized_captions[:,1:]
-            targets = Variable(torch.cat([first_part, end_tensor], 1))
-
-            # # compute loss
-            # loss = 0
-            # for t in range(timesteps):
-            #     loss += criterion(outputs[:,t], targets[:,t])
-            # loss /= (timesteps * batch_size)
-            # print("loss at iteration {}: {}".format(it+1, loss.data))
-
-            loss = SequenceCrossEntropy.forward(outputs, targets)
-
-            # compute accuracy
-            max_probs, output_tokens = torch.max(outputs,2)
-            #output_tokens = output_tokens.ppp[['[ =9view(-1)
-            #targets = targets.view(-1)
-            equal_values = targets.eq(output_tokens).sum().float()
-            accuracy = equal_values*100.0/(batch_size*timesteps)
-            print("accuracy is: {}".format(accuracy))
-
-            for caption_index in range(batch_size):
-                print(string_captions[caption_index])
-                model_generations = output_tokens[caption_index].view(-1)
-                model_generations_as_numpy = model_generations.data.numpy()
-                print(tokenizer.get_string(model_generations_as_numpy))
-
-            # optimize
-            loss.backward()
-            optimizer.step()
+        pass
