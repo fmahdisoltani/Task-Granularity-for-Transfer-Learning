@@ -10,10 +10,10 @@ class Encoder(nn.Module):
 
 class FullyConnectedEncoder(Encoder):
 
-    def __init__(self, video_dims, repr_dim):
+    def __init__(self, video_dims, num_features):
         super(FullyConnectedEncoder, self).__init__()
         C, T, W, H = video_dims
-        self.linear = nn.Linear(C*T*W*H, repr_dim)
+        self.linear = nn.Linear(C * T * W * H, num_features)
 
     def forward(self, video_batch):
         batch_size = video_batch.size()[0]
