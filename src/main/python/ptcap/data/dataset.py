@@ -43,7 +43,7 @@ class JpegVideoDataset(VideoDataset):
     as one extra-parameter.
     """
 
-    def __init__(self, size=[96,96], resample=Image.BICUBIC, *args, **kwargs):
+    def __init__(self, size=[128,128], resample=Image.BICUBIC, *args, **kwargs):
         super(JpegVideoDataset, self).__init__(*args, **kwargs)
         self.size = size
         self.resample = resample
