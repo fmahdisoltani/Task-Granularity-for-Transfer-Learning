@@ -8,10 +8,11 @@ from torch.utils.data import Dataset
 
 class VideoDataset(Dataset):
 
-    def __init__(self, annotation_parser, tokenizer):
+    def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
         self.captions = annotation_parser.get_captions()
+        self.preprocess = preprocess
 
     def __len__(self):
         return len(self.video_paths)
@@ -23,6 +24,8 @@ class VideoDataset(Dataset):
         """
 
         video = self._get_video(index)
+        if self.preprocess is not None:
+            video = self.preprocess(video)
         tokenized_caption = self._get_tokenized_caption(index)
         return video, self.captions[index], np.array(tokenized_caption)
 
@@ -50,4 +53,6 @@ class JpegVideoDataset(VideoDataset):
         frames = [np.array(Image.open(path).convert('RGB').
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
-        return np.array(frames, "float32")[0:5].transpose((3, 0, 1, 2))
+        return np.array(frames)
+
+
