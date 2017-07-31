@@ -1,7 +1,5 @@
 from torch import nn
 
-from rtorchn.models.gestures import gesture_net_rnn
-
 
 class Encoder(nn.Module):
 
