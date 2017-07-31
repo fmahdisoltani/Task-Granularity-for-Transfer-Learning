@@ -1,27 +1,22 @@
 import yaml
 
 
-class ConfigParser(object):
+class YamlConfig(object):
 
-    def __init__(self, path):
-        self.config_dict = self.read_yaml(path)
+    def __init__(self, path=None):
+        self.config_dict = {}
+        if path:
+            self.parse(path)
 
-    def read_yaml(self, path):
+    def parse(self, path):
         with open(path, 'r') as f:
-            config_dict = yaml.load(f.read())
-        return config_dict
+            self.config_dict.update(yaml.load(f.read()))
 
-    def get_value(self, key):
-        """
-        Return the value of the given key in the config dictionary
-        """
-
-        split_key = key.split(".")
-        hdict = self.config_dict
-        for hkey in split_key:
-            hdict = hdict[hkey]
-
-        return hdict
+    def get(self, *keys):
+        output = self.config_dict
+        for key in keys:
+            output = output[key]
+        return output
 
     def save(self, path):
         with open(path, 'w') as f:
