@@ -19,8 +19,5 @@ def set_properties(project):
     project.depends_on('pandas')
     # project.depends_on('rtorchn', url=('git+http://github.com/TwentyBN/'
     #                                    '20bn-rtorchn.git@captioning'))
-
-    # "https://github.com/TwentyBN/20bn-rtorchn.git"
-    # "git+ssh://git@github.com/TwentyBN/20bn-rtorchn.git@captioning"
     project.set_property('flake8_verbose_output', "True")
     project.set_property('coverage_threshold_warn', 0)

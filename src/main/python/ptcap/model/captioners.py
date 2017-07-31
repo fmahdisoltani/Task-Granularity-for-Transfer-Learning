@@ -10,8 +10,13 @@ class Captioner(nn.Module):
 
 
 class RtorchnCaptioner(Captioner):
-    # **kwargs: is_training=True, use_cuda=False, gpus=[0]
-    def __init__(self, vocab_size, batchnorm=True, stateful=False, **kwargs):
+    """
+    This class is a wrapper for rtorchn captioning model.
+    Typical kwargs: is_training=True, use_cuda=False, gpus=[0]
+    """
+
+    def __init__(self, vocab_size, go_token=0, batchnorm=True, stateful=False,
+                 **kwargs):
         super(RtorchnCaptioner, self).__init__()
         self.captioner = DeepNet(vocab_size, batchnorm, stateful,**kwargs)
 
