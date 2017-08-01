@@ -20,6 +20,7 @@ from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import RtorchnCaptioner
 from ptcap.losses import SequenceCrossEntropy
+from ptcap.trainers import Trainer
 
 
 if __name__ == '__main__':
@@ -51,15 +52,19 @@ if __name__ == '__main__':
                                  use_cuda=config_obj.get('device', 'use_cuda'))
 
     # Loss and Optimizer
-    criterion = nn.CrossEntropyLoss()
+    loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
 
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
-    # Train the Models
+    # Train the Model
     total_step = len(dataloader)
-
+    learning_rate = 0.1
+    num_epoch = 10
+    num_valid =1
+    trainer = Trainer(learning_rate, captioner,
+                 loss_function, optimizer, num_epoch, num_valid)
     for epoch in range(config_obj.get('training', 'num_epochs')):
         print("Epoch {}:".format(epoch+1))
-        pass
+        trainer.run_epoch(dataloader, dataloader)
