@@ -99,3 +99,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# sample data
+sample_data/
+
+# pycharm idea
+.idea/
+
+# mac storage
+.DS_Store
+
+
+

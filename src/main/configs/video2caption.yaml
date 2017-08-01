@@ -1,0 +1,25 @@
+paths:
+  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/frames
+
+  annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
+  train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
+
+device:
+  use_cuda: &use_cuda False
+  synchronize_gpu: &sync True
+  gpus: [0]
+
+dataloaders:
+  batch_size: &b 2
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
+
+model:
+  type: RtorchnCaptioner
+  kwargs: {use_cuda: *use_cuda}
+
+training:
+  num_epochs: 200
+  learning_rate: &lr 0.01
+
