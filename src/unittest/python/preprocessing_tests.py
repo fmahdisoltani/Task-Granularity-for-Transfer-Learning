@@ -5,17 +5,19 @@ import numpy as np
 import ptcap.data.preprocessing as prep
 
 
-def create_fake_video(size):
-    depth, height, width, num_channels = size
-    video = np.random.randint(0, 255, depth*height*width*num_channels)
-    return video.reshape(depth, height, width, num_channels)
-
-
-class TestRandomCrop(unittest.TestCase):
+class PrepTestCase(unittest.TestCase):
 
     def setUp(self):
         self.size = [24, 56, 31, 3]
-        self.video = create_fake_video(self.size)
+        self.video = self.create_fake_video()
+
+    def create_fake_video(self):
+        depth, height, width, num_channels = self.size
+        video = np.random.randint(0, 255, depth*height*width*num_channels)
+        return video.reshape(depth, height, width, num_channels)
+
+
+class TestRandomCrop(PrepTestCase):
 
     def test_with_size_12x30x30(self):
         cropper = prep.RandomCrop([12, 30, 30])
@@ -43,11 +45,7 @@ class TestRandomCrop(unittest.TestCase):
         self.assertEqual(video_crop.shape, self.video.shape)
 
 
-class TestPadVideo(unittest.TestCase):
-
-    def setUp(self):
-        self.size = [24, 56, 31, 3]
-        self.video = create_fake_video(self.size)
+class TestPadVideo(PrepTestCase):
 
     def test_with_size_12x30x30(self):
         padder = prep.PadVideo([12, 30, 30])
@@ -75,23 +73,14 @@ class TestPadVideo(unittest.TestCase):
         self.assertEqual(video_pad.shape, self.video.shape)
 
 
-class TestFloat32Converter(unittest.TestCase):
-
-    def setUp(self):
-        self.size = [24, 56, 31, 3]
-        self.video = create_fake_video(self.size)
+class TestFloat32Converter(PrepTestCase):
 
     def test_dtype(self):
         float_converter = prep.Float32Converter()
         self.assertEqual(float_converter(self.video).dtype, 'float32')
 
 
-class TestPytorchPermuter(unittest.TestCase):
-
-    def setUp(self):
-        self.size = [24, 56, 31, 3]
-        self.video = create_fake_video(self.size)
-
+class TestPytorchPermuter(PrepTestCase):
 
     def test_dtype(self):
         pytorch_permuter = prep.PytorchTransposer()
