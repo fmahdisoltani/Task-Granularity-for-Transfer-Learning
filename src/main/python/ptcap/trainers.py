@@ -13,10 +13,11 @@ class Trainer(object):
         self.valid_frequency = valid_frequency
 
     def train(self, train_dataloader, valid_dataloader):
-        for ep in range(self.num_epoch):
+        for epoch in range(self.num_epoch):
+            print("Epoch {}:".format(epoch + 1))
             self.run_epoch(train_dataloader, is_training=True)
 
-            if (ep + 1) % self.valid_frequency == 0:
+            if (epoch + 1) % self.valid_frequency == 0:
                 self.run_epoch(valid_dataloader, is_training=False)
 
     def run_epoch(self, dataloader, is_training):

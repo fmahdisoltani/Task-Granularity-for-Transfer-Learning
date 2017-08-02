@@ -62,6 +62,4 @@ if __name__ == '__main__':
     trainer = Trainer(captioner,
                       loss_function, optimizer, num_epoch, valid_frequency)
 
-    for epoch in range(config_obj.get('training', 'num_epochs')):
-        print("Epoch {}:".format(epoch+1))
-        trainer.train(dataloader, dataloader)
+    trainer.train(dataloader, dataloader)
