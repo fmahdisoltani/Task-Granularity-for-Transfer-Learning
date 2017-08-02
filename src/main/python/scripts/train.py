@@ -9,10 +9,8 @@ Options:
 """
 
 import torch
-from torch import nn
 from torch.utils.data import DataLoader
 from docopt import docopt
-from torch.autograd import Variable
 
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import JpegVideoDataset
@@ -59,12 +57,11 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Train the Model
-    total_step = len(dataloader)
-    learning_rate = 0.1
-    num_epoch = 10
-    num_valid =1
-    trainer = Trainer(learning_rate, captioner,
-                 loss_function, optimizer, num_epoch, num_valid)
+    num_epoch = config_obj.get('training','num_epochs')
+    valid_frequency = config_obj.get('training', 'valid_frequency')
+    trainer = Trainer(captioner,
+                      loss_function, optimizer, num_epoch, valid_frequency)
+
     for epoch in range(config_obj.get('training', 'num_epochs')):
         print("Epoch {}:".format(epoch+1))
-        trainer.run_epoch(dataloader, dataloader)
+        trainer.train(dataloader, dataloader)

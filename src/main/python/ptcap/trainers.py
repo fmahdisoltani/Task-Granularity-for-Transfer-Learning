@@ -1,12 +1,11 @@
-import torch
-
 from torch.autograd import Variable
+
+import ptcap.metrics as metrics
 
 
 class Trainer(object):
-    def __init__(self, learning_rate, model,
+    def __init__(self, model,
                  loss_function, optimizer, num_epoch, num_valid):
-        self.learning_rate = learning_rate
         self.model = model
         self.loss_function = loss_function
         self.optimizer = optimizer
@@ -24,17 +23,15 @@ class Trainer(object):
 
         for i, (videos, _, captions) in enumerate(dataloader):
             videos, captions = Variable(videos), Variable(captions)
-            batch_size, num_steps = captions.size()
             outputs = self.model((videos, captions))
             loss = self.loss_function(outputs, captions)
 
             # compute accuracy
-            _, predictions = torch.max(outputs, dim=2)
-            equal_values = captions.eq(predictions).sum().float()
-            accuracy = equal_values * 100.0 / (batch_size * num_steps)
+            accuracy = metrics.token_level_accuracy(captions, outputs)
             print("accuracy is: {}".format(accuracy))
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+
