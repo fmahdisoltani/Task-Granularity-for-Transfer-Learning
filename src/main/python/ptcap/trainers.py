@@ -35,4 +35,3 @@ class Trainer(object):
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-
