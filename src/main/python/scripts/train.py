@@ -9,11 +9,11 @@ Options:
 """
 
 import torch
-from torch import nn
 from torch.utils.data import DataLoader
 from docopt import docopt
 from torch.autograd import Variable
 from torchvision.transforms import Compose
+
 
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import JpegVideoDataset
@@ -21,6 +21,7 @@ from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import RtorchnCaptioner
 from ptcap.losses import SequenceCrossEntropy
+from ptcap.trainers import Trainer
 import ptcap.data.preprocessing as prep
 
 
@@ -59,15 +60,16 @@ if __name__ == '__main__':
                                  use_cuda=config_obj.get('device', 'use_cuda'))
 
     # Loss and Optimizer
-    criterion = nn.CrossEntropyLoss()
+    loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
 
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
-    # Train the Models
-    total_step = len(dataloader)
+    # Train the Model
+    num_epoch = config_obj.get('training','num_epochs')
+    valid_frequency = config_obj.get('training', 'valid_frequency')
+    trainer = Trainer(captioner,
+                      loss_function, optimizer, num_epoch, valid_frequency)
 
-    for epoch in range(config_obj.get('training', 'num_epochs')):
-        print("Epoch {}:".format(epoch+1))
-        pass
+    trainer.train(dataloader, dataloader)
