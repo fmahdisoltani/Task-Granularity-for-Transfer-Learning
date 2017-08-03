@@ -62,4 +62,12 @@ if __name__ == '__main__':
     trainer = Trainer(captioner,
                       loss_function, optimizer, num_epoch, valid_frequency)
 
-    trainer.train(dataloader, dataloader)
+    # trainer.train(dataloader, dataloader)
+
+
+    ################################<<UGLY>>####################################
+    from ptcap.model.captioners import EncoderDecoder
+    encoder = EncoderDecoder()
+    trainer2 = Trainer(encoder, loss_function, optimizer, num_epoch,
+                       valid_frequency)
+    trainer2.train(dataloader, dataloader)
