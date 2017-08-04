@@ -68,6 +68,6 @@ class LSTMDecoder(Decoder):
 
         # Project features in a 'vocab_size'-dimensional space
         lstm_hid_linear = torch.stack([self.linear(h) for h in lstm_hid], 0)
-        probs = torch.stack([self.softmax(h) for h in lstm_hid_linear], 0)
+        probs = torch.stack([self.logsoftmax(h) for h in lstm_hid_linear], 0)
 
         return probs
