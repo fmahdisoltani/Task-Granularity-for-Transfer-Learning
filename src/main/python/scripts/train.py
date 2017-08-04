@@ -46,10 +46,10 @@ if __name__ == '__main__':
                             **config_obj.get('dataloaders', 'kwargs'))
 
     # vocab_size, batchnorm=True, stateful=False, **kwargs
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
-    #                             use_cuda=config_obj.get('device', 'use_cuda'))
+    rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
+                                use_cuda=config_obj.get('device', 'use_cuda'))
 
-    captioner = EncoderDecoder()
+    captioner = CNN3dLSTM()
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())

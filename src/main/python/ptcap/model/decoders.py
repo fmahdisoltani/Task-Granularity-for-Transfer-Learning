@@ -30,23 +30,22 @@ class FullyConnectedDecoder(Decoder):
         return predictions.view(batch_size, -1, self.vocab_size)
 
 
-class LSTMDecoder(nn.Module):
+class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size,
-                 vocab_size, num_hidden_lstm, features=None, use_cuda=False):
+                 vocab_size, num_hidden_lstm, use_cuda=False):
 
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
 
-        #Embed each token in vocab to a 128 dimensional vector
+        # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
-        #batch_first: whether input and output are (batch, seq, feature)
-
+        # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
-        self.softmax = nn.LogSoftmax()
+        self.logsoftmax = nn.LogSoftmax()
         self.use_cuda = use_cuda
 
     def init_hidden_decoder(self, features):
@@ -65,10 +64,10 @@ class LSTMDecoder(nn.Module):
         h0, c0 = self.init_hidden_decoder(features)
         embedded_captions = self.embedding(captions)
 
-        h_list, _ = self.lstm(embedded_captions, (h0, c0))
+        lstm_hid, _ = self.lstm(embedded_captions, (h0, c0))
 
         # Project features in a 'vocab_size'-dimensional space
-        h_list1 = torch.stack([self.linear(h) for h in h_list], 0)
-        h_list2 = torch.stack([self.softmax(h) for h in h_list1], 0)
+        lstm_hid_linear = torch.stack([self.linear(h) for h in lstm_hid], 0)
+        probs = torch.stack([self.softmax(h) for h in lstm_hid_linear], 0)
 
-        return h_list2
+        return probs

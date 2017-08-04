@@ -4,6 +4,8 @@ from torch import nn
 from rtorchn.models.captioning.vid2caption import DeepNet
 from ptcap.model.encoders import CNN3dEncoder
 from ptcap.model.decoders import LSTMDecoder
+
+
 class Captioner(nn.Module):
 
     def forward(self, video_batch):
@@ -27,18 +29,31 @@ class RtorchnCaptioner(Captioner):
 
 
 class EncoderDecoder(Captioner):
-    def __init__(self, encoder=CNN3dEncoder,
-                 decoder=LSTMDecoder, encoder_output_size=128):
+    def __init__(self, encoder, decoder, encoder_args=(), decoder_args=()):
         super(EncoderDecoder, self).__init__()
-        self.encoder = encoder(encoder_output_size)
-        self.decoder = decoder(embedding_size=97,
-                               hidden_size=encoder_output_size,
-                               vocab_size=34, num_hidden_lstm=71)
+
+        self.encoder = encoder(*encoder_args)
+        self.decoder = decoder(*decoder_args)
 
     def forward(self, video_batch):
         videos, captions = video_batch
         features = self.encoder(videos)
-        h_list = self.decoder(features, captions)
+        probs = self.decoder(features, captions)
 
-        return h_list
+        return probs
+
+
+class CNN3dLSTM(EncoderDecoder):
+    def __init__(self, encoder_output_size=128, embedding_size=97,
+                 vocab_size=34, num_hidden_lstm=71):
+
+        decoder_args = (embedding_size, encoder_output_size,
+                        vocab_size, num_hidden_lstm)
+
+        encoder_args = (encoder_output_size, )
+
+        super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
+                                        encoder_args=encoder_args,
+                                        decoder_args=decoder_args)
+
 
