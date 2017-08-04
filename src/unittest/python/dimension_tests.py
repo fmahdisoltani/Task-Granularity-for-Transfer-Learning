@@ -15,16 +15,16 @@ class TestDimensions(unittest.TestCase):
         self.vocab_size = 5
         self.caption_len = 4
         self.arguments = {
-            'FullyConnectedEncoder': (((3, 10, 12, 12), 4), {}),
-            'FullyConnectedMapper': ((4, 10),{}),
+            'FullyConnectedEncoder': (((3, 10, 96, 96), 4), {}),
+            'FullyConnectedMapper': ((4, 10), {}),
             'FullyConnectedDecoder': ((10, self.caption_len, self.vocab_size),
                                       {}),
+            'CNN3dEncoder': ((128,), {}),
         }
-
 
     def test_encoders(self):
         encoder_classes = encoders.Encoder.__subclasses__()
-        video_batch = Variable(torch.zeros(self.batch_size, 3, 10, 12, 12))
+        video_batch = Variable(torch.zeros(self.batch_size, 3, 10, 96, 96))
         for encoder_class in encoder_classes:
             with self.subTest(encoder_class=encoder_class):
                 self.assertIn(encoder_class.__name__, self.arguments)
