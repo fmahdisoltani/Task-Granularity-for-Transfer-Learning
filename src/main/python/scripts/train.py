@@ -61,6 +61,6 @@ if __name__ == '__main__':
     num_epoch = config_obj.get('training','num_epochs')
     valid_frequency = config_obj.get('training', 'valid_frequency')
     trainer = Trainer(captioner,
-                      loss_function, optimizer, num_epoch, valid_frequency)
+                      loss_function, optimizer, num_epoch, valid_frequency, tokenizer)
 
     trainer.train(dataloader, dataloader)

@@ -45,7 +45,7 @@ class EncoderDecoder(Captioner):
 
 class CNN3dLSTM(EncoderDecoder):
     def __init__(self, encoder_output_size=128, embedding_size=97,
-                 vocab_size=34, num_hidden_lstm=71):
+                 vocab_size=33, num_hidden_lstm=71):
 
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm)
