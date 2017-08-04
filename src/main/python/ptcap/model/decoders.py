@@ -18,15 +18,14 @@ class FullyConnectedDecoder(Decoder):
         self.caption_len, self.vocab_size = caption_len, vocab_size
         self.input_mapping = nn.Linear(state_dim,
                                        self.caption_len * self.vocab_size)
-        self.caption_mapping = nn.Linear(self.caption_len * self.vocab_size,
-                                         self.caption_len * self.vocab_size)
+        self.caption_mapping = nn.Embedding(self.vocab_size, self.vocab_size)
 
     def forward(self, decoder_states, teacher_captions=None):
         batch_size = decoder_states.size()[0]
         predictions = self.input_mapping(decoder_states)
         if teacher_captions is not None:
             predictions += self.caption_mapping(
-                teacher_captions.view(batch_size, -1))
+                teacher_captions).view(batch_size, -1)
         return predictions.view(batch_size, -1, self.vocab_size)
 
 
