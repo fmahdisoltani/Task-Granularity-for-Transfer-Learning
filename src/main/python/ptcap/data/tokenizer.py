@@ -43,8 +43,7 @@ class Tokenizer(object):
 
     def encode_caption(self, caption):
         tokenized_caption = self.tokenize(caption)
-        encoded_caption = [self.caption_dict[self.GO]]
-        encoded_caption += [self.encode_token(token)
+        encoded_caption = [self.encode_token(token)
                             for token in tokenized_caption]
         return self.pad_with_end(encoded_caption)
 
