@@ -40,17 +40,22 @@ class Trainer(object):
 
             counter = 0
             for cap, pred in zip(captions, predictions):
-
-                decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-                decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
                 counter += 1
+                # print ("Sample number {}".format(counter))
+                if not is_training:
 
-                print("__TARGET__: {}".format(decoded_cap))
-                print("PREDICTION: {}\n".format(decoded_pred))
+                    decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
+                    decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
+
+                    print("__TARGET__: {}".format(decoded_cap))
+                    print("PREDICTION: {}\n".format(decoded_pred))
 
             print("*"*15)
-            print("accuracy is: {}".format(accuracy))
+            print("accuracy is: {}".format(accuracy.data))
             print ("\n \n")
+
+
+            use_teacher_forcing = is_training
 
             if is_training:
                 self.model.zero_grad()

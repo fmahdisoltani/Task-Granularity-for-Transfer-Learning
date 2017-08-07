@@ -49,7 +49,7 @@ if __name__ == '__main__':
     rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
                                 use_cuda=config_obj.get('device', 'use_cuda'))
 
-    captioner = CNN3dLSTM()
+    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size())
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
