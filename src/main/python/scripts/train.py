@@ -19,7 +19,7 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import JpegVideoDataset
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.model.captioners import RtorchnCaptioner
+from ptcap.model.captioners import *
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.trainers import Trainer
 import ptcap.data.preprocessing as prep
@@ -56,9 +56,10 @@ if __name__ == '__main__':
                             **config_obj.get('dataloaders', 'kwargs'))
 
     # vocab_size, batchnorm=True, stateful=False, **kwargs
-    captioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
-                                 use_cuda=config_obj.get('device', 'use_cuda'))
+    rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
+                                use_cuda=config_obj.get('device', 'use_cuda'))
 
+    captioner = CNN3dLSTM()
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
