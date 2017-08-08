@@ -35,24 +35,30 @@ class Trainer(object):
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
+
             # compute accuracy
             accuracy = metrics.token_level_accuracy(captions, predictions)
 
             if self.verbose:
-                print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
-                for cap, pred in zip(captions, predictions):
-
-                    decoded_cap = self.tokenizer.\
-                        decode_caption(cap.data.numpy())
-                    decoded_pred = self.tokenizer.\
-                        decode_caption(pred.data.numpy())
-
-                    print("__TARGET__: {}".format(decoded_cap))
-                    print("PREDICTION: {}\n".format(decoded_pred))
-
-                print("*"*30)
+                self.print_metrics(accuracy)
+                self.print_captions_and_predictions(captions,predictions)
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+
+    def print_captions_and_predictions(self, captions, predictions):
+
+        for cap, pred in zip(captions, predictions):
+
+            decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
+            decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
+
+            print("__TARGET__: {}".format(decoded_cap))
+            print("PREDICTION: {}\n".format(decoded_pred))
+
+        print("*"*30)
+
+    def print_metrics(self, accuracy):
+        print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
