@@ -33,7 +33,6 @@ class Trainer(object):
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
-            _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
             # compute accuracy
             accuracy = metrics.token_level_accuracy(captions, predictions)
