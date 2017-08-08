@@ -64,7 +64,6 @@ class LSTMDecoder(Decoder):
         batch_size, seq_len = captions.size()
         h0, c0 = self.init_hidden_decoder(features)
 
-
         # Add go token and remove the last token for all captions
         go_part = Variable(torch.zeros(batch_size, 1).long())
         captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
@@ -72,37 +71,21 @@ class LSTMDecoder(Decoder):
         embedded_captions = self.embedding(captions_with_go_token)
         #predictions = []
         lstm_hid, lstm_input = (h0, c0), embedded_captions[:,0,:].unsqueeze(1)
+
         use_teacher_forcing = False
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
-            for di in range(seq_len):
-
-                 lstm_output, lstm_hid = self.lstm(lstm_input, lstm_hid)
-                 #_, pi = torch.max(lstm_output, dim=2)
-                 lstm_input = embedded_captions[:,di,:].unsqueeze(1)  # Teacher forcing
-                 #predictions += pi
+            lstm_hid, _ = self.lstm(embedded_captions, (h0, c0))
 
         else:
-            print("YAY")
             # Without teacher forcing: use its own predictions as the next input
             for di in range(seq_len):
                 lstm_output, lstm_hid = self.lstm(lstm_input, lstm_hid)
 
                 lstm_hid_linear = torch.stack([self.linear(h) for h in lstm_output], 0)
-                #print(lstm_hid_linear)
-                #probs = torch.stack([self.logsoftmax(h) for h in lstm_hid_linear], 0)
+
                 _, pi = torch.max(lstm_hid_linear, dim=2)
-
-                topv, topi = lstm_hid_linear.data.topk(1)
-                #ni = topi[0][0]
-
-                #lstm_input = Variable(torch.LongTensor([[ni]]))
                 lstm_input = self.embedding(pi.squeeze()).unsqueeze(1)
-
-            #    lstm_input = lstm_input.cuda() if use_cuda else lstm_input
-
-
-        lstm_hid, _ = self.lstm(embedded_captions, (h0, c0))
 
         # Project features in a 'vocab_size'-dimensional space
         lstm_hid_linear = torch.stack([self.linear(h) for h in lstm_hid], 0)
