@@ -41,7 +41,7 @@ class Trainer(object):
 
             if self.verbose:
                 self.print_metrics(accuracy)
-                self.print_captions_and_predictions(captions,predictions)
+                self.print_captions_and_predictions(captions, predictions)
 
             if is_training:
                 self.model.zero_grad()
