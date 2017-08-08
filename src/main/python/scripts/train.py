@@ -8,10 +8,8 @@ Options:
   -h --help              Show this screen.
 """
 
-import torch
 from torch.utils.data import DataLoader
 from docopt import docopt
-from torch.autograd import Variable
 from torchvision.transforms import Compose
 
 
@@ -68,9 +66,11 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Train the Model
-    num_epoch = config_obj.get('training','num_epochs')
+    num_epoch = config_obj.get('training', 'num_epochs')
     valid_frequency = config_obj.get('training', 'valid_frequency')
-    trainer = Trainer(captioner,
-                      loss_function, optimizer, num_epoch, valid_frequency, tokenizer)
+    verbose = config_obj.get('training', 'verbose')
+
+    trainer = Trainer(captioner, loss_function, optimizer, num_epoch,
+                      valid_frequency, tokenizer, verbose=verbose)
 
     trainer.train(dataloader, dataloader)

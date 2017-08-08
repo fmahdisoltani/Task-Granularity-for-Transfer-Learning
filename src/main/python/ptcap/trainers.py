@@ -7,7 +7,7 @@ from torch.autograd import Variable
 class Trainer(object):
     def __init__(self, model,
                  loss_function, optimizer, num_epoch, valid_frequency,
-                 tokenizer):
+                 tokenizer, verbose=False):
 
         self.model = model
         self.loss_function = loss_function
@@ -15,6 +15,7 @@ class Trainer(object):
         self.num_epoch = num_epoch
         self.valid_frequency = valid_frequency
         self.tokenizer = tokenizer
+        self.verbose = verbose
 
     def train(self, train_dataloader, valid_dataloader):
         for epoch in range(self.num_epoch):
@@ -33,24 +34,23 @@ class Trainer(object):
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
-            _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
             # compute accuracy
             accuracy = metrics.token_level_accuracy(captions, predictions)
 
-            counter = 0
-            for cap, pred in zip(captions, predictions):
+            if self.verbose:
+                print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
+                for cap, pred in zip(captions, predictions):
 
-                decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-                decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
-                counter += 1
+                    decoded_cap = self.tokenizer.\
+                        decode_caption(cap.data.numpy())
+                    decoded_pred = self.tokenizer.\
+                        decode_caption(pred.data.numpy())
 
-                print("__TARGET__: {}".format(decoded_cap))
-                print("PREDICTION: {}\n".format(decoded_pred))
+                    print("__TARGET__: {}".format(decoded_cap))
+                    print("PREDICTION: {}\n".format(decoded_pred))
 
-            print("*"*15)
-            print("accuracy is: {}".format(accuracy))
-            print ("\n \n")
+                print("*"*30)
 
             if is_training:
                 self.model.zero_grad()
