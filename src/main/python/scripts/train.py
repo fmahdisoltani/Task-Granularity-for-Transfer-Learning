@@ -8,9 +8,10 @@ Options:
   -h --help              Show this screen.
 """
 
-import torch
 from torch.utils.data import DataLoader
 from docopt import docopt
+from torchvision.transforms import Compose
+
 
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import JpegVideoDataset
@@ -19,6 +20,7 @@ from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import *
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.trainers import Trainer
+import ptcap.data.preprocessing as prep
 
 
 if __name__ == '__main__':
@@ -39,8 +41,14 @@ if __name__ == '__main__':
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(training_parser.get_captions())
 
+    preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
+                            prep.PadVideo([24, 96, 96]),
+                            prep.Float32Converter(),
+                            prep.PytorchTransposer()])
+
     training_set = JpegVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer)
+                                    tokenizer=tokenizer,
+                                    preprocess=preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
                             **config_obj.get('dataloaders', 'kwargs'))
@@ -58,9 +66,11 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Train the Model
-    num_epoch = config_obj.get('training','num_epochs')
+    num_epoch = config_obj.get('training', 'num_epochs')
     valid_frequency = config_obj.get('training', 'valid_frequency')
-    trainer = Trainer(captioner,
-                      loss_function, optimizer, num_epoch, valid_frequency, tokenizer)
+    verbose = config_obj.get('training', 'verbose')
+
+    trainer = Trainer(captioner, loss_function, optimizer, num_epoch,
+                      valid_frequency, tokenizer, verbose=verbose)
 
     trainer.train(dataloader, dataloader)
