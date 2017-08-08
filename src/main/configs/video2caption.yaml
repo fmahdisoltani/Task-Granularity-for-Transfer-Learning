@@ -23,4 +23,5 @@ training:
   num_epochs: 200
   learning_rate: &lr 0.01
   valid_frequency: 1
+  verbose: True
 
