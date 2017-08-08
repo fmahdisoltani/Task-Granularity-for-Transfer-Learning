@@ -47,7 +47,7 @@ class TestTokenizer(unittest.TestCase):
         phrase = "THERE IS ONE HAND"
         phrase_encoded = self.tokenizer.encode_caption(phrase)
         phrase_decoded = self.tokenizer.decode_caption(phrase_encoded)
-        self.assertEqual(phrase_decoded[:6], [Tokenizer.GO,'THERE',
+        self.assertEqual(phrase_decoded[:5], ['THERE',
                                               Tokenizer.UNK, 'ONE',
                                              'HAND', Tokenizer.END])
 
