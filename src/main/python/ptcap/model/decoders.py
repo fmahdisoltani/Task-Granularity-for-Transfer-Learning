@@ -63,8 +63,8 @@ class LSTMDecoder(Decoder):
     def forward(self, features, captions, use_teacher_forcing=False):
         """
         This method computes the forward pass of the decoder with or without
-        teacher forcing. It should be noted that the <GO> symbol is
-        automatically appended to the input sequence.
+        teacher forcing. It should be noted that the <GO> token is
+        automatically appended to the input captions.
 
         Args:
             features: Video features extracted by the encoder.
