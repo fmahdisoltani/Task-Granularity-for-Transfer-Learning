@@ -67,10 +67,15 @@ if __name__ == '__main__':
 
     # Train the Model
     num_epoch = config_obj.get('training', 'num_epochs')
-    valid_frequency = config_obj.get('training', 'valid_frequency')
-    verbose = config_obj.get('training', 'verbose')
+    frequency_valid = config_obj.get('validation', 'frequency')
+    verbose_train = config_obj.get('training', 'verbose')
+    verbose_valid = config_obj.get('validation', 'verbose')
+    teacher_forcing_train = config_obj.get('training', 'teacher_force')
+    teacher_forcing_valid = config_obj.get('validation', 'teacher_force')
 
     trainer = Trainer(captioner, loss_function, optimizer, num_epoch,
-                      valid_frequency, tokenizer, verbose=verbose)
+                      frequency_valid, tokenizer, verbose_train=verbose_train,
+                      verbose_valid=verbose_valid)
 
-    trainer.train(dataloader, dataloader)
+    trainer.train(dataloader, dataloader, teacher_forcing_train,
+                  teacher_forcing_valid)
