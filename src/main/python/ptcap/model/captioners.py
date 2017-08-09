@@ -8,7 +8,7 @@ from ptcap.model.decoders import LSTMDecoder
 
 class Captioner(nn.Module):
 
-    def forward(self, video_batch):
+    def forward(self, video_batch, use_teacher_forcing):
         """BxCxTxWxH -> BxTxV"""
         raise NotImplementedError
 
@@ -24,7 +24,7 @@ class RtorchnCaptioner(Captioner):
         super(RtorchnCaptioner, self).__init__()
         self.captioner = DeepNet(vocab_size, batchnorm, stateful, **kwargs)
 
-    def forward(self, video_batch):
+    def forward(self, video_batch, use_teacher_forcing=True):
         return self.captioner.forward(video_batch)
 
 
@@ -35,7 +35,7 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args)
         self.decoder = decoder(*decoder_args)
 
-    def forward(self, video_batch):
+    def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder(videos)
         probs = self.decoder(features, captions)
@@ -55,5 +55,3 @@ class CNN3dLSTM(EncoderDecoder):
         super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
                                         encoder_args=encoder_args,
                                         decoder_args=decoder_args)
-
-
