@@ -70,12 +70,11 @@ if __name__ == '__main__':
     frequency_valid = config_obj.get('validation', 'frequency')
     verbose_train = config_obj.get('training', 'verbose')
     verbose_valid = config_obj.get('validation', 'verbose')
-    teacher_forcing_train = config_obj.get('training', 'teacher_force')
-    teacher_forcing_valid = config_obj.get('validation', 'teacher_force')
+    teacher_force_train = config_obj.get('training', 'teacher_force')
+    teacher_force_valid = config_obj.get('validation', 'teacher_force')
 
-    trainer = Trainer(captioner, loss_function, optimizer, num_epoch,
-                      frequency_valid, tokenizer, verbose_train=verbose_train,
-                      verbose_valid=verbose_valid)
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer)
 
-    trainer.train(dataloader, dataloader, teacher_forcing_train,
-                  teacher_forcing_valid)
+    trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
+                  teacher_force_train, teacher_force_valid, verbose_train,
+                  verbose_valid)
