@@ -61,6 +61,20 @@ class LSTMDecoder(Decoder):
         return h0, c0
 
     def forward(self, features, captions, use_teacher_forcing=False):
+        """
+        This method computes the forward pass of the decoder with or without
+        teacher forcing. It should be noted that the <GO> token is
+        automatically appended to the input captions.
+
+        Args:
+            features: Video features extracted by the encoder.
+            captions: Video captions (required if use_teacher_forcing=True).
+            use_teacher_forcing: Whether to use teacher forcing or not.
+
+        Returns:
+            The probability distribution over the vocabulary across the entire
+            sequence.
+        """
 
         batch_size, seq_len = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
@@ -84,8 +98,8 @@ class LSTMDecoder(Decoder):
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
-        lstm_out_linear = torch.stack([self.linear(h) for h in lstm_output], 0)
-        probs = torch.stack([self.logsoftmax(h) for h in lstm_out_linear], 0)
+        lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output], 0)
+        probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
 
         return probs, lstm_hidden
 
@@ -97,11 +111,12 @@ class LSTMDecoder(Decoder):
             probs, lstm_hidden = self.apply_lstm(features, lstm_input,
                                                  lstm_hidden)
 
-            # Greedy decoding
-            _, pred = torch.max(probs, dim=2)
-            lstm_input = pred.squeeze(1)
-
             output_probs.append(probs)
+            # Greedy decoding
+            _, preds = torch.max(probs, dim=2)
+            lstm_input = preds.squeeze(1)
+
+
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
