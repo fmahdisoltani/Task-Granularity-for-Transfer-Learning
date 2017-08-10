@@ -54,30 +54,3 @@ class JpegVideoDataset(VideoDataset):
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
         return np.array(frames)
-
-
-class VideoOnlyDataset(Dataset):
-
-    def __init__(self, annotation_parser, preprocess=None):
-        self.video_paths = annotation_parser.get_video_paths()
-        self.preprocess = preprocess
-
-    def __len__(self):
-        return len(self.video_paths)
-
-    def __getitem__(self, index):
-        """
-        Return a Video like
-        'video_tensor_of_size_CxTxWxH'
-        """
-
-        video = self._get_video(index)
-        if self.preprocess is not None:
-            video = self.preprocess(video)
-
-        return video
-
-    def _get_video(self, index):
-        pass
-
-
