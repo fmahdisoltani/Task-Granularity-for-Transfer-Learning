@@ -42,7 +42,6 @@ class Trainer(object):
                 loss.backward()
                 self.optimizer.step()
 
-
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
