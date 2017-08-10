@@ -1,10 +1,10 @@
 from ptcap.metrics import token_level_accuracy
 
 
-def print_captions_and_predictions(self, captions, predictions):
+def print_captions_and_predictions(tokenizer, captions, predictions):
     for cap, pred in zip(captions, predictions):
-        decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-        decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
+        decoded_cap = tokenizer.decode_caption(cap.data.numpy())
+        decoded_pred = tokenizer.decode_caption(pred.data.numpy())
 
         print("__TARGET__: {}".format(decoded_cap))
         print("PREDICTION: {}\n".format(decoded_pred))
@@ -12,19 +12,19 @@ def print_captions_and_predictions(self, captions, predictions):
     print("*" * 30)
 
 
-def print_metrics(self, accuracy):
+def print_metrics(accuracy):
     print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
 
 
-def print_stuff(self, is_training, captions, predictions, epoch_counter,
+def print_stuff(tokenizer, is_training, captions, predictions, epoch_counter,
                 sample_counter, total_samples, verbose=True):
     # compute accuracy
     accuracy = token_level_accuracy(captions, predictions)
-    print("Training..." if is_training else "Validating...")
+    status = "Training..." if is_training else "Validating..."
 
     print("Epoch {}".format(epoch_counter + 1))
-    print("Sample #{} out of {} samples".
+    print(status + " sample #{} out of {} samples".
           format(sample_counter, total_samples))
-    self.print_metrics(accuracy)
+    print_metrics(accuracy)
     if verbose:
-        self.print_captions_and_predictions(captions, predictions)
+        print_captions_and_predictions(tokenizer, captions, predictions)
