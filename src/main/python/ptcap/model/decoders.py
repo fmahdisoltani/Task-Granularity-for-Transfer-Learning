@@ -47,7 +47,6 @@ class LSTMDecoder(Decoder):
         self.logsoftmax = nn.LogSoftmax()
         self.use_cuda = use_cuda
         self.go_token = go_token
-        self.gpus = [0]
 
     def init_hidden(self, features):
         """

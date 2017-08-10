@@ -12,6 +12,8 @@ class Trainer(object):
         self.loss_function = loss_function
         self.optimizer = optimizer
         self.tokenizer = tokenizer
+        self.model = model.cuda() if use_cuda else model
+        self.loss_function = loss_function.cuda() if use_cuda else loss_function
         self.use_cuda = use_cuda
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
@@ -38,8 +40,6 @@ class Trainer(object):
             if self.use_cuda:
                 videos = videos.cuda()
                 captions = captions.cuda()
-                self.model = self.model.cuda()
-                self.loss_function = self.loss_function.cuda()
 
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
