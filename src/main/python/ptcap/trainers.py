@@ -47,4 +47,4 @@ class Trainer(object):
             predictions = torch.squeeze(predictions)
 
             prt.print_stuff(is_training, captions, predictions, epoch,
-                        sample_counter, len(dataloader), verbose)
+                            sample_counter, len(dataloader), verbose)
