@@ -58,8 +58,10 @@ if __name__ == '__main__':
                                 use_cuda=config_obj.get('device', 'use_cuda'))
 
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size())
+    captioner = captioner.cuda()
+
     # Loss and Optimizer
-    loss_function = SequenceCrossEntropy()
+    loss_function = SequenceCrossEntropy().cuda()
     params = list(captioner.parameters())
 
     optimizer = torch.optim.Adam(params,

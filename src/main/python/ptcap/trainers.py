@@ -35,6 +35,8 @@ class Trainer(object):
 
         for i, (videos, _, captions) in enumerate(dataloader):
             videos, captions = Variable(videos), Variable(captions)
+            videos = videos.cuda()
+            captions = captions.cuda()
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
@@ -58,8 +60,8 @@ class Trainer(object):
 
         for cap, pred in zip(captions, predictions):
 
-            decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-            decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
+            decoded_cap = self.tokenizer.decode_caption(cap.cpu().data.numpy())
+            decoded_pred = self.tokenizer.decode_caption(pred.cpu().data.numpy())
 
             print("__TARGET__: {}".format(decoded_cap))
             print("PREDICTION: {}\n".format(decoded_pred))
@@ -68,4 +70,4 @@ class Trainer(object):
 
     def print_metrics(self, accuracy):
 
-        print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
+        print("Batch Accuracy is: {}".format(accuracy.cpu().data.numpy()[0]))

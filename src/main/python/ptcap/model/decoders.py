@@ -77,7 +77,7 @@ class LSTMDecoder(Decoder):
         """
 
         batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long()).cuda()
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
@@ -115,8 +115,6 @@ class LSTMDecoder(Decoder):
             # Greedy decoding
             _, preds = torch.max(probs, dim=2)
             lstm_input = preds.squeeze(1)
-
-
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
