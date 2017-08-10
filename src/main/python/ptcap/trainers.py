@@ -1,7 +1,7 @@
 import torch
 from torch.autograd import Variable
 
-from ptcap.metrics import token_level_accuracy
+from ptcap.printers import *
 
 
 class Trainer(object):
@@ -31,51 +31,21 @@ class Trainer(object):
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
-        sample_counter = 0
-        total_samples = len(dataloader)
-        for i, (videos, _, captions) in enumerate(dataloader):
-            sample_counter += 1
+        for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
             videos, captions = Variable(videos), Variable(captions)
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
-
-            # convert probabilities to predictions
-            _, predictions = torch.max(probs, dim=2)
-            predictions = torch.squeeze(predictions)
-
-            # compute accuracy
-            accuracy = token_level_accuracy(captions, predictions)
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-            # print stuff
-            if is_training:
-                print("Training...")
-            else:
-                print("Validating...")
-            print("Epoch {}".format(epoch + 1))
-            print("Sample #{} out of {} samples".
-                  format(sample_counter, total_samples))
-            self.print_metrics(accuracy)
-            if verbose:
-                self.print_captions_and_predictions(captions, predictions)
 
-    def print_captions_and_predictions(self, captions, predictions):
+            # convert probabilities to predictions
+            _, predictions = torch.max(probs, dim=2)
+            predictions = torch.squeeze(predictions)
 
-        for cap, pred in zip(captions, predictions):
-
-            decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-            decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
-
-            print("__TARGET__: {}".format(decoded_cap))
-            print("PREDICTION: {}\n".format(decoded_pred))
-
-        print("*"*30)
-
-    def print_metrics(self, accuracy):
-
-        print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
+            print_stuff(is_training, captions, predictions, epoch,
+                        sample_counter, len(dataloader), verbose)
