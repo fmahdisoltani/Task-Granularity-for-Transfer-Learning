@@ -19,21 +19,23 @@ class Trainer(object):
               verbose_valid=False):
 
         for epoch in range(num_epoch):
-            print("Epoch {}".format(epoch + 1))
-            self.run_epoch(train_dataloader, is_training=True,
+            self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                print("Validating...")
-                self.run_epoch(valid_dataloader, is_training=False,
+                self.run_epoch(valid_dataloader, epoch, is_training=False,
                                use_teacher_forcing=teacher_force_valid,
                                verbose=verbose_valid)
 
-    def run_epoch(self, dataloader, is_training, use_teacher_forcing=False,
-                  verbose=True):
+    def run_epoch(self, dataloader, epoch, is_training,
+                  use_teacher_forcing=False, verbose=True):
 
+        sample_counter = 0
+        total_samples = len(dataloader)
         for i, (videos, _, captions) in enumerate(dataloader):
+            sample_counter += 1
+
             videos, captions = Variable(videos), Variable(captions)
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
@@ -44,15 +46,23 @@ class Trainer(object):
 
             # compute accuracy
             accuracy = token_level_accuracy(captions, predictions)
-            self.print_metrics(accuracy)
-
-            if verbose:
-                self.print_captions_and_predictions(captions, predictions)
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+
+            # print stuff
+            if is_training:
+                print("Training...")
+            else:
+                print("Validating...")
+            print("Epoch {}".format(epoch + 1))
+            print("Sample #{} out of {} samples".
+                  format(sample_counter, total_samples))
+            self.print_metrics(accuracy)
+            if verbose:
+                self.print_captions_and_predictions(captions, predictions)
 
     def print_captions_and_predictions(self, captions, predictions):
 
