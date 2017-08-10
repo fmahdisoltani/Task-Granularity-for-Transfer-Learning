@@ -1,7 +1,7 @@
 import torch
 from torch.autograd import Variable
 
-from ptcap.printers import *
+import ptcap.printers as prt
 
 
 class Trainer(object):
@@ -46,5 +46,5 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
 
-            print_stuff(is_training, captions, predictions, epoch,
+            prt.print_stuff(is_training, captions, predictions, epoch,
                         sample_counter, len(dataloader), verbose)
