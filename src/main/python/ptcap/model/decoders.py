@@ -76,7 +76,7 @@ class LSTMDecoder(Decoder):
             sequence.
         """
 
-        batch_size, seq_len = captions.size()
+        batch_size, num_step = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
 
         if use_teacher_forcing:
@@ -86,7 +86,7 @@ class LSTMDecoder(Decoder):
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part)
+            probs = self.predict(features, go_part, num_step)
 
         return probs
 
@@ -103,11 +103,11 @@ class LSTMDecoder(Decoder):
 
         return probs, lstm_hidden
 
-    def predict(self, features, go_tokens, maxlen=10):
+    def predict(self, features, go_tokens, num_step=1):
         lstm_input = go_tokens
         output_probs = []
         lstm_hidden = None
-        for i in range(maxlen):
+        for i in range(num_step):
             probs, lstm_hidden = self.apply_lstm(features, lstm_input,
                                                  lstm_hidden)
 
