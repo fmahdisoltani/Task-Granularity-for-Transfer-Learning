@@ -45,12 +45,12 @@ class EncoderDecoder(Captioner):
 
 class CNN3dLSTM(EncoderDecoder):
     def __init__(self, encoder_output_size=128, embedding_size=31,
-                 vocab_size=33, num_hidden_lstm=71):
+                 vocab_size=33, num_hidden_lstm=71, go_token=0, use_cuda=False):
 
         decoder_args = (embedding_size, encoder_output_size,
-                        vocab_size, num_hidden_lstm)
+                        vocab_size, num_hidden_lstm, go_token, use_cuda)
 
-        encoder_args = (encoder_output_size, )
+        encoder_args = (encoder_output_size,)
 
         super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
                                         encoder_args=encoder_args,

@@ -6,12 +6,13 @@ from ptcap.metrics import token_level_accuracy
 
 class Trainer(object):
     def __init__(self, model,
-                 loss_function, optimizer, tokenizer):
+                 loss_function, optimizer, tokenizer, use_cuda=False):
 
         self.model = model
         self.loss_function = loss_function
         self.optimizer = optimizer
         self.tokenizer = tokenizer
+        self.use_cuda = use_cuda
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -35,8 +36,12 @@ class Trainer(object):
 
         for i, (videos, _, captions) in enumerate(dataloader):
             videos, captions = Variable(videos), Variable(captions)
-            videos = videos.cuda()
-            captions = captions.cuda()
+            if self.use_cuda:
+                videos = videos.cuda()
+                captions = captions.cuda()
+                self.model = self.model.cuda()
+                self.loss_function = self.loss_function.cuda()
+
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 

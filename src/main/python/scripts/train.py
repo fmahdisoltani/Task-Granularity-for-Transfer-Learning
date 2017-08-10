@@ -41,6 +41,15 @@ if __name__ == '__main__':
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(training_parser.get_captions())
 
+    # Load attributes of config file
+    num_epoch = config_obj.get('training', 'num_epochs')
+    frequency_valid = config_obj.get('validation', 'frequency')
+    verbose_train = config_obj.get('training', 'verbose')
+    verbose_valid = config_obj.get('validation', 'verbose')
+    teacher_force_train = config_obj.get('training', 'teacher_force')
+    teacher_force_valid = config_obj.get('validation', 'teacher_force')
+    use_cuda = config_obj.get('device', 'use_cuda')
+
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
                             prep.Float32Converter(),
@@ -55,27 +64,21 @@ if __name__ == '__main__':
 
     # vocab_size, batchnorm=True, stateful=False, **kwargs
     rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
-                                use_cuda=config_obj.get('device', 'use_cuda'))
+                                  use_cuda=True)
 
-    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size())
-    captioner = captioner.cuda()
+    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
+                          go_token=tokenizer.encode_token(tokenizer.GO),
+                          use_cuda=use_cuda)
 
     # Loss and Optimizer
-    loss_function = SequenceCrossEntropy().cuda()
+    loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
 
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Train the Model
-    num_epoch = config_obj.get('training', 'num_epochs')
-    frequency_valid = config_obj.get('validation', 'frequency')
-    verbose_train = config_obj.get('training', 'verbose')
-    verbose_valid = config_obj.get('validation', 'verbose')
-    teacher_force_train = config_obj.get('training', 'teacher_force')
-    teacher_force_valid = config_obj.get('validation', 'teacher_force')
-
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer)
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, use_cuda)
 
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
