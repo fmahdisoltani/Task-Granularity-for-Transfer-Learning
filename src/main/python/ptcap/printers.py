@@ -28,3 +28,4 @@ def print_stuff(tokenizer, is_training, captions, predictions, epoch_counter,
     print_metrics(accuracy)
     if verbose:
         print_captions_and_predictions(tokenizer, captions, predictions)
+
