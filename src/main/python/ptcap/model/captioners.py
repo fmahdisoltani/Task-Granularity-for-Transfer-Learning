@@ -51,8 +51,8 @@ class CNN3dLSTM(EncoderDecoder):
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, use_cuda)
 
-        encoder_args = (encoder_output_size,)
+        encoder_args = (encoder_output_size, use_cuda)
 
-        super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
+        super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
                                         encoder_args=encoder_args,
                                         decoder_args=decoder_args)

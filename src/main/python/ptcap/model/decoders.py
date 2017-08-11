@@ -21,6 +21,7 @@ class FullyConnectedDecoder(Decoder):
         self.caption_mapping = nn.Embedding(self.vocab_size, self.vocab_size)
 
     def forward(self, decoder_states, teacher_captions=None):
+        decoder_states = decoder_states.squeeze(0)
         batch_size = decoder_states.size()[0]
         predictions = self.input_mapping(decoder_states)
         if teacher_captions is not None:
