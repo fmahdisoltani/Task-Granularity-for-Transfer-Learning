@@ -53,8 +53,8 @@ class LSTMDecoder(Decoder):
         Hidden states of the LSTM are initialized with features.
         """
 
-        c0 = features.unsqueeze(0)
-        h0 = features.unsqueeze(0)
+        c0 = features
+        h0 = features
         return h0, c0
 
     def forward(self, features, captions, use_teacher_forcing=False):

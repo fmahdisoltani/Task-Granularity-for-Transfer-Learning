@@ -15,8 +15,10 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
 def print_metrics(accuracy):
     print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
 
+def print_loss(loss):
+    print ("Loss: {}".format(loss.data.numpy()))
 
-def print_stuff(tokenizer, is_training, captions, predictions, epoch_counter,
+def print_stuff(loss, tokenizer, is_training, captions, predictions, epoch_counter,
                 sample_counter, total_samples, verbose=True):
     predictions = predictions.cpu()
     captions = captions.cpu()
@@ -28,6 +30,7 @@ def print_stuff(tokenizer, is_training, captions, predictions, epoch_counter,
     print(status + " sample #{} out of {} samples".
           format(sample_counter, total_samples))
     print_metrics(accuracy)
+    print_loss(loss.cpu())
     if verbose:
         print_captions_and_predictions(tokenizer, captions, predictions)
 
