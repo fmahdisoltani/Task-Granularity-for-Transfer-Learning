@@ -32,7 +32,7 @@ class FullyConnectedDecoder(Decoder):
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size,
-                 vocab_size, num_hidden_lstm, use_cuda=False, go_token=0):
+                 vocab_size, num_hidden_lstm, go_token=0, use_cuda=False):
 
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
@@ -55,9 +55,6 @@ class LSTMDecoder(Decoder):
 
         c0 = features.unsqueeze(0)
         h0 = features.unsqueeze(0)
-        if self.use_cuda:
-            h0 = h0.cuda(self.gpus[0])
-            c0 = c0.cuda(self.gpus[0])
         return h0, c0
 
     def forward(self, features, captions, use_teacher_forcing=False):
@@ -78,6 +75,8 @@ class LSTMDecoder(Decoder):
 
         batch_size, num_step = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda()
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
@@ -107,6 +106,7 @@ class LSTMDecoder(Decoder):
         lstm_input = go_tokens
         output_probs = []
         lstm_hidden = None
+
         for i in range(num_step):
             probs, lstm_hidden = self.apply_lstm(features, lstm_input,
                                                  lstm_hidden)
@@ -115,8 +115,6 @@ class LSTMDecoder(Decoder):
             # Greedy decoding
             _, preds = torch.max(probs, dim=2)
             lstm_input = preds.squeeze(1)
-
-
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs

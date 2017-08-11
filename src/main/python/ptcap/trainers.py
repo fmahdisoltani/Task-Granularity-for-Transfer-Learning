@@ -6,12 +6,15 @@ import ptcap.printers as prt
 
 class Trainer(object):
     def __init__(self, model,
-                 loss_function, optimizer, tokenizer):
+                 loss_function, optimizer, tokenizer, use_cuda=False):
 
         self.model = model
         self.loss_function = loss_function
         self.optimizer = optimizer
         self.tokenizer = tokenizer
+        self.model = model.cuda() if use_cuda else model
+        self.loss_function = loss_function.cuda() if use_cuda else loss_function
+        self.use_cuda = use_cuda
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -34,6 +37,10 @@ class Trainer(object):
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
             videos, captions = Variable(videos), Variable(captions)
+            if self.use_cuda:
+                videos = videos.cuda()
+                captions = captions.cuda()
+
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
@@ -46,5 +53,6 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
 
-            prt.print_stuff(is_training, captions, predictions, epoch,
-                            sample_counter, len(dataloader), verbose)
+            prt.print_stuff(self.tokenizer, is_training, captions, predictions,
+                            epoch, sample_counter, len(dataloader), verbose)
+

@@ -7,7 +7,7 @@ paths:
   test_annot: *train_annot
 
 device:
-  use_cuda: &use_cuda False
+  use_cuda: &use_cuda True
   synchronize_gpu: &sync True
   gpus: [0]
 

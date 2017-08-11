@@ -18,6 +18,8 @@ def print_metrics(accuracy):
 
 def print_stuff(tokenizer, is_training, captions, predictions, epoch_counter,
                 sample_counter, total_samples, verbose=True):
+    predictions = predictions.cpu()
+    captions = captions.cpu()
     # compute accuracy
     accuracy = token_level_accuracy(captions, predictions)
     status = "Training..." if is_training else "Validating..."
