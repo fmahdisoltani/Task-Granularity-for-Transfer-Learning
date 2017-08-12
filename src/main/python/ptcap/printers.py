@@ -12,11 +12,8 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
     print("*" * 30)
 
 
-def print_metrics(accuracy, first_token_accuracy):
+def print_metrics(accuracy):
     print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
-    print("First Token Accuracy is: {}".
-          format(first_token_accuracy.data.numpy()[0]))
-
 
 def print_loss(loss):
     print ("Loss: {}".format(loss.data.numpy()))
@@ -27,13 +24,12 @@ def print_stuff(loss, tokenizer, is_training, captions, predictions, epoch_count
     captions = captions.cpu()
     # compute accuracy
     accuracy = token_level_accuracy(captions, predictions)
-    first_accuracy = token_level_accuracy(captions, predictions, 1)
     status = "Training..." if is_training else "Validating..."
 
     print("Epoch {}".format(epoch_counter + 1))
-    print(status + " batch #{} out of {} batches".
-          format(sample_counter+1, total_samples))
-    print_metrics(accuracy, first_accuracy)
+    print(status + " sample #{} out of {} samples".
+          format(sample_counter, total_samples))
+    print_metrics(accuracy)
     print_loss(loss.cpu())
     if verbose:
         print_captions_and_predictions(tokenizer, captions, predictions)
