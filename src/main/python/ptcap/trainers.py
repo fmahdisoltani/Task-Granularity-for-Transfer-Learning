@@ -8,11 +8,11 @@ class Trainer(object):
     def __init__(self, model,
                  loss_function, optimizer, tokenizer, use_cuda=False):
 
-        self.model = model
-        self.loss_function = loss_function
         self.optimizer = optimizer
         self.tokenizer = tokenizer
+        print("*Line 15*" * 100)
         self.model = model.cuda() if use_cuda else model
+        print("^" * 100)
         self.loss_function = loss_function.cuda() if use_cuda else loss_function
         self.use_cuda = use_cuda
 
@@ -34,14 +34,20 @@ class Trainer(object):
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
+        print ("G"*100)
+        for temp in enumerate(dataloader):
+            print("This is how temp looks like {}".format(temp))
+
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
             videos, captions = Variable(videos), Variable(captions)
+            print("line 45: "*20)
             if self.use_cuda:
                 videos = videos.cuda()
                 captions = captions.cuda()
-
+            print("line 48: videos   {}".format(videos.size()))
             probs = self.model((videos, captions), use_teacher_forcing)
+            print("line 50:probs    {}".format(probs.size()))
             loss = self.loss_function(probs, captions)
 
             if is_training:
