@@ -32,7 +32,7 @@ class FullyConnectedDecoder(Decoder):
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size,
-                 vocab_size, num_hidden_lstm, use_cuda=False):
+                 vocab_size, num_hidden_lstm, go_token=0, use_cuda=False):
 
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
@@ -46,27 +46,75 @@ class LSTMDecoder(Decoder):
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
         self.use_cuda = use_cuda
+        self.go_token = go_token
 
-    def init_hidden_decoder(self, features):
+    def init_hidden(self, features):
         """
         Hidden states of the LSTM are initialized with features.
         """
 
         c0 = features.unsqueeze(0)
         h0 = features.unsqueeze(0)
-        if self.use_cuda:
-            h0 = h0.cuda(self.gpus[0])
-            c0 = c0.cuda(self.gpus[0])
         return h0, c0
 
-    def forward(self, features, captions):
-        h0, c0 = self.init_hidden_decoder(features)
-        embedded_captions = self.embedding(captions)
+    def forward(self, features, captions, use_teacher_forcing=False):
+        """
+        This method computes the forward pass of the decoder with or without
+        teacher forcing. It should be noted that the <GO> token is
+        automatically appended to the input captions.
 
-        lstm_hid, _ = self.lstm(embedded_captions, (h0, c0))
+        Args:
+            features: Video features extracted by the encoder.
+            captions: Video captions (required if use_teacher_forcing=True).
+            use_teacher_forcing: Whether to use teacher forcing or not.
 
-        # Project features in a 'vocab_size'-dimensional space
-        lstm_hid_linear = torch.stack([self.linear(h) for h in lstm_hid], 0)
-        probs = torch.stack([self.logsoftmax(h) for h in lstm_hid_linear], 0)
+        Returns:
+            The probability distribution over the vocabulary across the entire
+            sequence.
+        """
+
+        batch_size, num_step = captions.size()
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda()
+
+        if use_teacher_forcing:
+            # Add go token and remove the last token for all captions
+            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            probs, _ = self.apply_lstm(features, captions_with_go_token)
+
+        else:
+            # Without teacher forcing: use its own predictions as the next input
+            probs = self.predict(features, go_part, num_step)
 
         return probs
+
+    def apply_lstm(self, features, captions, lstm_hidden=None):
+
+        if lstm_hidden is None:
+            lstm_hidden = self.init_hidden(features)
+        embedded_captions = self.embedding(captions)
+        lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
+
+        # Project features in a 'vocab_size'-dimensional space
+        lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output], 0)
+        probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
+
+        return probs, lstm_hidden
+
+    def predict(self, features, go_tokens, num_step=1):
+        lstm_input = go_tokens
+        output_probs = []
+        lstm_hidden = None
+
+        for i in range(num_step):
+            probs, lstm_hidden = self.apply_lstm(features, lstm_input,
+                                                 lstm_hidden)
+
+            output_probs.append(probs)
+            # Greedy decoding
+            _, preds = torch.max(probs, dim=2)
+            lstm_input = preds.squeeze(1)
+
+        concatenated_probs = torch.cat(output_probs, dim=1)
+        return concatenated_probs

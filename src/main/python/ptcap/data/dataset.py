@@ -54,5 +54,3 @@ class JpegVideoDataset(VideoDataset):
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
         return np.array(frames)
-
-

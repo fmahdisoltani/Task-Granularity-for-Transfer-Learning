@@ -1,64 +1,58 @@
 import torch
-import ptcap.metrics as metrics
-
 from torch.autograd import Variable
+
+import ptcap.printers as prt
 
 
 class Trainer(object):
     def __init__(self, model,
-                 loss_function, optimizer, num_epoch, valid_frequency,
-                 tokenizer, verbose=False):
+                 loss_function, optimizer, tokenizer, use_cuda=False):
 
         self.model = model
         self.loss_function = loss_function
         self.optimizer = optimizer
-        self.num_epoch = num_epoch
-        self.valid_frequency = valid_frequency
         self.tokenizer = tokenizer
-        self.verbose = verbose
+        self.model = model.cuda() if use_cuda else model
+        self.loss_function = loss_function.cuda() if use_cuda else loss_function
+        self.use_cuda = use_cuda
 
-    def train(self, train_dataloader, valid_dataloader):
-        for epoch in range(self.num_epoch):
-            print("Epoch {}:".format(epoch + 1))
-            self.run_epoch(train_dataloader, is_training=True)
+    def train(self, train_dataloader, valid_dataloader, num_epoch,
+              frequency_valid, teacher_force_train=True,
+              teacher_force_valid=False, verbose_train=False,
+              verbose_valid=False):
 
-            if (epoch + 1) % self.valid_frequency == 0:
-                self.run_epoch(valid_dataloader, is_training=False)
+        for epoch in range(num_epoch):
+            self.run_epoch(train_dataloader, epoch, is_training=True,
+                           use_teacher_forcing=teacher_force_train,
+                           verbose=verbose_train)
 
-    def run_epoch(self, dataloader, is_training):
+            if (epoch + 1) % frequency_valid == 0:
+                self.run_epoch(valid_dataloader, epoch, is_training=False,
+                               use_teacher_forcing=teacher_force_valid,
+                               verbose=verbose_valid)
 
-        for i, (videos, _, captions) in enumerate(dataloader):
+    def run_epoch(self, dataloader, epoch, is_training,
+                  use_teacher_forcing=False, verbose=True):
+
+        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+
             videos, captions = Variable(videos), Variable(captions)
-            probs = self.model((videos, captions))
+            if self.use_cuda:
+                videos = videos.cuda()
+                captions = captions.cuda()
+
+            probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
-
-            # convert probabilities to predictions
-            _, predictions = torch.max(probs, dim=2)
-            predictions = torch.squeeze(predictions)
-
-            # compute accuracy
-            accuracy = metrics.token_level_accuracy(captions, predictions)
-
-            if self.verbose:
-                self.print_metrics(accuracy)
-                self.print_captions_and_predictions(captions, predictions)
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-    def print_captions_and_predictions(self, captions, predictions):
+            # convert probabilities to predictions
+            _, predictions = torch.max(probs, dim=2)
+            predictions = torch.squeeze(predictions)
 
-        for cap, pred in zip(captions, predictions):
+            prt.print_stuff(self.tokenizer, is_training, captions, predictions,
+                            epoch, sample_counter, len(dataloader), verbose)
 
-            decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
-            decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
-
-            print("__TARGET__: {}".format(decoded_cap))
-            print("PREDICTION: {}\n".format(decoded_pred))
-
-        print("*"*30)
-
-    def print_metrics(self, accuracy):
-        print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))

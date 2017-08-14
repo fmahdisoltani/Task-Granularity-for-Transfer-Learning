@@ -1,10 +1,10 @@
 paths:
-  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/frames
+  videos_folder: &vidpath /data/20bn-gestures/frames
 
-  annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
-  train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
-  validation_annot: *train_annot
-  test_annot: *train_annot
+  annot_folder: /data/20bn-gestures/json
+  train_annot:  /data/20bn-gestures/json/train_20170626.json.gz
+  validation_annot: /data/20bn-gestures/json/validation_20170626.json.gz
+  test_annot: /data/20bn-gestures/json/test_20170626.json.gz
 
 device:
   use_cuda: &use_cuda True
