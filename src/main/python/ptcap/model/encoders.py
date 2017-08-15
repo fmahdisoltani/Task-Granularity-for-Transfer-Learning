@@ -130,7 +130,7 @@ class CNN3dLSTMEncoder(Encoder):
 
         h = h.squeeze().permute(2, 0, 1)  # num_step * batch_size * embed_size
 
-        # h = h.mean(0).squeeze()
+        #h = h.mean(0).squeeze()
 
         h0, c0 = self.init_hidden(h)
         lstm_outputs, _ = self.lstm(h, (h0, c0))
