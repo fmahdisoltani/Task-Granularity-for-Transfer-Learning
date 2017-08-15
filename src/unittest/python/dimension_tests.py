@@ -20,8 +20,8 @@ class TestDimensions(unittest.TestCase):
             'FullyConnectedMapper': ((4, 10), {}),
             'FullyConnectedDecoder': ((self.hidden_size, self.caption_len,
                                        self.vocab_size), {}),
-            'CNN3dEncoder': ((128,), {}),
-            'CNN3dLSTMEncoder': ((128,), {}),
+            'CNN3dEncoder': ((29,), {}),
+            'CNN3dLSTMEncoder': ((73,), {}),
             'LSTMDecoder': ((17, self.hidden_size, self.vocab_size, 23,), {})
         }
 

@@ -52,6 +52,7 @@ class LSTMDecoder(Decoder):
     def init_hidden(self, features):
         """
         Hidden states of the LSTM are initialized with features.
+        c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
         c0 = features.unsqueeze(0)
@@ -117,7 +118,6 @@ class LSTMDecoder(Decoder):
             _, preds = torch.max(probs, dim=2)
 
             lstm_input = preds
-
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
