@@ -54,8 +54,8 @@ class LSTMDecoder(Decoder):
         Hidden states of the LSTM are initialized with features.
         """
 
-        c0 = features
-        h0 = features
+        c0 = features.unsqueeze(0)
+        h0 = features.unsqueeze(0)
         return h0, c0
 
     def forward(self, features, captions, use_teacher_forcing=False):
@@ -115,7 +115,7 @@ class LSTMDecoder(Decoder):
             output_probs.append(probs)
             # Greedy decoding
             _, preds = torch.max(probs, dim=2)
-            lstm_input = preds.squeeze(1)
+            lstm_input = preds
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
