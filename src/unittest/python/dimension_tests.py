@@ -58,7 +58,7 @@ class TestDimensions(unittest.TestCase):
     def test_decoders(self):
         decoder_classes = decoders.Decoder.__subclasses__()
         init_state_batch = Variable(
-            torch.zeros(self.batch_size, self.hidden_size))
+            torch.zeros(1, self.batch_size, self.hidden_size))
         teacher_batch = Variable(
             torch.zeros(self.batch_size, self.caption_len).long())
         for decoder_class in decoder_classes:
