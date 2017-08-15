@@ -30,6 +30,7 @@ class Trainer(object):
                 self.run_epoch(valid_dataloader, epoch, is_training=False,
                                use_teacher_forcing=teacher_force_valid,
                                verbose=verbose_valid)
+                #Checkpointer.save(run_epoch_output, policy)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
@@ -53,6 +54,7 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
 
-            prt.print_stuff(loss, self.tokenizer, is_training, captions, predictions,
-                            epoch, sample_counter, len(dataloader), verbose)
+            prt.print_stuff(loss, self.tokenizer, is_training, captions,
+                            predictions, epoch, sample_counter, len(dataloader),
+                            verbose)
 
