@@ -36,10 +36,7 @@ class TestDimensions(unittest.TestCase):
 
                 encoder = encoder_class(*args, **kwargs)
                 encoded = encoder(video_batch)
-                print("*"*100)
-                print(encoded.size())
-                print(self.batch_size)
-                print("("*100)
+
                 self.assertEqual(encoded.size()[0], self.batch_size)
                 self.assertEqual(len(encoded.size()), 2)
 
