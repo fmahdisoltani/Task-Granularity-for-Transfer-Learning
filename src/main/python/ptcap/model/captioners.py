@@ -2,8 +2,8 @@ import torch
 from torch import nn
 
 from rtorchn.models.captioning.vid2caption import DeepNet
-from ptcap.model.encoders import CNN3dEncoder
-from ptcap.model.encoders import CNN3dLSTMEncoder
+from ptcap.model.encoders import (CNN3dEncoder,
+                                  CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
 
 
