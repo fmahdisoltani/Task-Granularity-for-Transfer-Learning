@@ -78,7 +78,8 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Train the Model
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, use_cuda)
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+                      config_obj, use_cuda)
 
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,

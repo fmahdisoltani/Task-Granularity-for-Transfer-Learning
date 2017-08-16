@@ -8,7 +8,8 @@ from ptcap.checkpointers import Checkpointer
 
 class Trainer(object):
     def __init__(self, model,
-                 loss_function, optimizer, tokenizer, use_cuda=False):
+                 loss_function, optimizer, tokenizer, config_obj,
+                 use_cuda=False):
 
         self.model = model
         self.loss_function = loss_function
@@ -17,6 +18,7 @@ class Trainer(object):
         self.model = model.cuda() if use_cuda else model
         self.initial_model = self.model
         self.loss_function = loss_function.cuda() if use_cuda else loss_function
+        self.config_obj = config_obj
         self.use_cuda = use_cuda
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
@@ -34,17 +36,7 @@ class Trainer(object):
                                use_teacher_forcing=teacher_force_valid,
                                verbose=verbose_valid)
                 Checkpointer().save(self.model, "/home/farzaneh/PycharmProjects/"
-                                              "pytorch-captioning/")
-                temp_model = self.model
-                print("*"*100)
-                print(temp_model)
-                self.initial_model.load_state_dict(torch.load(
-                    "/home/farzaneh/PycharmProjects/pytorch-captioning/saved_model"))
-                print("*"*100)
-                print(self.model)
-                if temp_model is self.initial_model:
-                    print("Loaded correctly!")
-                print("Not sure what happened there")
+                                        "pytorch-captioning/", self.config_obj)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
