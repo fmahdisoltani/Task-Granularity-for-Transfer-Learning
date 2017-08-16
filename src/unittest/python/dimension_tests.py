@@ -20,7 +20,8 @@ class TestDimensions(unittest.TestCase):
             'FullyConnectedMapper': ((4, 10), {}),
             'FullyConnectedDecoder': ((self.hidden_size, self.caption_len,
                                        self.vocab_size), {}),
-            'CNN3dEncoder': ((128,), {}),
+            'CNN3dEncoder': ((29,), {}),
+            'CNN3dLSTMEncoder': ((73,), {}),
             'LSTMDecoder': ((17, self.hidden_size, self.vocab_size, 23,), {})
         }
 
@@ -72,3 +73,4 @@ class TestDimensions(unittest.TestCase):
                 self.assertEqual(decoded.size()[0], self.batch_size)
                 self.assertEqual(decoded.size()[2], self.vocab_size)
                 self.assertEqual(len(decoded.size()), 3)
+ 
