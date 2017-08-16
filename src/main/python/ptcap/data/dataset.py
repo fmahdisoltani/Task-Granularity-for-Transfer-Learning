@@ -69,8 +69,3 @@ class NumpyVideoDataset(VideoDataset):
         path = glob.glob(dirname + "/*.npz")[0]
         temp = np.load(path)["arr_0"]
         return temp
-
-        # dirname = self.video_paths[index]
-        # frames = [np.array(np.load(path))
-        #           for path in glob.glob(dirname + "/*.npz")]
-        # return np.array(frames)
