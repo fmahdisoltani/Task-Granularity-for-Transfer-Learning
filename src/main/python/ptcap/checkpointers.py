@@ -1,8 +1,9 @@
 import os
+import re
 
-import torch
-
+from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.config_parser import YamlConfig
+from ptcap.model.captioners import *
 
 
 class Checkpointer(object):
@@ -21,24 +22,25 @@ class Checkpointer(object):
         # load the model
         return model.load_state_dict(torch.load(path + "saved_model"))
 
-
-    def save(self, model, checkpoint_path, config_obj, tokenizer_obj):
-        """
-        Create the checkpoint directory, save the config file,
-         save the network definition file (necessary to reload
-        the model) and `models.utils.py`
-        """
-
-        # Make output dir
-        if not os.path.exists(checkpoint_path):
-            os.makedirs(checkpoint_path)
-        torch.save(model.state_dict(), checkpoint_path + "saved_model")
-
+    def initial_save(self, path, model, config_obj, tokenizer_obj, epoch=0):
+        # Make output dir if it does not exist
+        if not os.path.exists(path):
+            os.makedirs(path)
+        else:
+            files_list = os.listdir(path)
+            for file in files_list:
+                if file.contains("latest_model"):
+                    epoch = re.match(".*?([0-9]+)$", file).group(1)
         # Save config file
-        config_obj.save(checkpoint_path + "saved_config.yaml")
-        # # Save model definition file
-        # copy2(os.path.join(MODELS_DIR, config.configdict['model']['type'].replace('.', '/') + '.py'),
-        #       os.path.join(checkpoint_path, 'model.py'))
-        #
-        # copy2(os.path.join(MODELS_DIR, 'utils.py'),
-        #       os.path.join(checkpoint_path, 'utils.py'))
+        config_obj.save(path + "config" + str(epoch) + ".yaml")
+
+        if epoch == 0:
+            # Save the tokenizer
+            tokenizer_obj.save_dictionaries(path)
+            # Save the model as best_model and latest_model
+            self.save_model(path, model, epoch)
+        return epoch
+
+    def save_model(self, path, model, epoch):
+        torch.save(model.state_dict(), path + "latest_model" + str(epoch))
+        torch.save(model.state_dict(), path + "best_model" + str(epoch))
