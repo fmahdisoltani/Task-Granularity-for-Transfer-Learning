@@ -20,8 +20,8 @@ class TestDimensions(unittest.TestCase):
             'FullyConnectedMapper': ((4, 10), {}),
             'FullyConnectedDecoder': ((self.hidden_size, self.caption_len,
                                        self.vocab_size), {}),
-            'CNN3dEncoder': ((128,), {}),
-            'CNN3dLSTMEncoder': ((128,), {}),
+            'CNN3dEncoder': ((29,), {}),
+            'CNN3dLSTMEncoder': ((73,), {}),
             'LSTMDecoder': ((17, self.hidden_size, self.vocab_size, 23,), {})
         }
 
@@ -37,8 +37,8 @@ class TestDimensions(unittest.TestCase):
                 encoder = encoder_class(*args, **kwargs)
                 encoded = encoder(video_batch)
 
-                self.assertEqual(encoded.size()[1], self.batch_size)
-                self.assertEqual(len(encoded.size()), 3)
+                self.assertEqual(encoded.size()[0], self.batch_size)
+                self.assertEqual(len(encoded.size()), 2)
 
     def test_mappers(self):
         mapper_classes = mappers.Mapper.__subclasses__()
@@ -58,7 +58,7 @@ class TestDimensions(unittest.TestCase):
     def test_decoders(self):
         decoder_classes = decoders.Decoder.__subclasses__()
         init_state_batch = Variable(
-            torch.zeros(1, self.batch_size, self.hidden_size))
+            torch.zeros(self.batch_size, self.hidden_size))
         teacher_batch = Variable(
             torch.zeros(self.batch_size, self.caption_len).long())
         for decoder_class in decoder_classes:
@@ -73,3 +73,4 @@ class TestDimensions(unittest.TestCase):
                 self.assertEqual(decoded.size()[0], self.batch_size)
                 self.assertEqual(decoded.size()[2], self.vocab_size)
                 self.assertEqual(len(decoded.size()), 3)
+ 
