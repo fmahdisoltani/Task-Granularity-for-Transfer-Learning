@@ -67,5 +67,5 @@ class NumpyVideoDataset(VideoDataset):
     def _get_video(self, index):
         dirname = self.video_paths[index]
         path = glob.glob(dirname + "/*.npz")[0]
-        temp = np.load(path)["arr_0"]
-        return temp
+        video = np.load(path)["arr_0"]
+        return video
