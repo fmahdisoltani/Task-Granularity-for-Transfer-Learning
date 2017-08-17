@@ -63,21 +63,23 @@ class CNN3dEncoder(Encoder):
         h = self.conv5(h)
         h = self.conv6(h)
 
-        h = self.pool4(h)
+        h = self.pool4(h)  # batch_size * num_features * num_step * w * h
 
-        h = h.squeeze().permute(2, 0, 1)  # num_step * batch_size * num_features
-
-        h = h.mean(0)
+        h = h.mean(2)
+        h = h.view(h.size()[0:2])
 
         return h
 
 
 class CNN3dLSTMEncoder(Encoder):
     def __init__(self, num_features=128, use_cuda=False):
+        """
+        num_features: defines the output size of the encoder
+        """
+
         super(CNN3dLSTMEncoder, self).__init__()
 
-        self.hidden = 128
-        self.num_layers =1
+        self.num_layers = 1
         self.num_features = num_features
         self.use_cuda = use_cuda
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
@@ -97,17 +99,17 @@ class CNN3dLSTMEncoder(Encoder):
                                 stride=1, padding=(1, 0, 0))
         self.conv5 = CNN3dLayer(128, 128, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
-        self.conv6 = CNN3dLayer(self.hidden, self.num_features, (3, 3, 3),
+        self.conv6 = CNN3dLayer(128, 128, (3, 3, 3),
                                 nn.ReLU(), stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.lstm = nn.LSTM(self.num_features, self.hidden, self.num_layers,
-                            batch_first=True)
+        self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
+                            num_layers=self.num_layers, batch_first=True)
 
     def init_hidden(self, batch_size):
-        h0 = Variable(torch.zeros(1, batch_size, self.hidden))
-        c0 = Variable(torch.zeros(1, batch_size, self.hidden))
+        h0 = Variable(torch.zeros(1, batch_size, self.num_features))
+        c0 = Variable(torch.zeros(1, batch_size, self.num_features))
         if self.use_cuda:
             h0 = h0.cuda()
             c0 = c0.cuda()
@@ -128,10 +130,9 @@ class CNN3dLSTMEncoder(Encoder):
         h = self.conv4(h)
         h = self.conv5(h)
         h = self.conv6(h)
-
         h = self.pool4(h)
 
-        h = h.squeeze().permute(0, 2, 1)  # num_step * batch_size * num_features
+        h = h.squeeze().permute(0, 2, 1)  # batch_size * num_step * num_features
 
         lstm_hidden = self.init_hidden(batch_size=h.size()[0])
         lstm_outputs, _ = self.lstm(h, lstm_hidden)
