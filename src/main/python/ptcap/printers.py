@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from ptcap.metrics import token_level_accuracy
 
 
@@ -12,28 +14,29 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
     print("*" * 30)
 
 
-def print_metrics(accuracy, first_token_accuracy):
-    print("Batch Accuracy is: {}".format(accuracy.data.numpy()[0]))
-    print("First Token Accuracy is: {}".
-          format(first_token_accuracy.data.numpy()[0]))
+def print_dict(scores_dict):
+    for key, value in scores_dict.items():
+        print("{} is: {}".format(key, value.data.numpy()[0]))
 
 
-def print_loss(loss):
-    print ("Loss: {}".format(loss.data.numpy()))
-
-def print_stuff(loss, tokenizer, is_training, captions, predictions, epoch_counter,
-                sample_counter, total_samples, verbose=True):
-    predictions = predictions.cpu()
+def print_stuff(loss, tokenizer, is_training, captions, predictions,
+                epoch_counter, sample_counter, total_samples, verbose=True):
+    loss = loss.cpu()
     captions = captions.cpu()
-    # compute accuracy
-    accuracy = token_level_accuracy(captions, predictions)
-    first_accuracy = token_level_accuracy(captions, predictions, 1)
+    predictions = predictions.cpu()
+
+    scores_dict = OrderedDict()
+
+    scores_dict["loss"] = loss
+    scores_dict["accuracy"] = token_level_accuracy(captions, predictions)
+    scores_dict["first_accuracy"] = token_level_accuracy(captions,
+                                                         predictions, 1)
     status = "Training..." if is_training else "Validating..."
 
     print("Epoch {}".format(epoch_counter + 1))
     print(status + " batch #{} out of {} batches".
           format(sample_counter+1, total_samples))
-    print_metrics(accuracy, first_accuracy)
-    print_loss(loss.cpu())
+
+    print_dict(scores_dict)
     if verbose:
         print_captions_and_predictions(tokenizer, captions, predictions)
