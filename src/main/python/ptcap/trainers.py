@@ -8,8 +8,6 @@ class Trainer(object):
     def __init__(self, model,
                  loss_function, optimizer, tokenizer, use_cuda=False):
 
-        self.model = model
-        self.loss_function = loss_function
         self.optimizer = optimizer
         self.tokenizer = tokenizer
         self.model = model.cuda() if use_cuda else model
@@ -40,7 +38,6 @@ class Trainer(object):
             if self.use_cuda:
                 videos = videos.cuda()
                 captions = captions.cuda()
-
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 

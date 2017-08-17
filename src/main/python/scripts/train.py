@@ -14,7 +14,7 @@ from torchvision.transforms import Compose
 
 
 from ptcap.data.tokenizer import Tokenizer
-from ptcap.data.dataset import JpegVideoDataset
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import *
@@ -55,16 +55,12 @@ if __name__ == '__main__':
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    training_set = JpegVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer,
-                                    preprocess=preprocesser)
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+                                     tokenizer=tokenizer,
+                                     preprocess=preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
                             **config_obj.get('dataloaders', 'kwargs'))
-
-    # vocab_size, batchnorm=True, stateful=False, **kwargs
-    rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
-                                  use_cuda=True)
 
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
@@ -79,7 +75,6 @@ if __name__ == '__main__':
 
     # Train the Model
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer, use_cuda)
-
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)
