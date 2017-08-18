@@ -1,10 +1,12 @@
 paths:
   videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/frames
-
   annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
+
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
   test_annot: *train_annot
+  pretrained_model: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/model.best
 
 device:
   use_cuda: &use_cuda True
@@ -28,5 +30,5 @@ training:
 validation:
   frequency: 1
   teacher_force: False
+  higher_is_better: False
   verbose: True
-

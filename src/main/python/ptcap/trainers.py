@@ -1,7 +1,8 @@
 import torch
-from torch.autograd import Variable
 
 import ptcap.printers as prt
+
+from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
 
@@ -24,20 +25,38 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        for epoch in range(num_epoch):
+        pretrained_model = self.config_obj.get("paths", "pretrained_model")
+        checkpointer = Checkpointer()
+        init_epoch, model, optimizer = \
+            checkpointer.init_model(pretrained_model, self.model,
+                                    self.optimizer)
+
+        checkpointer.save_meta(self.config_obj, self.tokenizer)
+        for epoch in range(init_epoch, num_epoch):
             self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                self.run_epoch(valid_dataloader, epoch, is_training=False,
+                average_loss = self.run_epoch(valid_dataloader, epoch, is_training=False,
                                use_teacher_forcing=teacher_force_valid,
                                verbose=verbose_valid)
-                Checkpointer().save(self.model, "/home/farzaneh/PycharmProjects/"
-                                        "pytorch-captioning/", self.config_obj)
+
+                state_dict = {
+                    'epoch': epoch + 1,
+                    'model': self.model.state_dict(),
+                    'best_loss': checkpointer.best_loss,
+                    'optimizer': self.optimizer.state_dict(),
+                    }
+                # remember best loss and save checkpoint
+                checkpointer.save_model(state_dict, average_loss.cpu().data.numpy(),
+                                        is_higher_better=False)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+
+        average_loss = 0.
+        count = 0
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -47,6 +66,10 @@ class Trainer(object):
                 captions = captions.cuda()
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
+            count += 1
+            # Calculate a moving average of the loss
+            average_loss += (loss - average_loss)/count
+
 
             if is_training:
                 self.model.zero_grad()
@@ -57,6 +80,8 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
 
-            prt.print_stuff(loss, self.tokenizer, is_training, captions,
+            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
                             predictions, epoch, sample_counter, len(dataloader),
                             verbose)
+
+        return average_loss

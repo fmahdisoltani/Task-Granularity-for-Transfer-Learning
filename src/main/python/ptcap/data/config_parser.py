@@ -3,8 +3,8 @@ import yaml
 
 class YamlConfig(object):
 
-    def __init__(self, path=None):
-        self.config_dict = {}
+    def __init__(self, path=None, config_dict=None):
+        self.config_dict = {} if config_dict is None else config_dict
         if path:
             self.parse(path)
 
@@ -21,3 +21,8 @@ class YamlConfig(object):
     def save(self, path):
         with open(path, 'w') as f:
             yaml.dump(self.config_dict, f)
+
+    @classmethod
+    def dump(path, config_dict):
+        with open(path, 'w') as f:
+            yaml.dump(config_dict)

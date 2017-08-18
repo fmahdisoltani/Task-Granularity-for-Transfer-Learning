@@ -1,6 +1,7 @@
 import pickle
 import re
 import numpy as np
+import os
 
 
 class Tokenizer(object):
@@ -9,13 +10,14 @@ class Tokenizer(object):
     END = '<END>'
     UNK = '<UNK>'
 
-    def __init__(self, captions):
+    def __init__(self, captions=None):
         """
             Build captions from all the expanded labels in all annotation files
         Args:
             annotations: list of paths to annotation files
         """
-        self.build_dictionaries(captions)
+        if captions:
+            self.build_dictionaries(captions)
 
     def build_dictionaries(self, captions):
         """
@@ -69,7 +71,10 @@ class Tokenizer(object):
             end_index = len(predictions)
         return " ".join(output_tokens[:end_index]).lower()
 
+    def load_dictionaries(self, path):
+        with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
+            self.caption_dict, self.inv_caption_dict = pickle.load(f)
+
     def save_dictionaries(self, path):
-        with open(path, 'wb') as f:
-            pickle.dump(self.caption_dict, f)
-            pickle.dump(self.inv_caption_dict, f)
+        with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:
+            pickle.dump((self.caption_dict, self.inv_caption_dict), f)
