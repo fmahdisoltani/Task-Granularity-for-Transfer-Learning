@@ -48,7 +48,6 @@ class Trainer(object):
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
-            predictions = torch.squeeze(predictions)
 
             prt.print_stuff(loss, self.tokenizer, is_training, captions,
                             predictions, epoch, sample_counter, len(dataloader),
