@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                  config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer(training_parser.get_captions())
+    tokenizer = Tokenizer(training_parser.get_captions(), user_maxlen=20)
 
     # Load attributes of config file
     num_epoch = config_obj.get('training', 'num_epochs')
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    training_set = JpegVideoDataset(annotation_parser=training_parser,
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocesser)
 

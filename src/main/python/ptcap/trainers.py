@@ -49,14 +49,13 @@ class Trainer(object):
                     'optimizer': self.optimizer.state_dict(),
                     }
                 # remember best loss and save checkpoint
-                checkpointer.save_model(state_dict, average_loss.cpu().data.numpy(),
+                checkpointer.save_model(state_dict, average_loss,
                                         is_higher_better=False)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
         average_loss = 0.
-        count = 0
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -66,10 +65,11 @@ class Trainer(object):
                 captions = captions.cuda()
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
-            count += 1
-            # Calculate a moving average of the loss
-            average_loss += (loss - average_loss)/count
 
+            # Calculate a moving average of the loss
+            average_loss += \
+                (loss.data.cpu().numpy() - average_loss)/(sample_counter + 1)
+            #average_loss = loss
 
             if is_training:
                 self.model.zero_grad()
