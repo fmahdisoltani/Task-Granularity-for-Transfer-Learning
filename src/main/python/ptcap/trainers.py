@@ -67,9 +67,9 @@ class Trainer(object):
             loss = self.loss_function(probs, captions)
 
             # Calculate a moving average of the loss
-            average_loss += \
-                (loss.data.cpu().numpy() - average_loss)/(sample_counter + 1)
-            #average_loss = loss
+            average_loss += ((loss.data.cpu().numpy() - average_loss) /
+                             (sample_counter + 1))
+            # average_loss = loss
 
             if is_training:
                 self.model.zero_grad()
