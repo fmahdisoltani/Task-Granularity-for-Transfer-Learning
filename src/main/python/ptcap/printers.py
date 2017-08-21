@@ -21,7 +21,7 @@ def print_dict(scores_dict):
 
 def print_stuff(loss, tokenizer, is_training, captions, predictions,
                 epoch_counter, sample_counter, total_samples, verbose=True):
-    #loss = loss.cpu()
+
     captions = captions.cpu()
     predictions = predictions.cpu()
 
