@@ -7,8 +7,10 @@ from ptcap.model.captioners import *
 
 class Checkpointer(object):
 
-    def __init__(self):
-        self.best_loss = np.Inf
+    def __init__(self, higher_is_better=False):
+        self.best_score = np.Inf
+        if higher_is_better:
+            self.best_score *= -1
 
     def init_model(self, pretrained_path, model, optimizer):
         # optionally resume from a checkpoint
@@ -29,7 +31,7 @@ class Checkpointer(object):
             checkpoint = torch.load(pretrained_model)
             init_epoch = checkpoint["epoch"]
             model = model.load_state_dict(checkpoint["model"])
-            self.best_loss = checkpoint["best_loss"]
+            self.best_score = checkpoint["best_score"]
             optimizer = optimizer.load_state_dict(checkpoint["optimizer"])
 
             print("Loaded checkpoint {} @ epoch {}"
@@ -50,8 +52,8 @@ class Checkpointer(object):
     def save_model(self, state, score, is_higher_better,
                          filename="model"):
         torch.save(state, os.path.join(self.folder, filename + ".latest"))
-        if not ((score > self.best_loss) ^ is_higher_better):
-            self.best_loss = score
+        if not ((score > self.best_score) ^ is_higher_better):
+            self.best_score = score
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
             torch.save(state, os.path.join(self.folder, filename + ".best"))
