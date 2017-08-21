@@ -49,8 +49,7 @@ class Trainer(object):
                     'optimizer': self.optimizer.state_dict(),
                     }
                 # remember best loss and save checkpoint
-                checkpointer.save_model(state_dict, average_loss,
-                                        is_higher_better=False)
+                checkpointer.save_model(state_dict, average_loss)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):

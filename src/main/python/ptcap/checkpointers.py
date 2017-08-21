@@ -9,7 +9,8 @@ class Checkpointer(object):
 
     def __init__(self, higher_is_better=False):
         self.best_score = np.Inf
-        if higher_is_better:
+        self.higher_is_better = higher_is_better
+        if self.higher_is_better:
             self.best_score *= -1
 
     def init_model(self, pretrained_path, model, optimizer):
@@ -49,10 +50,9 @@ class Checkpointer(object):
         config_obj.save(self.folder + "config.yaml")
         tokenizer_obj.save_dictionaries(self.folder)
 
-    def save_model(self, state, score, is_higher_better,
-                         filename="model"):
+    def save_model(self, state, score, filename="model"):
         torch.save(state, os.path.join(self.folder, filename + ".latest"))
-        if not ((score > self.best_score) ^ is_higher_better):
+        if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
