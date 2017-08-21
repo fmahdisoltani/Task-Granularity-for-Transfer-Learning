@@ -38,16 +38,18 @@ class Trainer(object):
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                average_loss = self.run_epoch(valid_dataloader, epoch, is_training=False,
-                               use_teacher_forcing=teacher_force_valid,
-                               verbose=verbose_valid)
+                average_loss = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
+                    use_teacher_forcing=teacher_force_valid,
+                    verbose=verbose_valid
+                )
 
                 state_dict = {
                     'epoch': epoch + 1,
                     'model': self.model.state_dict(),
                     'best_score': checkpointer.best_score,
                     'optimizer': self.optimizer.state_dict(),
-                    }
+                }
                 # remember best loss and save checkpoint
                 checkpointer.save_model(state_dict, average_loss)
 

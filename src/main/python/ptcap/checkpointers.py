@@ -13,34 +13,34 @@ class Checkpointer(object):
         if self.higher_is_better:
             self.best_score *= -1
 
-    def init_model(self, pretrained_path, model, optimizer):
+    def init_model(self, pretrained_path, model, optimizer, tokenizer):
         # optionally resume from a checkpoint
         if pretrained_path:
-            init_epoch, model, optimizer = self.load_model(pretrained_path,
-                                                           model, optimizer)
+            init_epoch, model, optimizer, tokenizer = \
+                self.load_model(pretrained_path, model, optimizer, tokenizer)
         else:
             init_epoch = 0
 
-        return init_epoch, model, optimizer
+        return init_epoch, model, optimizer, tokenizer
 
-    def load_model(self, pretrained_model, model, optimizer):
-        print("Loading checkpoint {}".format(pretrained_model))
-        if os.path.isfile(pretrained_model):
-            model_folder = pretrained_model[:pretrained_model.rfind("/")]
+    def load_model(self, pretrained_path, model, optimizer):
+        print("Loading checkpoint {}".format(pretrained_path))
+        if os.path.isfile(pretrained_path):
+            model_folder = pretrained_path[:pretrained_path.rfind("/")]
             tokenizer = Tokenizer()
             tokenizer.load_dictionaries(model_folder)
-            checkpoint = torch.load(pretrained_model)
+            checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model = model.load_state_dict(checkpoint["model"])
             self.best_score = checkpoint["best_score"]
             optimizer = optimizer.load_state_dict(checkpoint["optimizer"])
 
             print("Loaded checkpoint {} @ epoch {}"
-                  .format(pretrained_model, checkpoint["epoch"]))
+                  .format(pretrained_path, checkpoint["epoch"]))
         else:
             init_epoch = 0
-            print("No checkpoint found at {}".format(pretrained_model))
-        return init_epoch, model, optimizer
+            print("No checkpoint found at {}".format(pretrained_path))
+        return init_epoch, model, optimizer, tokenizer
 
     def save_meta(self, config_obj, tokenizer_obj):
         self.folder = config_obj.get("paths", "checkpoint_folder")
