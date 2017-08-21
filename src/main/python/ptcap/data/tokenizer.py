@@ -29,14 +29,8 @@ class Tokenizer(object):
         self.maxlen = np.max([len(caption.split())
                               for caption in captions]) + 1
 
-
-        print(self.maxlen)
         if user_maxlen:
-            print("if"*100)
             self.maxlen = np.min([self.maxlen, user_maxlen])
-
-        print("*"*100)
-        print("maxlen: {}".format(self.maxlen))
 
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
