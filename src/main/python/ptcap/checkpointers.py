@@ -23,7 +23,7 @@ class Checkpointer(object):
 
         return init_epoch, model, optimizer, tokenizer
 
-    def load_model(self, pretrained_path, model, optimizer):
+    def load_model(self, pretrained_path, model, optimizer, tokenizer):
         print("Loading checkpoint {}".format(pretrained_path))
         if os.path.isfile(pretrained_path):
             model_folder = pretrained_path[:pretrained_path.rfind("/")]
@@ -42,13 +42,13 @@ class Checkpointer(object):
             print("No checkpoint found at {}".format(pretrained_path))
         return init_epoch, model, optimizer, tokenizer
 
-    def save_meta(self, config_obj, tokenizer_obj):
+    def save_meta(self, config_obj, tokenizer):
         self.folder = config_obj.get("paths", "checkpoint_folder")
         if not os.path.exists(self.folder):
             os.makedirs(self.folder)
 
         config_obj.save(self.folder + "config.yaml")
-        tokenizer_obj.save_dictionaries(self.folder)
+        tokenizer.save_dictionaries(self.folder)
 
     def save_model(self, state, score, filename="model"):
         torch.save(state, os.path.join(self.folder, filename + ".latest"))

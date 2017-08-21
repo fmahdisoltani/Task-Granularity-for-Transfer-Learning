@@ -27,11 +27,11 @@ class Trainer(object):
 
         pretrained_model = self.config_obj.get("paths", "pretrained_model")
         checkpointer = Checkpointer()
-        init_epoch, model, optimizer = \
+        init_epoch, model, optimizer, tokenizer = \
             checkpointer.init_model(pretrained_model, self.model,
-                                    self.optimizer)
+                                    self.optimizer, self.tokenizer)
 
-        checkpointer.save_meta(self.config_obj, self.tokenizer)
+        checkpointer.save_meta(self.config_obj, tokenizer)
         for epoch in range(init_epoch, num_epoch):
             self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
