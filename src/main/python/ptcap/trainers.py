@@ -2,9 +2,12 @@ import torch
 
 import ptcap.printers as prt
 
+from collections import OrderedDict
+
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.metrics import token_level_accuracy
 
 
 class Trainer(object):
@@ -57,6 +60,7 @@ class Trainer(object):
 
         average_loss = 0.
         count = 0
+        scores_dict = OrderedDict()
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -66,10 +70,10 @@ class Trainer(object):
                 captions = captions.cuda()
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
+
             count += 1
             # Calculate a moving average of the loss
-            average_loss += (loss - average_loss)/count
-
+            average_loss += (loss.data.numpy() - average_loss)/count
 
             if is_training:
                 self.model.zero_grad()
@@ -80,8 +84,24 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
             predictions = torch.squeeze(predictions)
 
+            scores_dict["loss"] = loss
+            scores_dict["accuracy"] = token_level_accuracy(captions,
+                                                           predictions)
+            scores_dict["first_accuracy"] = token_level_accuracy(captions,
+                                                                 predictions, 1)
+            self.moving_average(scores_dict, count)
+
             prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
                             predictions, epoch, sample_counter, len(dataloader),
                             verbose)
 
         return average_loss
+
+    def moving_average(self, scores_dict, count):
+        for metric in scores_dict:
+            average_metric = "average_" + metric
+            if average_metric in scores_dict:
+                scores_dict[average_metric] += \
+                    (scores_dict[metric] - scores_dict[average_metric])/count
+            else:
+                scores_dict[average_metric] = scores_dict[metric]
