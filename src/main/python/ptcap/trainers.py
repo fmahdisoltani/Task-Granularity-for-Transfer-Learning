@@ -45,7 +45,7 @@ class Trainer(object):
                 state_dict = {
                     'epoch': epoch + 1,
                     'model': self.model.state_dict(),
-                    'best_loss': checkpointer.best_score,
+                    'best_score': checkpointer.best_score,
                     'optimizer': self.optimizer.state_dict(),
                     }
                 # remember best loss and save checkpoint
