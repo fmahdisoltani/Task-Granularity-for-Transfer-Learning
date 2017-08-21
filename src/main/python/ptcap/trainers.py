@@ -15,7 +15,6 @@ class Trainer(object):
         self.optimizer = optimizer
         self.tokenizer = tokenizer
         self.model = model.cuda() if use_cuda else model
-        self.initial_model = self.model
         self.loss_function = loss_function.cuda() if use_cuda else loss_function
         self.config_obj = config_obj
         self.use_cuda = use_cuda
