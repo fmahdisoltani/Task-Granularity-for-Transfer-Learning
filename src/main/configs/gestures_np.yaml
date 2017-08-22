@@ -1,10 +1,13 @@
 paths:
   videos_folder: &vidpath /data/20bn-gestures/videos_npz
-
   annot_folder: /data/20bn-gestures/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_gestures_np/
+
   train_annot:  /data/20bn-gestures/json/train_20170626.json.gz
   validation_annot: /data/20bn-gestures/json/validation_20170626.json.gz
   test_annot: /data/20bn-gestures/json/test_20170626.json.gz
+
+  pretrained_model:
 
 device:
   use_cuda: &use_cuda True
@@ -16,7 +19,7 @@ dataloaders:
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
-  type: RtorchnCaptioner
+  type:
   kwargs: {use_cuda: *use_cuda}
 
 training:
@@ -29,4 +32,8 @@ validation:
   frequency: 1
   teacher_force: False
   verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
 
