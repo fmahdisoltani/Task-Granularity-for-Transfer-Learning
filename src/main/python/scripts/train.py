@@ -55,7 +55,7 @@ if __name__ == '__main__':
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    training_set = JpegVideoDataset(annotation_parser=training_parser,
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocesser)
 
