@@ -60,8 +60,11 @@ class TestTokenizer(unittest.TestCase):
 
     @tempdir()
     def test_save_load(self, temp_dir):
-        self.tokenizer.save_dictionaries(temp_dir)
+        self.tokenizer.save_dictionaries(temp_dir.path)
         loading_tokenizer = Tokenizer()
-        loaded_caption_dict, loaded_inv_caption_dict = (
-            loading_tokenizer.load_dictionaries(tempdir))
+        loading_tokenizer.load_dictionaries(temp_dir.path)
+        self.assertEqual(self.tokenizer.caption_dict,
+                         loading_tokenizer.caption_dict)
+        self.assertEqual(self.tokenizer.inv_caption_dict,
+                         loading_tokenizer.inv_caption_dict)
 
