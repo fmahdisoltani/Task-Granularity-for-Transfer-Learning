@@ -1,22 +1,22 @@
 paths:
-  videos_folder: &vidpath /home/waseem/20bn-gitrepo/pytorch-captioning/sample_data/frames
-  annot_folder: /home/waseem/20bn-gitrepo/pytorch-captioning/sample_data/json
-  checkpoint_folder: /home/waseem/pytorch_models/sample_model/
+  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
+  annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
-  train_annot: &train_annot /home/waseem/20bn-gitrepo/pytorch-captioning/sample_data/json/training_sample.json
+  train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
   test_annot: *train_annot
 
   pretrained_path:
 
 device:
-  use_cuda: &use_cuda False
+  use_cuda: &use_cuda True
   synchronize_gpu: &sync True
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 1
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+  batch_size: &b 2
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
   type: RtorchnCaptioner
