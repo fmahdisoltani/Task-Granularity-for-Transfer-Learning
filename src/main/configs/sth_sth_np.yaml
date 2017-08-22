@@ -7,7 +7,7 @@ paths:
   validation_annot: /data/20bn-objects/json/validation_20170429.json.gz
   test_annot: /data/20bn-gestures/json/test_20170429.json.gz
 
-  pretrained_model:
+  pretrained_path:
 
 device:
   use_cuda: &use_cuda True

@@ -7,7 +7,7 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_model:
+  pretrained_path:
 
 device:
   use_cuda: &use_cuda True
