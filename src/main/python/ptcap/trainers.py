@@ -41,9 +41,10 @@ class Trainer(object):
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                average_loss = self.run_epoch(valid_dataloader, epoch, is_training=False,
-                               use_teacher_forcing=teacher_force_valid,
-                               verbose=verbose_valid)
+                average_scores = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
+                    use_teacher_forcing=teacher_force_valid,
+                    verbose=verbose_valid)
 
                 state_dict = {
                     'epoch': epoch + 1,
@@ -52,15 +53,16 @@ class Trainer(object):
                     'optimizer': self.optimizer.state_dict(),
                     }
                 # remember best loss and save checkpoint
-                checkpointer.save_model(state_dict, average_loss,
+                checkpointer.save_model(state_dict,
+                                        average_scores["average_loss"],
                                         is_higher_better=False)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
-        average_loss = 0.
         count = 0
         scores_dict = OrderedDict()
+        all_scores_dict = OrderedDict()
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -80,30 +82,34 @@ class Trainer(object):
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
-            predictions = torch.squeeze(predictions)
 
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            scores_dict["loss"] = loss.data.cpu().numpy()
+            scores_dict["loss"] = loss.data.cpu().numpy()[0]
             scores_dict["accuracy"] = token_level_accuracy(captions,
                                                            predictions)
             scores_dict["first_accuracy"] = token_level_accuracy(captions,
                                                                  predictions, 1)
             # Calculate a moving average of the metrics
-            self.moving_average(scores_dict, count)
+            all_scores_dict = self.moving_average(scores_dict, all_scores_dict,
+                                                  count)
 
-            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
-                            predictions, epoch, sample_counter, len(dataloader),
-                            verbose)
+            prt.print_stuff(all_scores_dict, self.tokenizer, is_training,
+                            captions, predictions, epoch, sample_counter,
+                            len(dataloader), verbose)
 
-        return average_loss
+        return {key: all_scores_dict[key] for key in all_scores_dict if
+                "average" in key}
 
-    def moving_average(self, scores_dict, count):
+    def moving_average(self, scores_dict, all_scores_dict, count):
         for metric in scores_dict:
             average_metric = "average_" + metric
-            if average_metric in scores_dict:
-                scores_dict[average_metric] += \
-                    (scores_dict[metric] - scores_dict[average_metric])/count
+            all_scores_dict[metric] = scores_dict[metric]
+            if average_metric in all_scores_dict:
+                all_scores_dict[average_metric] += (
+                    (scores_dict[metric] - all_scores_dict[average_metric])
+                    / count)
             else:
-                scores_dict[average_metric] = scores_dict[metric]
+                all_scores_dict[average_metric] = scores_dict[metric]
+        return all_scores_dict

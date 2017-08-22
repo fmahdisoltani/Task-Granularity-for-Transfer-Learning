@@ -12,7 +12,7 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
 
 def print_dict(scores_dict):
     for key, value in scores_dict.items():
-        print("{} is: {}".format(key, value))
+        print("{} is: {:.5f}".format(key, value))
 
 
 def print_stuff(scores_dict, tokenizer, is_training, captions, predictions,
