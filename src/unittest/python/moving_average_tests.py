@@ -25,7 +25,7 @@ class MovingAverageTests(unittest.TestCase):
                                                      count + 1)
             expected = np.mean(input_list)
             self.assertEqual(all_scores_dict["loss"], self.input_dict["loss"])
-            self.assertEqual(all_scores_dict["average_loss"], expected, 15)
+            self.assertEqual(all_scores_dict["average_loss"], expected, 14)
 
     def test_input_same(self):
         # Test when the moving average is getting the same input (0 and 1 here)
