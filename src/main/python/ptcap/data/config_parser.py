@@ -23,6 +23,6 @@ class YamlConfig(object):
             yaml.dump(self.config_dict, f)
 
     @classmethod
-    def dump(path, config_dict):
+    def dump(cls, path, config_dict):
         with open(path, 'w') as f:
-            yaml.dump(config_dict)
+            yaml.dump(config_dict, f)
