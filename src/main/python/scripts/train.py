@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                  config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer(training_parser.get_captions(), user_maxlen=20)
+    tokenizer = Tokenizer(training_parser.get_captions())
 
     # Load attributes of config file
     num_epoch = config_obj.get('training', 'num_epochs')
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     use_cuda = config_obj.get('device', 'use_cuda')
     checkpoint_path = config_obj.get('paths', 'checkpoint_folder')
-    pretrained_path = config_obj.get('paths', 'pretrained_model')
+    pretrained_path = config_obj.get('paths', 'pretrained_path')
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
