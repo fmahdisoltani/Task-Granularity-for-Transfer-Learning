@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data/20bn-gestures/videos_npz
   annot_folder: /data/20bn-gestures/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_gestures_all/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_gestures_np/
 
   train_annot:  /data/20bn-gestures/json/train_20170626.json.gz
   validation_annot: /data/20bn-gestures/json/validation_20170626.json.gz
@@ -15,8 +15,8 @@ device:
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 12
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+  batch_size: &b 32
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
   type:
@@ -24,7 +24,7 @@ model:
 
 training:
   num_epochs: 200
-  learning_rate: &lr 0.1
+  learning_rate: &lr 0.01
   teacher_force: True
   verbose: True
 

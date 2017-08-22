@@ -12,9 +12,9 @@ from torch.utils.data import DataLoader
 from docopt import docopt
 from torchvision.transforms import Compose
 
-
+from ptcap.checkpointers import Checkpointer
 from ptcap.data.tokenizer import Tokenizer
-from ptcap.data.dataset import JpegVideoDataset
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.model.captioners import *
@@ -49,22 +49,20 @@ if __name__ == '__main__':
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     use_cuda = config_obj.get('device', 'use_cuda')
+    checkpoint_path = config_obj.get('paths', 'checkpoint_folder')
+    pretrained_path = config_obj.get('paths', 'pretrained_path')
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    training_set = JpegVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer,
-                                    preprocess=preprocesser)
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+                                     tokenizer=tokenizer,
+                                     preprocess=preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
                             **config_obj.get('dataloaders', 'kwargs'))
-
-    # vocab_size, batchnorm=True, stateful=False, **kwargs
-    rcaptioner = RtorchnCaptioner(tokenizer.get_vocab_size(), is_training=True,
-                                  use_cuda=True)
 
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
@@ -77,9 +75,15 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
-    # Train the Model
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, use_cuda)
+    # Prepare checkpoint directory and save config
+    Checkpointer.save_meta(config_obj, tokenizer)
 
+    # Trainer
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+                      checkpoint_path, pretrained_path=pretrained_path,
+                      use_cuda=use_cuda)
+
+    # Train the Model
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)

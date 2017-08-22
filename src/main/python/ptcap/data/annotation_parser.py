@@ -32,7 +32,7 @@ class JsonParser(AnnotationParser):
     def open_annotation(cls, path):
         if path.endswith("gz"):
             with gzip.open(path, "rb") as f:
-                json = pd.read_json(f.read().decode("ascii"))
+                json = pd.read_json(f.read().decode("utf-8"))
         else:
             json = pd.read_json(path)
         return json

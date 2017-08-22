@@ -2,7 +2,8 @@ import torch
 from torch import nn
 
 from rtorchn.models.captioning.vid2caption import DeepNet
-from ptcap.model.encoders import CNN3dEncoder
+from ptcap.model.encoders import (CNN3dEncoder,
+                                  CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
 
 
@@ -50,8 +51,8 @@ class CNN3dLSTM(EncoderDecoder):
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, use_cuda)
 
-        encoder_args = (encoder_output_size,)
+        encoder_args = (encoder_output_size, use_cuda)
 
-        super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
+        super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
                                         encoder_args=encoder_args,
                                         decoder_args=decoder_args)

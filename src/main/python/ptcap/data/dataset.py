@@ -54,3 +54,18 @@ class JpegVideoDataset(VideoDataset):
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
         return np.array(frames)
+
+
+class NumpyVideoDataset(VideoDataset):
+    """
+    Load video saved in a NPZ file.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(NumpyVideoDataset, self).__init__(*args, **kwargs)
+
+    def _get_video(self, index):
+        dirname = self.video_paths[index]
+        path = glob.glob(dirname + "/*.npz")[0]
+        video = np.load(path)["arr_0"]
+        return video

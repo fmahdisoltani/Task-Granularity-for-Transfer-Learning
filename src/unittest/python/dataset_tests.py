@@ -7,7 +7,7 @@ from PIL import Image
 
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.data.dataset import VideoDataset
-from ptcap.data.dataset import JpegVideoDataset
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 
 class TestVideoDataset(unittest.TestCase):
@@ -63,7 +63,18 @@ class TestJpegVideoDataset(TestVideoDataset):
     @mock.patch('PIL.Image.open', return_value=PIL_IMAGE)
     @mock.patch('glob.glob', return_value=[0 for i in range(13)])
     def test_getvideo(self, mock_pil, mock_glob):
-        dataset = JpegVideoDataset([128,128], Image.BICUBIC,
+        dataset = JpegVideoDataset([128, 128], Image.BICUBIC,
                                    self.annotation_parser, self.tokenizer)
         video = dataset._get_video(0)
         self.assertEqual(video.shape, (13, 128, 128, 3))
+
+
+class TestNumpyDataset(TestVideoDataset):
+    NUMPY_VIDEO = {"arr_0": np.random.rand(11, 237, 237, 3)}
+
+    @mock.patch('glob.glob', return_value=[0])
+    @mock.patch('numpy.load', return_value=NUMPY_VIDEO)
+    def test_getvideo(self, mock_np, mock_glob):
+        dataset = NumpyVideoDataset(self.annotation_parser, self.tokenizer)
+        video = dataset._get_video(0)
+        self.assertEqual(video.shape, (11, 237, 237, 3))
