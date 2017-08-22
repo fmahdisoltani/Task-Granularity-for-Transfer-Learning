@@ -2,6 +2,8 @@ import unittest
 
 import pandas as pd
 
+from testfixtures import tempdir
+
 from ptcap.data.tokenizer import Tokenizer
 
 
@@ -55,3 +57,11 @@ class TestTokenizer(unittest.TestCase):
         phrase = "THERE IS ONE HAND"
         phrase_encoded = self.tokenizer.encode_caption(phrase)
         self.assertEqual(len(phrase_encoded), self.tokenizer.maxlen)
+
+    @tempdir()
+    def test_save_load(self, temp_dir):
+        self.tokenizer.save_dictionaries(temp_dir)
+        loading_tokenizer = Tokenizer()
+        loaded_caption_dict, loaded_inv_caption_dict = (
+            loading_tokenizer.load_dictionaries(tempdir))
+
