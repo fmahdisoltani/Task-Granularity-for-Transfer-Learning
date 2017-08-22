@@ -9,14 +9,16 @@ from ptcap.checkpointers import Checkpointer
 
 class Trainer(object):
     def __init__(self, model,
-                 loss_function, optimizer, tokenizer, config_obj,
-                 use_cuda=False):
+                 loss_function, optimizer, tokenizer, checkpoint_path,
+                 pretrained_path=None, use_cuda=False):
 
-        self.optimizer = optimizer
-        self.tokenizer = tokenizer
-        self.model = model.cuda() if use_cuda else model
+        self.checkpointer = Checkpointer(checkpoint_path,
+                                         pretrained_path=pretrained_path)
+        init_state = self.checkpointer.load_model(model, optimizer, tokenizer)
+        self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
+
+        self.model = self.model.cuda() if use_cuda else self.model
         self.loss_function = loss_function.cuda() if use_cuda else loss_function
-        self.config_obj = config_obj
         self.use_cuda = use_cuda
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
@@ -24,33 +26,31 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        pretrained_model = self.config_obj.get("paths", "pretrained_model")
-        checkpointer = Checkpointer()
-        init_epoch, model, optimizer, tokenizer = \
-            checkpointer.init_model(pretrained_model, self.model,
-                                    self.optimizer, self.tokenizer)
+        for epoch in range(num_epoch):
+            self.num_epochs += 1
 
-        checkpointer.save_meta(self.config_obj, tokenizer)
-        for epoch in range(init_epoch, num_epoch):
-            self.run_epoch(train_dataloader, epoch, is_training=True,
+            self.run_epoch(train_dataloader, epoch + 1, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
                 average_loss = self.run_epoch(
-                    valid_dataloader, epoch, is_training=False,
+                    valid_dataloader, epoch + 1, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
 
-                state_dict = {
-                    'epoch': epoch + 1,
+                state_dict = self.get_state_dict()
+                # remember best loss and save checkpoint
+                self.checkpointer.save_model(state_dict, average_loss)
+
+    def get_state_dict(self):
+        return {
+                    'epoch': self.num_epochs,
                     'model': self.model.state_dict(),
-                    'best_score': checkpointer.best_score,
+                    'best_score': self.checkpointer.best_score,
                     'optimizer': self.optimizer.state_dict(),
                 }
-                # remember best loss and save checkpoint
-                checkpointer.save_model(state_dict, average_loss)
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
