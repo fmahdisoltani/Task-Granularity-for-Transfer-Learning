@@ -7,8 +7,9 @@ from ptcap.model.captioners import *
 
 class Checkpointer(object):
 
-    def __init__(self, path, pretrained_path=None, higher_is_better=False):
-        self.path = path
+    def __init__(self, checkpoint_folder, pretrained_path=None,
+                 higher_is_better=False):
+        self.checkpoint_folder = checkpoint_folder
         self.pretrained_path = pretrained_path
         self.best_score = np.Inf
         self.higher_is_better = higher_is_better
@@ -39,12 +40,14 @@ class Checkpointer(object):
         return init_epoch, model, optimizer, tokenizer
 
     def save_model(self, state, score, filename="model"):
-        torch.save(state, os.path.join(self.path, filename + ".latest"))
+        torch.save(state, os.path.join(self.checkpoint_folder,
+                                       filename + ".latest"))
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
-            torch.save(state, os.path.join(self.path, filename + ".best"))
+            torch.save(state, os.path.join(self.checkpoint_folder,
+                                           filename + ".best"))
 
     @classmethod
     def save_meta(cls, config_obj, tokenizer):

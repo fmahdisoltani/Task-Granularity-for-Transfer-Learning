@@ -26,16 +26,16 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        for it in range(num_epoch):
+        for epoch in range(num_epoch):
             self.num_epochs += 1
 
-            self.run_epoch(train_dataloader, it + 1, is_training=True,
+            self.run_epoch(train_dataloader, epoch + 1, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            if it % frequency_valid == 0:
+            if (epoch + 1) % frequency_valid == 0:
                 average_loss = self.run_epoch(
-                    valid_dataloader, it + 1, is_training=False,
+                    valid_dataloader, epoch + 1, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
