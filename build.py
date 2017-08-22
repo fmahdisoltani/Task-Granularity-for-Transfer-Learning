@@ -18,6 +18,6 @@ def set_properties(project):
     project.depends_on('pyfackel')
     project.depends_on('pandas')
     project.depends_on('rtorchn', url=('git+ssh://git@github.com/TwentyBN/'
-                                       '20bn-rtorchn.git@captioning'))
+                                       '20bn-rtorchn.git'))
     project.set_property('flake8_verbose_output', "True")
     project.set_property('coverage_threshold_warn', 0)
