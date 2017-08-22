@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from ptcap.trainers import Trainer
 
-class MovingAverageTest(unittest.TestCase):
+class MovingAverageTests(unittest.TestCase):
 
     def setUp(self):
         self.input_dict = OrderedDict()
