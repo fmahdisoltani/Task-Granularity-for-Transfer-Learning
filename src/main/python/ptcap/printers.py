@@ -16,12 +16,12 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
 
 def print_dict(scores_dict):
     for key, value in scores_dict.items():
-        print("{} is: {}".format(key, value.data.numpy()[0]))
+        print("{} is: {}".format(key, value))
 
 
 def print_stuff(loss, tokenizer, is_training, captions, predictions,
                 epoch_counter, sample_counter, total_samples, verbose=True):
-    loss = loss.cpu()
+
     captions = captions.cpu()
     predictions = predictions.cpu()
 
@@ -29,7 +29,7 @@ def print_stuff(loss, tokenizer, is_training, captions, predictions,
 
     scores_dict["loss"] = loss
     scores_dict["accuracy"] = token_level_accuracy(captions, predictions)
-    scores_dict["first_accuracy"] = token_level_accuracy(captions,
+    scores_dict["first_token_accuracy"] = token_level_accuracy(captions,
                                                          predictions, 1)
     status = "Training..." if is_training else "Validating..."
 
