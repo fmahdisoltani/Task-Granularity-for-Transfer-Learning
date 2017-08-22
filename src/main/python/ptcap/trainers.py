@@ -102,7 +102,8 @@ class Trainer(object):
         return {key: all_scores_dict[key] for key in all_scores_dict if
                 "average" in key}
 
-    def moving_average(self, scores_dict, all_scores_dict, count):
+    @classmethod
+    def moving_average(cls, scores_dict, all_scores_dict, count):
         for metric in scores_dict:
             average_metric = "average_" + metric
             all_scores_dict[metric] = scores_dict[metric]
