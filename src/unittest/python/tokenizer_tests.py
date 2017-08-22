@@ -67,4 +67,3 @@ class TestTokenizer(unittest.TestCase):
                          loading_tokenizer.caption_dict)
         self.assertEqual(self.tokenizer.inv_caption_dict,
                          loading_tokenizer.inv_caption_dict)
-
