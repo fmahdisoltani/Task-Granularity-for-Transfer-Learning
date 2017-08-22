@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from docopt import docopt
 from torchvision.transforms import Compose
 
-
+from ptcap.checkpointers import Checkpointer
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                  config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer(training_parser.get_captions())
+    tokenizer = Tokenizer(training_parser.get_captions(), user_maxlen=20)
 
     # Load attributes of config file
     num_epoch = config_obj.get('training', 'num_epochs')
@@ -49,6 +49,8 @@ if __name__ == '__main__':
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     use_cuda = config_obj.get('device', 'use_cuda')
+    checkpoint_path = config_obj.get('paths', 'checkpoint_folder')
+    pretrained_path = config_obj.get('paths', 'pretrained_model')
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
@@ -73,8 +75,15 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
+    # Prepare checkpoint directory and save config
+    Checkpointer.save_meta(config_obj, tokenizer)
+
+    # Trainer
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+                      checkpoint_path, pretrained_path=pretrained_path,
+                      use_cuda=use_cuda)
+
     # Train the Model
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, use_cuda)
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)

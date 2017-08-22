@@ -1,6 +1,7 @@
 import pickle
 import re
 import numpy as np
+import os
 
 
 class Tokenizer(object):
@@ -9,15 +10,17 @@ class Tokenizer(object):
     END = '<END>'
     UNK = '<UNK>'
 
-    def __init__(self, captions):
+    def __init__(self, captions=None, user_maxlen=None):
         """
             Build captions from all the expanded labels in all annotation files
         Args:
             annotations: list of paths to annotation files
         """
-        self.build_dictionaries(captions)
 
-    def build_dictionaries(self, captions):
+        if captions:
+            self.build_dictionaries(captions, user_maxlen)
+
+    def build_dictionaries(self, captions, user_maxlen):
         """
             Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
@@ -25,6 +28,10 @@ class Tokenizer(object):
 
         self.maxlen = np.max([len(caption.split())
                               for caption in captions]) + 1
+
+        if user_maxlen:
+            self.maxlen = np.min([self.maxlen, user_maxlen])
+
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
@@ -42,7 +49,10 @@ class Tokenizer(object):
             '', caption.upper()).split(" ") if x is not ""]
 
     def encode_caption(self, caption):
+
         tokenized_caption = self.tokenize(caption)
+        if len(tokenized_caption) > self.maxlen:
+            tokenized_caption = tokenized_caption[0:self.maxlen - 1]
         encoded_caption = [self.encode_token(token)
                             for token in tokenized_caption]
         return self.pad_with_end(encoded_caption)
@@ -69,7 +79,10 @@ class Tokenizer(object):
             end_index = len(predictions)
         return " ".join(output_tokens[:end_index]).lower()
 
+    def load_dictionaries(self, path):
+        with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
+            self.caption_dict, self.inv_caption_dict = pickle.load(f)
+
     def save_dictionaries(self, path):
-        with open(path, 'wb') as f:
-            pickle.dump(self.caption_dict, f)
-            pickle.dump(self.inv_caption_dict, f)
+        with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:
+            pickle.dump((self.caption_dict, self.inv_caption_dict), f)
