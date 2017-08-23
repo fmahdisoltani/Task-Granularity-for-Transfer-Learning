@@ -97,8 +97,10 @@ class Trainer(object):
                             captions, predictions, epoch, sample_counter,
                             len(dataloader), verbose)
 
-        return {key: all_scores_dict[key] for key in all_scores_dict if
-                "average" in key}
+        # Take only the average of the metrics in all_scores_dict
+        average_scores_dict = {key: all_scores_dict[key] for key in
+                               all_scores_dict if "average" in key}
+        return average_scores_dict
 
     @classmethod
     def moving_average(cls, scores_dict, all_scores_dict, count):
