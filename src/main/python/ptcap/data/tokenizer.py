@@ -17,20 +17,20 @@ class Tokenizer(object):
             annotations: list of paths to annotation files
         """
 
+        self.maxlen = None
         if captions:
-            self._build_dictionaries(captions, user_maxlen)
+            self._build_dictionaries(captions)
+        self.set_maxlen(user_maxlen)
 
-    def _build_dictionaries(self, captions, user_maxlen=None):
+    def _build_dictionaries(self, captions):
         """
             Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
         """
 
-        self.maxlen = np.max([len(caption.split())
-                              for caption in captions]) + 1
+        maxlen = np.max([len(caption.split()) for caption in captions]) + 1
 
-        if user_maxlen:
-            self.maxlen = np.min([self.maxlen, user_maxlen])
+        self.set_maxlen(maxlen)
 
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
@@ -78,6 +78,13 @@ class Tokenizer(object):
         else:
             end_index = len(predictions)
         return " ".join(output_tokens[:end_index]).lower()
+
+    def set_maxlen(self, maxlen=None):
+        assert maxlen >= 0
+        if self.maxlen is None:
+            self.maxlen = maxlen
+        else:
+            self.maxlen = np.min([self.maxlen, maxlen])
 
     def load_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
