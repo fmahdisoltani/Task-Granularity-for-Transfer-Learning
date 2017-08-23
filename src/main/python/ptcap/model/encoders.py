@@ -72,7 +72,7 @@ class CNN3dEncoder(Encoder):
 
 
 class CNN3dLSTMEncoder(Encoder):
-    def __init__(self, num_features=128, use_cuda=False):
+    def __init__(self, num_features=128, use_cuda=False, gpus=[0]):
         """
         num_features: defines the output size of the encoder
         """
@@ -82,6 +82,7 @@ class CNN3dLSTMEncoder(Encoder):
         self.num_layers = 1
         self.num_features = num_features
         self.use_cuda = use_cuda
+        self.gpus = gpus
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
@@ -111,8 +112,8 @@ class CNN3dLSTMEncoder(Encoder):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
         c0 = Variable(torch.zeros(1, batch_size, self.num_features))
         if self.use_cuda:
-            h0 = h0.cuda()
-            c0 = c0.cuda()
+            h0 = h0.cuda(self.gpus[0])
+            c0 = c0.cuda(self.gpus[0])
         return (h0, c0)
 
     def forward(self, videos):
