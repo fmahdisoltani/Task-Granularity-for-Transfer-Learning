@@ -2,9 +2,12 @@ import torch
 
 import ptcap.printers as prt
 
+from collections import OrderedDict
+
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.metrics import token_level_accuracy
 
 
 class Trainer(object):
@@ -42,7 +45,7 @@ class Trainer(object):
 
                 state_dict = self.get_state_dict()
                 # remember best loss and save checkpoint
-                self.checkpointer.save_model(state_dict, average_loss)
+                self.checkpointer.save_model(state_dict, average_loss["loss"])
 
     def get_state_dict(self):
         return {
@@ -55,7 +58,9 @@ class Trainer(object):
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
-        average_loss = 0.
+        count = 0
+        scores_dict = OrderedDict()
+        all_scores_dict = OrderedDict()
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -66,10 +71,7 @@ class Trainer(object):
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
-            # Calculate a moving average of the loss
-            average_loss += ((loss.data.cpu().numpy() - average_loss) /
-                             (sample_counter + 1))
-            # average_loss = loss
+            count += 1
 
             if is_training:
                 self.model.zero_grad()
@@ -79,8 +81,36 @@ class Trainer(object):
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
 
-            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
-                            predictions, epoch, sample_counter, len(dataloader),
-                            verbose)
+            captions = captions.cpu()
+            predictions = predictions.cpu()
 
-        return average_loss
+            scores_dict["loss"] = loss.data.cpu().numpy()[0]
+            scores_dict["accuracy"] = token_level_accuracy(captions,
+                                                           predictions)
+            scores_dict["first_accuracy"] = token_level_accuracy(captions,
+                                                                 predictions, 1)
+            # Calculate a moving average of the metrics
+            all_scores_dict = self.moving_average(scores_dict, all_scores_dict,
+                                                  count)
+
+            prt.print_stuff(all_scores_dict, self.tokenizer, is_training,
+                            captions, predictions, epoch, sample_counter,
+                            len(dataloader), verbose)
+
+        # Take only the average of the metrics in all_scores_dict
+        average_scores_dict = {key: all_scores_dict[key] for key in
+                               all_scores_dict if "average" in key}
+        return average_scores_dict
+
+    @classmethod
+    def moving_average(cls, scores_dict, all_scores_dict, count):
+        for metric in scores_dict:
+            average_metric = "average_" + metric
+            all_scores_dict[metric] = scores_dict[metric]
+            if average_metric in all_scores_dict:
+                all_scores_dict[average_metric] += (
+                    (scores_dict[metric] - all_scores_dict[average_metric])
+                    / count)
+            else:
+                all_scores_dict[average_metric] = scores_dict[metric]
+        return all_scores_dict
