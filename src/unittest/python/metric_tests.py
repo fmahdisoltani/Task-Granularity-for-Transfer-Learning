@@ -56,8 +56,8 @@ class MetricTests(unittest.TestCase):
 class TestTokenLevelAccuracy(unittest.TestCase):
 
     def test_all_elements_match(self):
-        captions = torch.IntTensor([[1,2,3],[4,5,6]])
-        predictions = torch.IntTensor([[1,2,3],[4,5,6]])
+        captions = torch.LongTensor([[1,2,3],[4,5,6]])
+        predictions = torch.LongTensor([[1,2,3],[4,5,6]])
         for num in (1, None):
             with self.subTest(captions=captions, predictions=predictions,
                               num=num):
@@ -66,8 +66,8 @@ class TestTokenLevelAccuracy(unittest.TestCase):
                 self.assertEqual(accuracy, 100)
 
     def test_no_elements_match(self):
-        captions = torch.IntTensor([[1,2,3],[4,5,6]])
-        predictions = torch.IntTensor([[7,8,9],[10,11,12]])
+        captions = torch.LongTensor([[1,2,3],[4,5,6]])
+        predictions = torch.LongTensor([[7,8,9],[10,11,12]])
         for num in (1, None):
             with self.subTest(captions=captions, predictions=predictions,
                               num=num):
@@ -76,8 +76,8 @@ class TestTokenLevelAccuracy(unittest.TestCase):
                 self.assertEqual(accuracy, 0)
 
     def test_some_elements_match(self):
-        captions = torch.IntTensor([[1,2,3],[4,5,6]])
-        predictions = torch.IntTensor([[1,20,30],[40,5,6]])
+        captions = torch.LongTensor([[1,2,3],[4,5,6]])
+        predictions = torch.LongTensor([[1,20,30],[40,5,6]])
         for num in (1, None):
             with self.subTest(captions=captions, predictions=predictions,
                               num=num):
@@ -86,8 +86,8 @@ class TestTokenLevelAccuracy(unittest.TestCase):
                 self.assertEqual(accuracy, 50)
 
     def test_no_elements(self):
-        captions = torch.IntTensor([])
-        predictions = torch.IntTensor([])
+        captions = torch.LongTensor([])
+        predictions = torch.LongTensor([])
         for num in (1, None):
             with self.subTest(captions=captions, predictions=predictions,
                               num=num):
