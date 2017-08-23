@@ -61,10 +61,10 @@ class Trainer(object):
 
         metrics = Metrics(OrderedDict([(
             "loss", lambda x: x.data.cpu().numpy()[0]),(
-            "accuracy", lambda captions, predictions:
-            Metrics.token_level_accuracy(captions, predictions)),(
-            "first_accuracy", lambda captions, predictions:
-            Metrics.token_level_accuracy(captions, predictions, 1))
+            "accuracy", lambda caps, preds:
+            Metrics.token_level_accuracy(caps, preds)),(
+            "first_accuracy", lambda caps, preds:
+            Metrics.token_level_accuracy(caps, preds, 1))
         ]))
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
