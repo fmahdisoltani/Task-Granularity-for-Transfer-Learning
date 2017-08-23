@@ -10,7 +10,7 @@ class Tokenizer(object):
     END = '<END>'
     UNK = '<UNK>'
 
-    def __init__(self, captions=None):
+    def __init__(self, captions=None, user_maxlen=None):
         """
             Build captions from all the expanded labels in all annotation files
         Args:
@@ -18,9 +18,9 @@ class Tokenizer(object):
         """
 
         if captions:
-            self.build_dictionaries(captions)
+            self._build_dictionaries(captions, user_maxlen)
 
-    def build_dictionaries(self, captions):
+    def _build_dictionaries(self, captions, user_maxlen=None):
         """
             Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
@@ -28,6 +28,9 @@ class Tokenizer(object):
 
         self.maxlen = np.max([len(caption.split())
                               for caption in captions]) + 1
+
+        if user_maxlen:
+            self.maxlen = np.min([self.maxlen, user_maxlen])
 
         print('\nBuilding dictionary for captions...')
         extra_tokens = [self.GO, self.END, self.UNK]
