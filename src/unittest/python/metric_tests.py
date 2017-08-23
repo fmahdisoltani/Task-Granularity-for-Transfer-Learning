@@ -18,14 +18,12 @@ class MetricTests(unittest.TestCase):
     def test_input_normal(self):
         # Test when the moving average is getting random input
         input_list = []
-        all_scores_dict = OrderedDict()
 
         for count in range(self.num_epochs):
             random_num = np.random.rand()
             self.input_dict["loss"] = random_num
             input_list.append(random_num)
-            all_scores_dict = Metrics.moving_average(self.input_dict,
-                                                     count + 1)
+            Metrics.moving_average(self.input_dict, count + 1)
             expected = np.mean(input_list)
 
             self.assertAlmostEqual(self.input_dict["average_loss"],
