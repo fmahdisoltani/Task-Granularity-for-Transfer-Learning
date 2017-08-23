@@ -88,7 +88,8 @@ class Trainer(object):
             predictions = predictions.cpu()
 
             metrics.compute_metrics([(loss,), (captions, predictions),
-                                     (captions, predictions)], sample_counter)
+                                     (captions, predictions)],
+                                    sample_counter + 1)
 
             prt.print_stuff(metrics.metrics_dict, self.tokenizer, is_training,
                             captions, predictions, epoch, sample_counter,
