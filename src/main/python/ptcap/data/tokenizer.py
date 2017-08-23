@@ -78,8 +78,10 @@ class Tokenizer(object):
 
     def load_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
-            self.caption_dict, self.inv_caption_dict = pickle.load(f)
+            (self.maxlen, self.caption_dict,
+             self.inv_caption_dict) = pickle.load(f)
 
     def save_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:
-            pickle.dump((self.caption_dict, self.inv_caption_dict), f)
+            pickle.dump((self.maxlen, self.caption_dict,
+                         self.inv_caption_dict), f)
