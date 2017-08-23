@@ -18,9 +18,9 @@ class Tokenizer(object):
         """
 
         if captions:
-            self.build_dictionaries(captions, user_maxlen)
+            self._build_dictionaries(captions, user_maxlen)
 
-    def build_dictionaries(self, captions, user_maxlen):
+    def _build_dictionaries(self, captions, user_maxlen):
         """
             Builds two dictionaries: One that maps from tokens to ints, and
             another that maps from ints back to tokens.
