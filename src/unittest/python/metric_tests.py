@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from ptcap.metrics import Metrics
 
-class MovingAverageTests(unittest.TestCase):
+class MetricTests(unittest.TestCase):
 
     def setUp(self):
         self.input_dict = OrderedDict()
@@ -31,10 +31,20 @@ class MovingAverageTests(unittest.TestCase):
     def test_input_same(self):
         # Test when the moving average is getting the same input (0 and 1 here)
         for value in range(2):
-            all_scores_dict = OrderedDict()
 
             for count in range(self.num_epochs):
                 self.input_dict["loss"] = value
-                all_scores_dict = Metrics.moving_average(self.input_dict,
-                                                         count + 1)
+                Metrics.moving_average(self.input_dict, count + 1)
                 self.assertEqual(self.input_dict["average_loss"], value)
+
+    def test_run_metrics(self):
+        metrics = Metrics(OrderedDict([("add1", lambda x: x + 1)]))
+        metrics.run_metrics([(1,)])
+        self.assertEqual(metrics.metrics_dict["add1"], 2)
+
+    def test_compute_metrics(self):
+        metrics = Metrics(OrderedDict([("add1", lambda x: x + 1)]))
+        for count in range(self.num_epochs):
+            metrics.compute_metrics([(1,)], count + 1)
+            self.assertEqual(metrics.metrics_dict["add1"], 2)
+            self.assertEqual(metrics.metrics_dict["average_add1"], 2)
