@@ -45,7 +45,7 @@ class Trainer(object):
 
                 state_dict = self.get_state_dict()
                 # remember best loss and save checkpoint
-                self.checkpointer.save_model(state_dict, average_loss)
+                self.checkpointer.save_model(state_dict, average_loss["loss"])
 
     def get_state_dict(self):
         return {
