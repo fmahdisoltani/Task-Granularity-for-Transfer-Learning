@@ -17,14 +17,11 @@ TARGET_LABELS = [
     "Spinning [something] that quickly stops spinning",
     "Uncovering [something]",
     "Pretending to open [something] without actually opening it",
-    "Hitting [something] with [something]",
     "Opening [something]",
-    "Pushing [something] so it spins",
-    "Dropping [something] into [something]",
-    "Burying [something] in [something]",
-    "Pretending to take [something] out of [something]",
-    "Opening [something]",
-    "Tearing [something] just a little bit",
+    "Tearing [something] just a little bit"
+]
+
+TEMP=[
     "Showing that [something] is inside [something]",
     "Moving [something] away from [something]",
     "Bending [something] so that it deforms",
@@ -66,9 +63,10 @@ def create_subset_json(path, num_samples, target_labels):
         loaded_json = json.load(fp)
         for i in loaded_json:
             # print("\"" + i['template'] + "\",")
-            if counter < num_samples and i['template'] in target_labels:
-                new_json.append(i)
-                counter += 1
+            if i['template'] in target_labels:
+                #if counter < num_samples and
+                    new_json.append(i)
+                    counter += 1
     return new_json
 
 
@@ -86,7 +84,7 @@ if __name__ == "__main__":
         print('converting {} to {}'.format(input_jsons[i], output_jsons[i]))
         print("^" * 100)
         print(annot)
-        new_json = create_subset_json(input_jsons[i], 1000, TARGET_LABELS)
+        new_json = create_subset_json(input_jsons[i], 10000, TARGET_LABELS)
         with gzip.open(output_jsons[i], 'wt') as f:
             json.dump(new_json, f)
         with gzip.open("subset_classes.json.gz", 'wt') as f:
