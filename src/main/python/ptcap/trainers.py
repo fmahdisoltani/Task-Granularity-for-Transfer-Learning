@@ -18,8 +18,8 @@ class Trainer(object):
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
 
         self.model = self.model.cuda(gpus[0]) if use_cuda else self.model
-        self.loss_function = \
-            loss_function.cuda(gpus[0]) if use_cuda else loss_function
+        self.loss_function = (loss_function.cuda(gpus[0])
+                              if use_cuda else loss_function)
         self.use_cuda = use_cuda
         self.gpus = gpus
 
@@ -48,11 +48,11 @@ class Trainer(object):
 
     def get_state_dict(self):
         return {
-                    'epoch': self.num_epochs,
-                    'model': self.model.state_dict(),
-                    'best_score': self.checkpointer.best_score,
-                    'optimizer': self.optimizer.state_dict(),
-                }
+            'epoch': self.num_epochs,
+            'model': self.model.state_dict(),
+            'best_score': self.checkpointer.best_score,
+            'optimizer': self.optimizer.state_dict(),
+        }
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
