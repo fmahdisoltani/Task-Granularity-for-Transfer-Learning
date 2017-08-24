@@ -7,14 +7,14 @@ from ptcap.data.annotation_parser import JsonParser
 NUM_SAMPLES = 1000
 
 TARGET_LABELS = [
-
     "Pretending to open [something] without actually opening it",
     "Opening [something]",
 
 ]
 
-TEMP=["Tearing [something] just a little bit",
-"Turning the camera left while filming [something]",
+TEMP_LABELS = [
+    "Tearing [something] just a little bit",
+    "Turning the camera left while filming [something]",
     "Pulling [something] from right to left",
     "Burying [something] in [something]",
     "Pretending to pick [something] up",
@@ -38,7 +38,6 @@ TEMP=["Tearing [something] just a little bit",
     "Pretending to turn [something] upside down",
     "Pulling [something] out of [something]",
     "Spilling [something] onto [something]",
-    "[Something] colliding with [something] and both are being deflected",
     "[Something] being deflected from [something]",
     "Dropping [something] in front of [something]",
     "Pretending to close [something] without actually closing it",
@@ -48,11 +47,10 @@ TEMP=["Tearing [something] just a little bit",
     "Taking [something] out of [something]",
     "[Something] falling like a rock",
     "Closing [something]"
-
 ]
 
 
-def create_subset_json(path, num_samples, target_labels):
+def create_subset_json(path, num_samples, target_labels, use_all=True):
     """
     This method extracts samples from a json annotation file where the sample
     belongs to a class in target_labels
@@ -65,7 +63,7 @@ def create_subset_json(path, num_samples, target_labels):
         for i in loaded_json:
             # print("\"" + i['template'] + "\",")
             if i['template'] in target_labels:
-                #if counter < num_samples and
+                if use_all or counter < num_samples:
                     new_json.append(i)
                     counter += 1
     return new_json
@@ -90,4 +88,3 @@ if __name__ == "__main__":
             json.dump(new_json, f)
         with gzip.open("subset_classes.json.gz", 'wt') as f:
             json.dump(TARGET_LABELS, f)
-
