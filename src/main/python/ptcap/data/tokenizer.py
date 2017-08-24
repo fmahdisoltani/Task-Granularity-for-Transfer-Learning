@@ -12,9 +12,10 @@ class Tokenizer(object):
 
     def __init__(self, captions=None, user_maxlen=None):
         """
-            Build captions from all the expanded labels in all annotation files
+            Build captions from all the expanded labels in all annotation files.
         Args:
-            annotations: list of paths to annotation files
+            captions: list of paths to annotation files.
+            user_maxlen: the maximum length of the captions set by the user.
         """
 
         self.maxlen = None if user_maxlen is None else user_maxlen + 1
@@ -78,7 +79,7 @@ class Tokenizer(object):
             end_index = len(predictions)
         return " ".join(output_tokens[:end_index]).upper()
 
-    def set_maxlen(self, maxlen=None):
+    def set_maxlen(self, maxlen):
         assert maxlen >= 0
         if self.maxlen is None:
             self.maxlen = maxlen + 1
