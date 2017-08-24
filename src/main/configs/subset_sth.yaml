@@ -23,7 +23,7 @@ model:
   kwargs: {use_cuda: *use_cuda}
 
 training:
-  num_epochs: 200
+  num_epochs: 2000
   learning_rate: &lr 0.01
   teacher_force: True
   verbose: False

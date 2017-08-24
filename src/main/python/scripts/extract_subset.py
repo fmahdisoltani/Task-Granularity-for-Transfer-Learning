@@ -7,7 +7,14 @@ from ptcap.data.annotation_parser import JsonParser
 NUM_SAMPLES = 1000
 
 TARGET_LABELS = [
-    "Turning the camera left while filming [something]",
+
+    "Pretending to open [something] without actually opening it",
+    "Opening [something]",
+
+]
+
+TEMP=["Tearing [something] just a little bit",
+"Turning the camera left while filming [something]",
     "Pulling [something] from right to left",
     "Burying [something] in [something]",
     "Pretending to pick [something] up",
@@ -16,12 +23,6 @@ TARGET_LABELS = [
     "Pushing [something] with [something]",
     "Spinning [something] that quickly stops spinning",
     "Uncovering [something]",
-    "Pretending to open [something] without actually opening it",
-    "Opening [something]",
-    "Tearing [something] just a little bit"
-]
-
-TEMP=[
     "Showing that [something] is inside [something]",
     "Moving [something] away from [something]",
     "Bending [something] so that it deforms",
