@@ -32,10 +32,10 @@ class TestTokenizer(unittest.TestCase):
 
         json_annot = pd.read_json(self.arguments)
         self.captions = [p for p in json_annot["label"]]
-        self.captions_vocab = {'THERE', 'HAND', 'ARE', 'AND', 'ON', 'TILTING',
-                               'IT', 'TABLE', 'THREE', 'THE', 'COFFEE', 'CUP',
-                               'WITH', 'HANDS', 'ONE', 'OTHER', '<GO>', '<END>',
-                               '<UNK>'}
+        self.captions_vocab = {"THERE", "HAND", "ARE", "AND", "ON", "TILTING",
+                               "IT", "TABLE", "THREE", "THE", "COFFEE", "CUP",
+                               "WITH", "HANDS", "ONE", "OTHER", "<GO>", "<END>",
+                               "<UNK>"}
 
     def test_captions_vocab(self):
         tokenizer = Tokenizer(self.captions)
@@ -53,7 +53,7 @@ class TestTokenizer(unittest.TestCase):
                 tokenizer = Tokenizer(self.captions, value)
                 phrase_encoded = tokenizer.encode_caption(self.phrase)
                 phrase_decoded = tokenizer.decode_caption(phrase_encoded)
-                expected_string = ['THERE', Tokenizer.UNK, 'ONE', 'HAND']
+                expected_string = ["THERE", Tokenizer.UNK, "ONE", "HAND"]
                 pad_length = 9 if value is None or value > 8 else value + 1
                 self.assertEqual(phrase_decoded[:pad_length], expected_string +
                                  [Tokenizer.END] * (pad_length -
@@ -131,7 +131,7 @@ class TestTokenizer(unittest.TestCase):
                 loading_tokenizer.load_dictionaries(temp_dir.path)
                 phrase_encoded = loading_tokenizer.encode_caption(self.phrase)
                 phrase_decoded = tokenizer.decode_caption(phrase_encoded)
-                expected_string = ['THERE', Tokenizer.UNK, 'ONE', 'HAND']
+                expected_string = ["THERE", Tokenizer.UNK, "ONE", "HAND"]
                 pad_length = 9 if value is None or value > 8 else value + 1
                 self.assertEqual(phrase_decoded[:pad_length], expected_string +
                                  [Tokenizer.END] * (pad_length -

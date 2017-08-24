@@ -45,7 +45,7 @@ class Tokenizer(object):
     def tokenize(self, caption):
         tokenize_regex = re.compile("[^A-Z\s]")
         return [x for x in tokenize_regex.sub(
-            '', caption.upper()).split(" ") if x is not ""]
+            "", caption.upper()).split(" ") if x is not ""]
 
     def encode_caption(self, caption):
 
