@@ -82,8 +82,9 @@ class TestTokenizer(unittest.TestCase):
                 expected = " ".join(first_chunk + [first_chunk[0]])
             else:
                 expected = " ".join(first_chunk)
-            string = tokenizer.get_string(phrase_encoded)
-            self.assertEqual(expected, string)
+            with self.subTest(remove_end=remove_end):
+                string = tokenizer.get_string(phrase_encoded)
+                self.assertEqual(expected, string)
 
     def test_user_maxlen(self):
         for value in [None, 0, 5, 10]:
