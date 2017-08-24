@@ -23,7 +23,7 @@ class FullyConnectedEncoder(Encoder):
 
 
 class CNN3dEncoder(Encoder):
-    def __init__(self, num_features=128, use_cuda=False, gpus=None):
+    def __init__(self, num_features=128, gpus=None):
         super(CNN3dEncoder, self).__init__()
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
