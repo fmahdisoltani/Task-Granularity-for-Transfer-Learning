@@ -48,7 +48,7 @@ if __name__ == '__main__':
     verbose_valid = config_obj.get('validation', 'verbose')
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    use_cuda = config_obj.get('device', 'use_cuda')
+    # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
     checkpoint_path = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
@@ -65,10 +65,15 @@ if __name__ == '__main__':
     dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
                             **config_obj.get('dataloaders', 'kwargs'))
 
+    print("gpus: {}".format(gpus))
+    print("Line 69 " *20)
+
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
-                          use_cuda=use_cuda, gpus=gpus)
+                          gpus=gpus)
+    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
+    print("Line 73 " * 20)
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
@@ -82,7 +87,7 @@ if __name__ == '__main__':
     # Trainer
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
                       checkpoint_path, pretrained_path=pretrained_path,
-                      use_cuda=use_cuda, gpus=gpus)
+                        gpus=gpus)
 
     # Train the Model
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,

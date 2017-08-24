@@ -10,9 +10,9 @@ paths:
   pretrained_path:
 
 device:
-  use_cuda: &use_cuda True
+  use_cuda:
   synchronize_gpu: &sync True
-  gpus: [1]
+  gpus:
 
 dataloaders:
   batch_size: &b 2
@@ -20,7 +20,6 @@ dataloaders:
 
 model:
   type: RtorchnCaptioner
-  kwargs: {use_cuda: *use_cuda}
 
 training:
   num_epochs: 200

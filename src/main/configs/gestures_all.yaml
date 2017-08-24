@@ -15,7 +15,7 @@ device:
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 12
+  batch_size: &b 80
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
 
 model:

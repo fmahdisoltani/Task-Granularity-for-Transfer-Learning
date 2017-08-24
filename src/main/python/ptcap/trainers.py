@@ -10,18 +10,19 @@ from ptcap.checkpointers import Checkpointer
 class Trainer(object):
     def __init__(self, model,
                  loss_function, optimizer, tokenizer, checkpoint_path,
-                 pretrained_path=None, use_cuda=False, gpus=[0]):
+                 pretrained_path=None, gpus=None):
 
+        self.use_cuda = True if gpus else False
+        self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path,
                                          pretrained_path=pretrained_path)
         init_state = self.checkpointer.load_model(model, optimizer, tokenizer)
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
 
-        self.model = self.model.cuda(gpus[0]) if use_cuda else self.model
+        self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
-                              if use_cuda else loss_function)
-        self.use_cuda = use_cuda
-        self.gpus = gpus
+                              if self.use_cuda else loss_function)
+
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
