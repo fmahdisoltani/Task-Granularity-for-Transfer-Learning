@@ -10,9 +10,8 @@ paths:
   pretrained_path:
 
 device:
-  use_cuda:
   synchronize_gpu: &sync True
-  gpus:
+  gpus: [0]
 
 dataloaders:
   batch_size: &b 2
