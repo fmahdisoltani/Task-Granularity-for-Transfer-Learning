@@ -1,8 +1,5 @@
 import json
 import gzip
-import pandas as pd
-
-from ptcap.data.annotation_parser import JsonParser
 
 NUM_SAMPLES = 1000
 
@@ -50,23 +47,39 @@ TEMP_LABELS = [
 ]
 
 
-def create_subset_json(path, num_samples, target_labels, use_all=True):
+
+def create_subset_json(path, target_classes, num_samples=None):
     """
-    This method extracts samples from a json annotation file where the sample
-    belongs to a class in target_labels
+    This method extracts 'num_samples' samples using a json annotation file
+    where each sample belong to one of the classes in target_classes.
+    If num_samples is None, it extracts all the samples in target_classes.
     """
+
+    if num_samples:
+        assert(num_samples > 0)
+    assert(len(target_classes) > 1)
 
     counter = 0
     new_json = []
-    with gzip.open(path, 'rt') as fp:
-        loaded_json = json.load(fp)
-        for i in loaded_json:
-            # print("\"" + i['template'] + "\",")
-            if i['template'] in target_labels:
-                if use_all or counter < num_samples:
-                    new_json.append(i)
-                    counter += 1
+    all_samples = open_json(path)
+    for sample in all_samples:
+        if sample['template'] in target_classes:
+            if not num_samples or counter < num_samples:
+                new_json.append(sample)
+                counter += 1
+
     return new_json
+
+
+def open_json(path):
+    if path.endswith("gz"):
+        f = gzip.open(path, "rb")
+        loaded_json = json.loads(f.read().decode("utf-8"))
+    else:
+        f = open(path)
+        loaded_json = json.load(f)
+    return loaded_json
+
 
 
 if __name__ == "__main__":
@@ -77,14 +90,13 @@ if __name__ == "__main__":
                     "subset_validation_20170429.json.gz",
                     "subset_test_20170429.json.gz"]
 
-    print('numer of labels in subset dataset : {}'.format(len(TARGET_LABELS)))
+    print('number of labels in subset dataset : {}'.format(len(TARGET_LABELS)))
 
-    for i, annot in enumerate(input_jsons):
-        print('converting {} to {}'.format(input_jsons[i], output_jsons[i]))
-        print("^" * 100)
-        print(annot)
-        new_json = create_subset_json(input_jsons[i], 10000, TARGET_LABELS)
-        with gzip.open(output_jsons[i], 'wt') as f:
+    for in_json, out_json in zip(input_jsons, output_jsons):
+        print('Creating subset from {} to {}'.format(in_json, out_json))
+        new_json = create_subset_json(in_json, TARGET_LABELS, num_samples=10000)
+
+        with gzip.open(out_json, 'wt') as f:
             json.dump(new_json, f)
         with gzip.open("subset_classes.json.gz", 'wt') as f:
             json.dump(TARGET_LABELS, f)
