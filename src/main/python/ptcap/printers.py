@@ -16,7 +16,7 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
 
 def print_dict(scores_dict):
     for key, value in scores_dict.items():
-        print("{} is: {}".format(key, value))
+        print("{} is: {:.4f} -".format(key, value[0]), end=" ")
 
 
 def print_stuff(loss, tokenizer, is_training, captions, predictions,
@@ -28,14 +28,14 @@ def print_stuff(loss, tokenizer, is_training, captions, predictions,
     scores_dict = OrderedDict()
 
     scores_dict["loss"] = loss
-    scores_dict["accuracy"] = token_level_accuracy(captions, predictions)
+    scores_dict["accuracy"] = token_level_accuracy(captions, predictions).data
     scores_dict["first_token_accuracy"] = token_level_accuracy(captions,
-                                                         predictions, 1)
-    status = "Training..." if is_training else "Validating..."
+                                                         predictions, 1).data
+    phase = "Training" if is_training else "Validating"
 
-    print("Epoch {}".format(epoch_counter + 1))
-    print(status + " batch #{} out of {} batches".
-          format(sample_counter+1, total_samples))
+    print("\rEpoch {} - {} - batch {}/{} -".
+          format(epoch_counter + 1, phase, sample_counter+1, total_samples),
+          end=" ")
 
     print_dict(scores_dict)
     if verbose:

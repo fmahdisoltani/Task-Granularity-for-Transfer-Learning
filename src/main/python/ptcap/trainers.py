@@ -56,6 +56,7 @@ class Trainer(object):
                   use_teacher_forcing=False, verbose=True):
 
         average_loss = 0.
+        print("")
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
