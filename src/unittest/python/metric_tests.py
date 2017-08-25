@@ -50,6 +50,13 @@ class MetricTests(unittest.TestCase):
             self.assertEqual(metrics.metrics_dict["add1"], 2)
             self.assertEqual(metrics.metrics_dict["average_add1"], 2)
 
+    def test_get_average_metrics(self):
+        metrics = Metrics(OrderedDict([("add1", lambda x: x + 1)]))
+        for count in range(self.num_epochs):
+            metrics.compute_metrics([(1,)], count + 1)
+        average_metrics = metrics.get_average_metrics()
+        self.assertEqual(list(average_metrics.keys()), ["average_add1"])
+
 
 class TestTokenLevelAccuracy(unittest.TestCase):
 

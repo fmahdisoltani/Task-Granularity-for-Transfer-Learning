@@ -39,6 +39,10 @@ class Metrics(object):
             self.metrics_dict[metric] = self.functions_dict[metric](
                                                         *parameters_list[index])
 
+    def get_average_metrics(self):
+        return {key: self.metrics_dict[key] for key in self.metrics_dict
+                if "average" in key}
+
     @classmethod
     def moving_average(cls, metrics_dict, count):
         for metric in metrics_dict:

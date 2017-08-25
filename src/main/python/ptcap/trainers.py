@@ -95,7 +95,6 @@ class Trainer(object):
                             captions, predictions, epoch, sample_counter,
                             len(dataloader), verbose)
 
-        # Take only the average of the metrics in all_metrics_dict
-        average_metrics_dict = {key: metrics.metrics_dict[key] for key in
-                                metrics.metrics_dict if "average" in key}
+        # Take only the average of the metrics in metrics_dict
+        average_metrics_dict = metrics.get_average_metrics()
         return average_metrics_dict
