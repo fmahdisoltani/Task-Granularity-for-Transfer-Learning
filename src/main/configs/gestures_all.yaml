@@ -10,17 +10,15 @@ paths:
   pretrained_path:
 
 device:
-  use_cuda: &use_cuda True
   synchronize_gpu: &sync True
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 12
+  batch_size: &b 80
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
 
 model:
   type:
-  kwargs: {use_cuda: *use_cuda}
 
 training:
   num_epochs: 200

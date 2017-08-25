@@ -31,8 +31,8 @@ class FullyConnectedDecoder(Decoder):
 
 class LSTMDecoder(Decoder):
 
-    def __init__(self, embedding_size, hidden_size,
-                 vocab_size, num_hidden_lstm, go_token=0, use_cuda=False):
+    def __init__(self, embedding_size, hidden_size, vocab_size,
+                 num_hidden_lstm, go_token=0, gpus=None):
 
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
@@ -45,7 +45,8 @@ class LSTMDecoder(Decoder):
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = use_cuda
+        self.use_cuda = True if gpus else False
+        self.gpus = gpus
         self.go_token = go_token
 
     def init_hidden(self, features):
@@ -77,7 +78,7 @@ class LSTMDecoder(Decoder):
         batch_size, num_step = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
         if self.use_cuda:
-            go_part = go_part.cuda()
+            go_part = go_part.cuda(self.gpus[0])
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
