@@ -2,6 +2,7 @@ import torch
 
 import ptcap.printers as prt
 
+from collections import namedtuple
 from collections import OrderedDict
 
 from torch.autograd import Variable
@@ -56,16 +57,20 @@ class Trainer(object):
                     'optimizer': self.optimizer.state_dict(),
                 }
 
+    def get_function_dict(self):
+        function_dict = OrderedDict()
+        function_dict["loss"] = Metrics.compute_loss
+
+        function_dict["accuracy"] = Metrics.token_level_accuracy
+
+        function_dict["first_accuracy"] = Metrics.first_token_accuracy
+        return function_dict
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
-        metrics = Metrics(OrderedDict([(
-            "loss", lambda x: x.data.cpu().numpy()[0]),(
-            "accuracy", lambda caps, preds:
-            Metrics.token_level_accuracy(caps, preds)),(
-            "first_accuracy", lambda caps, preds:
-            Metrics.token_level_accuracy(caps, preds, 1))
-        ]))
+        outputs = namedtuple("outputs", "loss captions predictions")
+        metrics = Metrics(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -87,9 +92,9 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            metrics.compute_metrics([(loss,), (captions, predictions),
-                                     (captions, predictions)],
-                                    sample_counter + 1)
+            epoch_outputs = outputs(loss, captions, predictions)
+
+            metrics.compute_metrics(epoch_outputs, sample_counter + 1)
 
             prt.print_stuff(metrics.metrics_dict, self.tokenizer, is_training,
                             captions, predictions, epoch, sample_counter,
@@ -98,3 +103,5 @@ class Trainer(object):
         # Take only the average of the metrics in metrics_dict
         average_metrics_dict = metrics.get_average_metrics()
         return average_metrics_dict
+
+

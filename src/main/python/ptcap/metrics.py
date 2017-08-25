@@ -44,6 +44,14 @@ class Metrics(object):
                 if "average" in key}
 
     @classmethod
+    def compute_loss(cls, named_tuple):
+        return named_tuple.loss.data.cpu().numpy()[0]
+
+    @classmethod
+    def first_token_accuracy(cls, outputs):
+        return cls.token_level_accuracy(outputs, 1)
+
+    @classmethod
     def moving_average(cls, metrics_dict, count):
         for metric in metrics_dict:
             average_metric = "average_" + metric
@@ -52,6 +60,11 @@ class Metrics(object):
                     (metrics_dict[metric] - metrics_dict[average_metric])
                     / count)
         return metrics_dict
+
+    @classmethod
+    def token_level_accuracy(cls, outputs, num_tokens=None):
+        return cls.token_level_accuracy(outputs.captions, outputs.predictions,
+                                        num_tokens)
 
     @classmethod
     def token_level_accuracy(cls, captions, predictions, num_tokens=None):
