@@ -47,7 +47,6 @@ TEMP_LABELS = [
 ]
 
 
-
 def create_subset_json(path, target_classes, num_samples=None):
     """
     This method extracts 'num_samples' samples using a json annotation file
@@ -56,8 +55,8 @@ def create_subset_json(path, target_classes, num_samples=None):
     """
 
     if num_samples:
-        assert(num_samples > 0)
-    assert(len(target_classes) > 1)
+        assert (num_samples > 0)
+    assert (len(target_classes) > 1)
 
     counter = 0
     new_json = []
@@ -79,7 +78,6 @@ def open_json(path):
         f = open(path)
         loaded_json = json.load(f)
     return loaded_json
-
 
 
 if __name__ == "__main__":
