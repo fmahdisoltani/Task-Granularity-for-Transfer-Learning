@@ -18,7 +18,7 @@ class Tokenizer(object):
             user_maxlen: the maximum length of the captions set by the user.
         """
 
-        self.maxlen = None if user_maxlen is None else user_maxlen + 1
+        self.maxlen = None if user_maxlen is None else user_maxlen
         if captions:
             self.build_dictionaries(captions)
 
@@ -28,7 +28,7 @@ class Tokenizer(object):
             another that maps from ints back to tokens.
         """
 
-        maxlen = np.max([len(caption.split()) for caption in captions])
+        maxlen = np.max([len(caption.split()) for caption in captions]) + 1
 
         self.set_maxlen(maxlen)
 
@@ -51,7 +51,7 @@ class Tokenizer(object):
     def encode_caption(self, caption):
 
         tokenized_caption = self.tokenize(caption)
-        if len(tokenized_caption) > self.maxlen - 1:
+        if len(tokenized_caption) >= self.maxlen:
             tokenized_caption = tokenized_caption[0:self.maxlen - 1]
         encoded_caption = [self.encode_token(token)
                            for token in tokenized_caption]
@@ -80,11 +80,11 @@ class Tokenizer(object):
         return " ".join(output_tokens[:end_index]).upper()
 
     def set_maxlen(self, maxlen):
-        assert maxlen >= 0
+        assert maxlen >= 1
         if self.maxlen is None:
-            self.maxlen = maxlen + 1
+            self.maxlen = maxlen
         else:
-            self.maxlen = np.min([self.maxlen, maxlen + 1])
+            self.maxlen = np.min([self.maxlen, maxlen])
 
     def load_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:

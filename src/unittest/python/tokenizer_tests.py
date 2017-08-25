@@ -29,7 +29,7 @@ class TestTokenizer(unittest.TestCase):
         "placeholders":["the table","coffee cup"],
         "external_worker_id":"A2YD53VKHR3BED"}
         ]"""
-
+        self.max_phraselen = 9
         json_annot = pd.read_json(self.arguments)
         self.captions = [p for p in json_annot["label"]]
         self.captions_vocab = {"THERE", "HAND", "ARE", "AND", "ON", "TILTING",
@@ -54,26 +54,27 @@ class TestTokenizer(unittest.TestCase):
                 phrase_encoded = tokenizer.encode_caption(self.phrase)
                 phrase_decoded = tokenizer.decode_caption(phrase_encoded)
                 expected_string = ["THERE", Tokenizer.UNK, "ONE", "HAND"]
-                pad_length = 9 if value is None or value > 8 else value + 1
+                pad_length = self.max_phraselen if (value is None) or (
+                    value >= self.max_phraselen) else value
                 self.assertEqual(phrase_decoded[:pad_length], expected_string +
                                  [Tokenizer.END] * (pad_length -
                                                     len(expected_string)))
 
-    def test_encode_decode_with_0_maxlen(self):
-        tokenizer = Tokenizer(self.captions, 0)
+    def test_encode_decode_with_1_maxlen(self):
+        tokenizer = Tokenizer(self.captions, 1)
         phrase_encoded = tokenizer.encode_caption(self.phrase)
         phrase_decoded = tokenizer.decode_caption(phrase_encoded)
         self.assertEqual(phrase_decoded, [Tokenizer.END])
 
     def test_encoding_length_equal_max_len(self):
-        for value in [None, 0, 5, 10]:
+        for value in [None, 1, 5, 10]:
             with self.subTest(captions=self.captions, user_maxlen=value):
                 tokenizer = Tokenizer(self.captions, value)
                 phrase_encoded = tokenizer.encode_caption(self.phrase)
                 self.assertEqual(len(phrase_encoded), tokenizer.maxlen)
 
     def test_get_string(self):
-        tokenizer = Tokenizer(self.captions, 4)
+        tokenizer = Tokenizer(self.captions, 5)
         first_chunk = ["THERE", tokenizer.UNK, "ONE", "HAND"]
         for remove_end in [True, False]:
             phrase_encoded = tokenizer.encode_caption(self.phrase)
@@ -87,22 +88,22 @@ class TestTokenizer(unittest.TestCase):
                 self.assertEqual(expected, string)
 
     def test_user_maxlen(self):
-        for value in [None, 0, 5, 10]:
+        for value in [None, 1, 5, 10]:
             with self.subTest(user_maxlen=value):
                 tokenizer = Tokenizer(user_maxlen=value)
                 self.assertEqual(tokenizer.maxlen,
-                                 None if value is None else value + 1)
+                                 None if value is None else value)
 
     def test_max_len(self):
         tokenizer = Tokenizer(self.captions)
-        self.assertEqual(tokenizer.maxlen, 9)
+        self.assertEqual(tokenizer.maxlen, self.max_phraselen)
 
     def test_user_maxlen_vs_caption_maxlen(self):
-        for value in [None, 0, 5, 10]:
+        for value in [None, 1, 5, 10]:
             with self.subTest(captions=self.captions, user_maxlen=value):
                 tokenizer = Tokenizer(self.captions, value)
-                self.assertEqual(tokenizer.maxlen,
-                                 9 if value is None or value > 8 else value + 1)
+                self.assertEqual(tokenizer.maxlen, self.max_phraselen if (
+                    value is None or value >= self.max_phraselen) else value)
 
     def test_assert_error_for_maxlen(self):
         tokenizer = Tokenizer()
@@ -111,7 +112,7 @@ class TestTokenizer(unittest.TestCase):
 
     @tempdir()
     def test_save_load(self, temp_dir):
-        for value in [None, 0, 5, 10]:
+        for value in [None, 1, 5, 10]:
             with self.subTest(captions=self.captions, user_maxlen=value):
                 tokenizer = Tokenizer(self.captions, value)
                 tokenizer.save_dictionaries(temp_dir.path)
@@ -133,14 +134,15 @@ class TestTokenizer(unittest.TestCase):
                 phrase_encoded = loading_tokenizer.encode_caption(self.phrase)
                 phrase_decoded = tokenizer.decode_caption(phrase_encoded)
                 expected_string = ["THERE", Tokenizer.UNK, "ONE", "HAND"]
-                pad_length = 9 if value is None or value > 8 else value + 1
+                pad_length = self.max_phraselen if (value is None) or (
+                    value >= self.max_phraselen) else value
                 self.assertEqual(phrase_decoded[:pad_length], expected_string +
                                  [Tokenizer.END] * (pad_length -
                                                     len(expected_string)))
 
     @tempdir()
-    def test_encode_decode_from_loaded_tokenizer_with_0_maxlen(self, temp_dir):
-        tokenizer = Tokenizer(self.captions, 0)
+    def test_encode_decode_from_loaded_tokenizer_with_1_maxlen(self, temp_dir):
+        tokenizer = Tokenizer(self.captions, 1)
         tokenizer.save_dictionaries(temp_dir.path)
         loading_tokenizer = Tokenizer()
         loading_tokenizer.load_dictionaries(temp_dir.path)
