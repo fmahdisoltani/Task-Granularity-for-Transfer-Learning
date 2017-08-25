@@ -6,45 +6,8 @@ NUM_SAMPLES = 1000
 TARGET_LABELS = [
     "Pretending to open [something] without actually opening it",
     "Opening [something]",
-
 ]
 
-TEMP_LABELS = [
-    "Tearing [something] just a little bit",
-    "Turning the camera left while filming [something]",
-    "Pulling [something] from right to left",
-    "Burying [something] in [something]",
-    "Pretending to pick [something] up",
-    "Scooping [something] up with [something]",
-    "Moving [something] up",
-    "Pushing [something] with [something]",
-    "Spinning [something] that quickly stops spinning",
-    "Uncovering [something]",
-    "Showing that [something] is inside [something]",
-    "Moving [something] away from [something]",
-    "Bending [something] so that it deforms",
-    "Closing [something]",
-    "Showing that [something] is inside [something]",
-    "Dropping [something] onto [something]",
-    "Picking [something] up",
-    "[Something] falling like a feather or paper",
-    "Taking [something] out of [something]",
-    "Dropping [something] into [something]",
-    "Turning the camera left while filming [something]",
-    "Pouring [something] into [something]",
-    "Pretending to turn [something] upside down",
-    "Pulling [something] out of [something]",
-    "Spilling [something] onto [something]",
-    "[Something] being deflected from [something]",
-    "Dropping [something] in front of [something]",
-    "Pretending to close [something] without actually closing it",
-    "Opening [something]",
-    "Covering [something] with [something]",
-    "Attaching [something] to [something]",
-    "Taking [something] out of [something]",
-    "[Something] falling like a rock",
-    "Closing [something]"
-]
 
 
 def create_subset_json(path, target_classes, num_samples=None):
@@ -88,7 +51,7 @@ if __name__ == "__main__":
                     "subset_validation_20170429.json.gz",
                     "subset_test_20170429.json.gz"]
 
-    print('number of labels in subset dataset : {}'.format(len(TARGET_LABELS)))
+    print('Number of labels in subset dataset : {}'.format(len(TARGET_LABELS)))
 
     for in_json, out_json in zip(input_jsons, output_jsons):
         print('Creating subset from {} to {}'.format(in_json, out_json))
