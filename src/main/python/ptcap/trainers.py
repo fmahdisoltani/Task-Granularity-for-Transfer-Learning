@@ -61,7 +61,7 @@ class Trainer(object):
         function_dict = OrderedDict()
         function_dict["loss"] = Metrics.compute_loss
 
-        function_dict["accuracy"] = Metrics.token_level_accuracy
+        function_dict["accuracy"] = Metrics.accuracy_namedtuple
 
         function_dict["first_accuracy"] = Metrics.first_token_accuracy
         return function_dict

@@ -17,7 +17,7 @@ class Metrics(object):
         for metric in self.functions_dict:
             self.metrics_dict["average_" + metric] = 0
 
-    def compute_metrics(self, parameters_list, count):
+    def compute_metrics(self, named_tuple, count):
         """
             Computes all the metrics provided by the functions_dict in __init__.
         Args:
@@ -29,15 +29,14 @@ class Metrics(object):
             moving average.
         """
 
-        self.run_metrics(parameters_list)
+        self.run_metrics(named_tuple)
         # Calculate a moving average of the metrics.
         self.metrics_dict = self.moving_average(self.metrics_dict, count)
         return self.metrics_dict
 
-    def run_metrics(self, parameters_list):
+    def run_metrics(self, named_tuple):
         for index, metric in enumerate(self.functions_dict):
-            self.metrics_dict[metric] = self.functions_dict[metric](
-                                                        *parameters_list[index])
+            self.metrics_dict[metric] = self.functions_dict[metric](named_tuple)
 
     def get_average_metrics(self):
         return {key: self.metrics_dict[key] for key in self.metrics_dict
@@ -49,7 +48,7 @@ class Metrics(object):
 
     @classmethod
     def first_token_accuracy(cls, outputs):
-        return cls.token_level_accuracy(outputs, 1)
+        return cls.accuracy_namedtuple(outputs, 1)
 
     @classmethod
     def moving_average(cls, metrics_dict, count):
@@ -62,7 +61,7 @@ class Metrics(object):
         return metrics_dict
 
     @classmethod
-    def token_level_accuracy(cls, outputs, num_tokens=None):
+    def accuracy_namedtuple(cls, outputs, num_tokens=None):
         return cls.token_level_accuracy(outputs.captions, outputs.predictions,
                                         num_tokens)
 
