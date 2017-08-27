@@ -10,8 +10,8 @@ Options:
 
 import ptcap.data.preprocessing as prep
 
-from torch.utils.data import DataLoader
 from docopt import docopt
+from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
@@ -19,14 +19,12 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.model.captioners import *
 from ptcap.losses import SequenceCrossEntropy
-from ptcap.trainers import Trainer
+from ptcap.model.captioners import *
 from rtorchn.preprocessing import CenterCropper
-
+from ptcap.trainers import Trainer
 
 if __name__ == '__main__':
-
     # Get argument
     args = docopt(__doc__)
 
@@ -41,7 +39,7 @@ if __name__ == '__main__':
     training_parser = JsonParser(training_path,
                                  config_obj.get('paths', 'videos_folder'))
     validation_parser = JsonParser(validation_path,
-                                 config_obj.get('paths', 'videos_folder'))
+                                   config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(training_parser.get_captions())
@@ -63,23 +61,23 @@ if __name__ == '__main__':
                             prep.PytorchTransposer()])
 
     val_preprocesser = Compose([CenterCropper([24, 96, 96]),
-                            prep.PadVideo([24, 96, 96]),
-                            prep.Float32Converter(),
-                            prep.PytorchTransposer()])
+                                prep.PadVideo([24, 96, 96]),
+                                prep.Float32Converter(),
+                                prep.PytorchTransposer()])
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocesser)
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-                                     tokenizer=tokenizer,
-                                     preprocess=val_preprocesser)
+                                       tokenizer=tokenizer,
+                                       preprocess=val_preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get('dataloaders', 'kwargs'))
 
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
-                            **config_obj.get('dataloaders', 'kwargs'))
+                                **config_obj.get('dataloaders', 'kwargs'))
 
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
