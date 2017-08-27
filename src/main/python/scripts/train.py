@@ -21,8 +21,8 @@ from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.model.captioners import *
-from rtorchn.preprocessing import CenterCropper
 from ptcap.trainers import Trainer
+from rtorchn.preprocessing import CenterCropper
 
 if __name__ == '__main__':
     # Get argument
@@ -102,4 +102,3 @@ if __name__ == '__main__':
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)
-
