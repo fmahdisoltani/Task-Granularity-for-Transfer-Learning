@@ -102,3 +102,4 @@ if __name__ == '__main__':
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)
+
