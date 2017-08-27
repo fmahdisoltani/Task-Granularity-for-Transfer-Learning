@@ -26,7 +26,7 @@ def create_subset_json(path, target_classes, num_samples=None):
     all_samples = open_json(path)
     for sample in all_samples:
         if sample['template'] in target_classes:
-            if not num_samples or counter < num_samples:
+            if num_samples is None or counter < num_samples:
                 new_json.append(sample)
                 counter += 1
 
@@ -35,11 +35,11 @@ def create_subset_json(path, target_classes, num_samples=None):
 
 def open_json(path):
     if path.endswith("gz"):
-        f = gzip.open(path, "rb")
-        loaded_json = json.loads(f.read().decode("utf-8"))
+        with gzip.open(path, "rb") as f:
+            loaded_json = json.loads(f.read().decode("utf-8"))
     else:
-        f = open(path)
-        loaded_json = json.load(f)
+        with open(path) as f:
+            loaded_json = json.load(f)
     return loaded_json
 
 
