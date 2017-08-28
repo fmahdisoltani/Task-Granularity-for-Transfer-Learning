@@ -12,9 +12,9 @@ TARGET_LABELS = [
 
 def create_subset_json(path, target_classes, num_samples=None):
     """
-    This method extracts 'num_samples' samples using a json annotation file
-    where each sample belong to one of the classes in target_classes.
-    If num_samples is None, it extracts all the samples in target_classes.
+        This method extracts 'num_samples' samples using a json annotation file
+        where each sample belong to one of the classes in target_classes.
+        If num_samples is None, it extracts all the samples in target_classes.
     """
 
     if num_samples:
