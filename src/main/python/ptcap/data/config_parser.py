@@ -1,3 +1,4 @@
+import os
 import yaml
 
 
@@ -19,7 +20,7 @@ class YamlConfig(object):
         return output
 
     def save(self, path):
-        with open(path, 'w') as f:
+        with open(os.path.join(path, "config.yaml"), "w") as f:
             yaml.dump(self.config_dict, f)
 
     @classmethod

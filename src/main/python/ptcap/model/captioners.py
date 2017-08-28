@@ -52,8 +52,6 @@ class CNN3dLSTM(EncoderDecoder):
     def __init__(self, encoder_output_size=128, embedding_size=31,
                  vocab_size=33, num_hidden_lstm=71, go_token=0, use_cuda=False,
                  gpus=None):
-        print("Line 54 " * 20)
-        print("gpus: {}".format(gpus))
 
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, gpus)

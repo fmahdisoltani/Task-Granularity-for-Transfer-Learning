@@ -8,21 +8,18 @@ from ptcap.checkpointers import Checkpointer
 
 
 class Trainer(object):
-    def __init__(self, model,
-                 loss_function, optimizer, tokenizer, checkpoint_path,
-                 pretrained_path=None, gpus=None):
+    def __init__(self, model, loss_function, optimizer, tokenizer,
+                 checkpoint_path, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        self.checkpointer = Checkpointer(checkpoint_path,
-                                         pretrained_path=pretrained_path)
-        init_state = self.checkpointer.load_model(model, optimizer, tokenizer)
+        self.checkpointer = Checkpointer(checkpoint_path)
+        init_state = self.checkpointer.load_model(folder, filename, model,
+                                                  optimizer, tokenizer)
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
-
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
-
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -59,7 +56,6 @@ class Trainer(object):
                   use_teacher_forcing=False, verbose=True):
 
         average_loss = 0.
-        print("")
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
