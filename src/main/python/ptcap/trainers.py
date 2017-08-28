@@ -8,14 +8,12 @@ from ptcap.checkpointers import Checkpointer
 
 
 class Trainer(object):
-    def __init__(self, model,
-                 loss_function, optimizer, tokenizer, checkpoint_path,
-                 pretrained_folder=None, pretraiend_filename=None, use_cuda=False):
+    def __init__(self, model, loss_function, optimizer, tokenizer,
+                 checkpoint_path, folder=None, filename=None, use_cuda=False):
 
         self.checkpointer = Checkpointer(checkpoint_path)
-        init_state = \
-            self.checkpointer.load_model(
-                pretrained_folder, pretraiend_filename, model, optimizer, tokenizer)
+        init_state = self.checkpointer.load_model(folder, filename, model,
+                                                  optimizer, tokenizer)
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
         self.model = self.model.cuda() if use_cuda else self.model
         self.loss_function = loss_function.cuda() if use_cuda else loss_function
@@ -46,17 +44,17 @@ class Trainer(object):
 
     def get_state_dict(self):
         return {
-                    'epoch': self.num_epochs,
-                    'model': self.model.state_dict(),
-                    'best_score': self.checkpointer.best_score,
-                    'optimizer': self.optimizer.state_dict(),
-                }
+            'epoch': self.num_epochs,
+            'model': self.model.state_dict(),
+            'best_score': self.checkpointer.best_score,
+            'optimizer': self.optimizer.state_dict(),
+        }
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
         average_loss = 0.
-        print("")
+        #print("")
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 

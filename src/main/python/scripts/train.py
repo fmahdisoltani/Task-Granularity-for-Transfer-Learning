@@ -22,9 +22,7 @@ from ptcap.losses import SequenceCrossEntropy
 from ptcap.trainers import Trainer
 import ptcap.data.preprocessing as prep
 
-
 if __name__ == '__main__':
-
     # Get argument
     args = docopt(__doc__)
 
@@ -80,11 +78,10 @@ if __name__ == '__main__':
     Checkpointer.save_meta(checkpoint_path, config_obj, tokenizer)
 
     # Trainer
-    path1 = "/home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/"
-
+    pretrained_folder = config_obj.get("paths", "pretrained_path")
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
-                      checkpoint_path, pretrained_folder=path1, pretraiend_filename= "model.best",
-                      use_cuda=use_cuda)
+                      checkpoint_path, folder= pretrained_folder,
+                      filename="model.best", use_cuda=use_cuda)
 
     # Train the Model
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
