@@ -47,7 +47,7 @@ if __name__ == '__main__':
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     use_cuda = config_obj.get('device', 'use_cuda')
-    checkpoint_path = config_obj.get('paths', 'checkpoint_folder')
+    checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
@@ -74,13 +74,12 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Prepare checkpoint directory and save config
-
-    Checkpointer.save_meta(checkpoint_path, config_obj, tokenizer)
+    Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
-                      checkpoint_path, folder= pretrained_folder,
+                      checkpoint_folder, folder= pretrained_folder,
                       filename="model.best", use_cuda=use_cuda)
 
     # Train the Model

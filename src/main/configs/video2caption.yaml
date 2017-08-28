@@ -1,13 +1,13 @@
 paths:
   videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
   annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample2/
 
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path:
+  pretrained_path:  /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
 device:
   use_cuda: &use_cuda True
@@ -21,6 +21,7 @@ dataloaders:
 model:
   type: RtorchnCaptioner
   kwargs: {use_cuda: *use_cuda}
+  resume:
 
 training:
   num_epochs: 200
