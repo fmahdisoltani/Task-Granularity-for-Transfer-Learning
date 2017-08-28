@@ -19,8 +19,7 @@ class YamlConfig(object):
         return output
 
     def save(self, path):
-        with open(os.path.join(path, "cofig.yaml"), "w") as f:
-        # with open(path, 'w') as f:
+        with open(os.path.join(path, "config.yaml"), "w") as f:
             yaml.dump(self.config_dict, f)
 
     @classmethod
