@@ -14,7 +14,8 @@ class Checkpointer(object):
         if self.higher_is_better:
             self.best_score *= -1
 
-    def load_model(self, folder, filename, model, optimizer, tokenizer):
+    def load_model(self, model, optimizer, tokenizer,
+                   folder=None, filename=None):
         pretrained_path = os.path.join(folder, filename) if folder else None
         init_epoch = 0
         if pretrained_path is None:
