@@ -63,7 +63,8 @@ class MetricsOperator(object):
                 if "average" in key}
 
     def moving_average(self, metrics_dict, count):
-        for metric in metrics_dict:
+        metrics_list = list(metrics_dict.keys())
+        for metric in metrics_list:
             average_metric = "average_" + metric
             self.metrics_dict[average_metric] += (
                 (metrics_dict[metric] - self.metrics_dict[average_metric])

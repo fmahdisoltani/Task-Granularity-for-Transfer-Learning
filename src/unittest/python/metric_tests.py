@@ -18,8 +18,8 @@ class MetricTests(unittest.TestCase):
 
     def test_input_normal(self):
         # Test when the moving average is getting random input
-        metrics_operator = MetricsOperator(OrderedDict([("loss",
-                                                         lambda x: x)]))
+        metrics_operator = MetricsOperator(
+            OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
         input_list = []
 
         for count in range(self.num_epochs):
@@ -34,8 +34,8 @@ class MetricTests(unittest.TestCase):
 
     def test_input_same(self):
         # Test when the moving average is getting the same input (0 and 1 here)
-        metrics_operator = MetricsOperator(OrderedDict([("loss",
-                                                         lambda x: x)]))
+        metrics_operator = MetricsOperator(
+            OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
 
         for value in range(2):
             for count in range(self.num_epochs):
