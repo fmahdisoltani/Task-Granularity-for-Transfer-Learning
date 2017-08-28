@@ -26,8 +26,8 @@ class MetricsOperator(object):
         """
             Initializes metrics_dict and functions_dict.
         Args:
-            functions_dict: An OrderedDict of string keys and function values
-                containing the functions and their corresponding names.
+            functions_dict: An OrderedDict whose keys are strings and values are
+                the functions that will be applied.
         """
 
         self.metrics_dict = OrderedDict()
