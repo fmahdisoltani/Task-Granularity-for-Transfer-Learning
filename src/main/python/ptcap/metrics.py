@@ -6,8 +6,8 @@ def accuracy_namedtuple(outputs, num_tokens=None):
                                 num_tokens)
 
 
-def compute_loss(named_tuple):
-    return named_tuple.loss.data.cpu().numpy()[0]
+def compute_loss(metric_attr):
+    return metric_attr.loss.data.cpu().numpy()[0]
 
 
 def first_token_accuracy(outputs):
@@ -30,12 +30,12 @@ class MetricsOperator(object):
                 the functions that will be applied.
         """
 
-        self.metrics_dict = OrderedDict()
         self.functions_dict = functions_dict
+        self.metrics_dict = OrderedDict()
         for metric in self.functions_dict:
             self.metrics_dict["average_" + metric] = 0
 
-    def compute_metrics(self, named_tuple, count):
+    def compute_metrics(self, metric_attr, count):
         """
             Computes all the metrics provided by the functions_dict in __init__.
         Args:
@@ -47,15 +47,15 @@ class MetricsOperator(object):
             moving average.
         """
 
-        metrics_dict = self.run_metrics(named_tuple)
+        metrics_dict = self.run_metrics(metric_attr)
         # Calculate a moving average of the metrics.
         metrics_dict = self.moving_average(metrics_dict, count)
         return metrics_dict
 
-    def run_metrics(self, named_tuple):
+    def run_metrics(self, metric_attr):
         metrics_dict = OrderedDict()
         for index, metric in enumerate(self.functions_dict):
-            metrics_dict[metric] = self.functions_dict[metric](named_tuple)
+            metrics_dict[metric] = self.functions_dict[metric](metric_attr)
         return metrics_dict
 
     def get_average_metrics(self):
