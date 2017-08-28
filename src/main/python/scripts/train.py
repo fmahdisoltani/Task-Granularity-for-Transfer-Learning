@@ -8,8 +8,10 @@ Options:
   -h --help              Show this screen.
 """
 
-from torch.utils.data import DataLoader
+import ptcap.data.preprocessing as prep
+
 from docopt import docopt
+from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
@@ -17,14 +19,12 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.model.captioners import *
 from ptcap.losses import SequenceCrossEntropy
+from ptcap.model.captioners import *
 from ptcap.trainers import Trainer
-import ptcap.data.preprocessing as prep
-
+from rtorchn.preprocessing import CenterCropper
 
 if __name__ == '__main__':
-
     # Get argument
     args = docopt(__doc__)
 
@@ -33,10 +33,13 @@ if __name__ == '__main__':
 
     # Find paths to training, validation and test sets
     training_path = config_obj.get('paths', 'train_annot')
+    validation_path = config_obj.get('paths', 'validation_annot')
 
     # Load Json annotation files
     training_parser = JsonParser(training_path,
                                  config_obj.get('paths', 'videos_folder'))
+    validation_parser = JsonParser(validation_path,
+                                   config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(training_parser.get_captions())
@@ -58,15 +61,25 @@ if __name__ == '__main__':
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
+    val_preprocesser = Compose([CenterCropper([24, 96, 96]),
+                                prep.PadVideo([24, 96, 96]),
+                                prep.Float32Converter(),
+                                prep.PytorchTransposer()])
+
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocesser)
 
-    dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
+    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+                                       tokenizer=tokenizer,
+                                       preprocess=val_preprocesser)
+
+    dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get('dataloaders', 'kwargs'))
 
-    print("gpus: {}".format(gpus))
-    print("Line 69 " *20)
+    val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
+                                **config_obj.get('dataloaders', 'kwargs'))
+
 
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
@@ -90,6 +103,6 @@ if __name__ == '__main__':
                         gpus=gpus)
 
     # Train the Model
-    trainer.train(dataloader, dataloader, num_epoch, frequency_valid,
+    trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
                   verbose_valid)
