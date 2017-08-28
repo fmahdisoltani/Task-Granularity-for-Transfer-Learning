@@ -1,7 +1,27 @@
 from collections import OrderedDict
 
 
-class Metrics(object):
+def accuracy_namedtuple(outputs, num_tokens=None):
+    return token_level_accuracy(outputs.captions, outputs.predictions,
+                                num_tokens)
+
+
+def compute_loss(named_tuple):
+    return named_tuple.loss.data.cpu().numpy()[0]
+
+
+def first_token_accuracy(outputs):
+    return accuracy_namedtuple(outputs, 1)
+
+
+def token_level_accuracy(captions, predictions, num_tokens=None):
+    equal_values = captions[:, 0:num_tokens].eq(
+        predictions[:, 0:num_tokens])
+    accuracy = equal_values.float().mean() * 100.0
+    return accuracy
+
+
+class MetricsOperator(object):
     def __init__(self, functions_dict):
         """
             Initializes metrics_dict and functions_dict.
@@ -12,8 +32,6 @@ class Metrics(object):
 
         self.metrics_dict = OrderedDict()
         self.functions_dict = functions_dict
-        for metric in self.functions_dict:
-            self.metrics_dict[metric] = 0
         for metric in self.functions_dict:
             self.metrics_dict["average_" + metric] = 0
 
@@ -29,45 +47,26 @@ class Metrics(object):
             moving average.
         """
 
-        self.run_metrics(named_tuple)
+        metrics_dict = self.run_metrics(named_tuple)
         # Calculate a moving average of the metrics.
-        self.metrics_dict = self.moving_average(self.metrics_dict, count)
-        return self.metrics_dict
+        metrics_dict = self.moving_average(metrics_dict, count)
+        return metrics_dict
 
     def run_metrics(self, named_tuple):
+        metrics_dict = OrderedDict()
         for index, metric in enumerate(self.functions_dict):
-            self.metrics_dict[metric] = self.functions_dict[metric](named_tuple)
+            metrics_dict[metric] = self.functions_dict[metric](named_tuple)
+        return metrics_dict
 
     def get_average_metrics(self):
         return {key: self.metrics_dict[key] for key in self.metrics_dict
                 if "average" in key}
 
-    @classmethod
-    def compute_loss(cls, named_tuple):
-        return named_tuple.loss.data.cpu().numpy()[0]
-
-    @classmethod
-    def first_token_accuracy(cls, outputs):
-        return cls.accuracy_namedtuple(outputs, 1)
-
-    @classmethod
-    def moving_average(cls, metrics_dict, count):
+    def moving_average(self, metrics_dict, count):
         for metric in metrics_dict:
             average_metric = "average_" + metric
-            if average_metric in metrics_dict:
-                metrics_dict[average_metric] += (
-                    (metrics_dict[metric] - metrics_dict[average_metric])
-                    / count)
+            self.metrics_dict[average_metric] += (
+                (metrics_dict[metric] - self.metrics_dict[average_metric])
+                / count)
+            metrics_dict[average_metric] = self.metrics_dict[average_metric]
         return metrics_dict
-
-    @classmethod
-    def accuracy_namedtuple(cls, outputs, num_tokens=None):
-        return cls.token_level_accuracy(outputs.captions, outputs.predictions,
-                                        num_tokens)
-
-    @classmethod
-    def token_level_accuracy(cls, captions, predictions, num_tokens=None):
-        equal_values = captions[:, 0:num_tokens].eq(
-                                                predictions[:, 0:num_tokens])
-        accuracy = equal_values.float().mean() * 100.0
-        return accuracy

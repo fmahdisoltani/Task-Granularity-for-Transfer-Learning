@@ -8,7 +8,10 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.metrics import Metrics
+from ptcap.metrics import MetricsOperator
+from ptcap.metrics import accuracy_namedtuple
+from ptcap.metrics import compute_loss
+from ptcap.metrics import first_token_accuracy
 
 
 class Trainer(object):
@@ -60,18 +63,18 @@ class Trainer(object):
 
     def get_function_dict(self):
         function_dict = OrderedDict()
-        function_dict["loss"] = Metrics.compute_loss
+        function_dict["loss"] = compute_loss
 
-        function_dict["accuracy"] = Metrics.accuracy_namedtuple
+        function_dict["accuracy"] = accuracy_namedtuple
 
-        function_dict["first_accuracy"] = Metrics.first_token_accuracy
+        function_dict["first_accuracy"] = first_token_accuracy
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
 
         MetricAttr = namedtuple("MetricsAttr", "loss captions predictions")
-        metrics = Metrics(self.get_function_dict())
+        metrics = MetricsOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -95,9 +98,10 @@ class Trainer(object):
 
             epoch_outputs = MetricAttr(loss, captions, predictions)
 
-            metrics.compute_metrics(epoch_outputs, sample_counter + 1)
+            metrics_dict = metrics.compute_metrics(epoch_outputs,
+                                                   sample_counter + 1)
 
-            prt.print_stuff(metrics.metrics_dict, self.tokenizer, is_training,
+            prt.print_stuff(metrics_dict, self.tokenizer, is_training,
                             captions, predictions, epoch, sample_counter,
                             len(dataloader), verbose)
 
