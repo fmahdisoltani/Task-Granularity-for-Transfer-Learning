@@ -44,7 +44,7 @@ class Checkpointer(object):
                                        filename + ".latest"))
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
-            print("Saving best model, score: {} @ epoch {}".
+            print("\nSaving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
             torch.save(state, os.path.join(self.checkpoint_folder,
                                            filename + ".best"))
