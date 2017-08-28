@@ -1,5 +1,5 @@
 import yaml
-
+import os
 
 class YamlConfig(object):
 
@@ -19,7 +19,8 @@ class YamlConfig(object):
         return output
 
     def save(self, path):
-        with open(path, 'w') as f:
+        with open(os.path.join(path, "cofig.yaml"), "w") as f:
+        # with open(path, 'w') as f:
             yaml.dump(self.config_dict, f)
 
     @classmethod

@@ -76,11 +76,14 @@ if __name__ == '__main__':
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Prepare checkpoint directory and save config
-    Checkpointer.save_meta(config_obj, tokenizer)
+
+    Checkpointer.save_meta(checkpoint_path, config_obj, tokenizer)
 
     # Trainer
+    path1 = "/home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/"
+
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
-                      checkpoint_path, pretrained_path=pretrained_path,
+                      checkpoint_path, pretrained_folder=path1, pretraiend_filename= "model.best",
                       use_cuda=use_cuda)
 
     # Train the Model
