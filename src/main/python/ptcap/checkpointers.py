@@ -44,14 +44,6 @@ class Checkpointer(object):
             print("No checkpoint found at {}".format(pretrained_path))
         return init_epoch, model, optimizer, tokenizer
 
-    @classmethod
-    def save_meta(cls, folder, config_obj, tokenizer):
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-
-        config_obj.save(folder)
-        tokenizer.save_dictionaries(folder)
-
     def save_model(self, state, score, folder=None):
         if not folder:
             folder = self.checkpoint_folder
@@ -61,3 +53,11 @@ class Checkpointer(object):
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
             torch.save(state, os.path.join(folder, "model.best"))
+
+    @classmethod
+    def save_meta(cls, folder, config_obj, tokenizer):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        config_obj.save(folder)
+        tokenizer.save_dictionaries(folder)
