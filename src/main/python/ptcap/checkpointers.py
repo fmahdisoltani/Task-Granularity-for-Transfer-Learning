@@ -14,17 +14,6 @@ class Checkpointer(object):
         if self.higher_is_better:
             self.best_score *= -1
 
-
-    def init_model(self, pretrained_path, model, optimizer, tokenizer):
-        # optionally resume from a checkpoint
-        if pretrained_path:
-            init_epoch, model, optimizer, tokenizer = \
-                self.load_model(pretrained_path, model, optimizer, tokenizer)
-        else:
-            init_epoch = 0
-
-        return init_epoch, model, optimizer, tokenizer
-
     def load_model(self, folder, filename, model, optimizer, tokenizer):
         pretrained_path = os.path.join(folder, filename) if folder else None
         init_epoch = 0
