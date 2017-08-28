@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from rtorchn.models.captioning.vid2caption import DeepNet
+from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import (CNN3dEncoder,
                                   CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
@@ -20,10 +20,9 @@ class RtorchnCaptioner(Captioner):
     Typical kwargs: is_training=True, use_cuda=False, gpus=[0]
     """
 
-    def __init__(self, vocab_size, go_token=0, batchnorm=True, stateful=False,
-                 **kwargs):
+    def __init__(self, vocab_size):
         super(RtorchnCaptioner, self).__init__()
-        self.captioner = DeepNet(vocab_size, batchnorm, stateful, **kwargs)
+        self.captioner = RtorchnCap(vocab_size)
 
     def forward(self, video_batch, use_teacher_forcing=True):
         return self.captioner.forward(video_batch)
