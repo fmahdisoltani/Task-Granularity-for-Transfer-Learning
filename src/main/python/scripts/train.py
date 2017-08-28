@@ -62,10 +62,15 @@ if __name__ == '__main__':
     dataloader = DataLoader(training_set, shuffle=True, drop_last=True,
                             **config_obj.get('dataloaders', 'kwargs'))
 
+    print("gpus: {}".format(gpus))
+    print("Line 69 " *20)
+
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
-                          use_cuda=use_cuda)
+                          gpus=gpus)
+    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
+    print("Line 73 " * 20)
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
@@ -81,6 +86,9 @@ if __name__ == '__main__':
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder= pretrained_folder,
                       filename="model.best", use_cuda=use_cuda)
+                      checkpoint_path, pretrained_path=pretrained_path,
+                      gpus=gpus)
+
 
     # Train the Model
     trainer.train(dataloader, dataloader, num_epoch, frequency_valid,

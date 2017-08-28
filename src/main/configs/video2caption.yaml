@@ -10,7 +10,6 @@ paths:
   pretrained_path:  /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
 device:
-  use_cuda: &use_cuda True
   synchronize_gpu: &sync True
   gpus: [0]
 
@@ -21,7 +20,6 @@ dataloaders:
 model:
   type: RtorchnCaptioner
   kwargs: {use_cuda: *use_cuda}
-  resume:
 
 training:
   num_epochs: 200
