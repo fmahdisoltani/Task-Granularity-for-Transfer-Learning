@@ -14,8 +14,8 @@ class Trainer(object):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
-        init_state = self.checkpointer.load_model(folder, filename, model,
-                                                  optimizer, tokenizer)
+        init_state = self.checkpointer.load_model( model,
+                                                  optimizer, tokenizer, folder, filename)
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
