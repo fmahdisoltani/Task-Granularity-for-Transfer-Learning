@@ -8,10 +8,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import ScoresOperator
-from ptcap.scores import token_accuracy
-from ptcap.scores import loss_to_numpy
-from ptcap.scores import first_token_accuracy
+from ptcap.metrics import (first_token_accuracy, loss_to_numpy, ScoresOperator,
+                           token_accuracy)
 
 
 class Trainer(object):
