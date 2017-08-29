@@ -1,4 +1,3 @@
-
 def print_captions_and_predictions(tokenizer, captions, predictions):
     for cap, pred in zip(captions, predictions):
         decoded_cap = tokenizer.decode_caption(cap.data.numpy())
@@ -21,12 +20,6 @@ def print_stuff(scores_dict, tokenizer, is_training, captions, predictions,
     captions = captions.cpu()
     predictions = predictions.cpu()
 
-    scores_dict = OrderedDict()
-
-    scores_dict["loss"] = loss
-    scores_dict["accuracy"] = token_level_accuracy(captions, predictions).data
-    scores_dict["first_token_accuracy"] = token_level_accuracy(captions,
-                                                         predictions, 1).data
     phase = "Training" if is_training else "Validating"
 
     print("\rEpoch {} - {} - batch {}/{} -".
