@@ -8,10 +8,10 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.metrics import MetricsOperator
-from ptcap.metrics import token_accuracy
-from ptcap.metrics import loss_to_numpy
-from ptcap.metrics import first_token_accuracy
+from ptcap.scores import ScoresOperator
+from ptcap.scores import token_accuracy
+from ptcap.scores import loss_to_numpy
+from ptcap.scores import first_token_accuracy
 
 
 class Trainer(object):
@@ -44,7 +44,7 @@ class Trainer(object):
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                average_metrics = self.run_epoch(
+                average_scores = self.run_epoch(
                     valid_dataloader, epoch + 1, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
@@ -54,7 +54,7 @@ class Trainer(object):
 
                 # remember best loss and save checkpoint
                 self.checkpointer.save_model(state_dict,
-                                             average_metrics["average_loss"])
+                                             average_scores["average_loss"])
 
     def get_state_dict(self):
         return {
@@ -76,8 +76,8 @@ class Trainer(object):
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
       
-        MetricAttr = namedtuple("MetricsAttr", "loss captions predictions")
-        metrics = MetricsOperator(self.get_function_dict())
+        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
+        scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -99,17 +99,17 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            epoch_outputs = MetricAttr(loss, captions, predictions)
+            epoch_outputs = ScoreAttr(loss, captions, predictions)
 
-            metrics_dict = metrics.compute_metrics(epoch_outputs,
+            scores_dict = scores.compute_scores(epoch_outputs,
                                                    sample_counter + 1)
 
-            prt.print_stuff(metrics_dict, self.tokenizer, is_training,
+            prt.print_stuff(scores_dict, self.tokenizer, is_training,
                             captions, predictions, epoch, sample_counter,
                             len(dataloader), verbose)
 
-        # Take only the average of the metrics in metrics_dict
-        average_metrics_dict = metrics.get_average_metrics()
-        return average_metrics_dict
+        # Take only the average of the scores in scores_dict
+        average_scores_dict = scores.get_average_scores()
+        return average_scores_dict
 
 
