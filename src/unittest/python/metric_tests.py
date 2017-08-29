@@ -17,7 +17,9 @@ class MetricTests(unittest.TestCase):
         self.num_epochs = 3
 
     def test_input_normal(self):
-        # Test when the moving average is getting random input
+        """
+            Test when the moving average is getting random input.
+        """
         metrics_operator = MetricsOperator(
             OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
         input_list = []
@@ -33,7 +35,10 @@ class MetricTests(unittest.TestCase):
             self.assertAlmostEqual(metrics_dict["average_loss"], expected, 14)
 
     def test_input_same(self):
-        # Test when the moving average is getting the same input (0 and 1 here)
+        """
+            Test when the moving average is getting the same input (0 and 1
+            here).
+        """
         metrics_operator = MetricsOperator(
             OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
 
