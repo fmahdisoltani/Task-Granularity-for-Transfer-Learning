@@ -16,6 +16,7 @@ class Trainer(object):
         self.checkpointer = Checkpointer(checkpoint_path)
         init_state = self.checkpointer.load_model( model,
                                                   optimizer, tokenizer, folder, filename)
+
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
@@ -41,7 +42,9 @@ class Trainer(object):
 
                 state_dict = self.get_state_dict()
                 # remember best loss and save checkpoint
-                self.checkpointer.save_model(state_dict, average_loss)
+                self.checkpointer.save_best(state_dict, average_loss)
+                self.checkpointer.save_latest(state_dict, average_loss)
+
 
     def get_state_dict(self):
         return {
