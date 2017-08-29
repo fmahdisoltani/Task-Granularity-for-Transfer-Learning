@@ -34,8 +34,7 @@ def print_stuff(loss, tokenizer, is_training, captions, predictions,
     phase = "Training" if is_training else "Validating"
 
     print("\rEpoch {} - {} - batch {}/{} -".
-          format(epoch_counter, phase, sample_counter + 1, total_samples),
-          end=" ")
+          format(epoch_counter, phase, sample_counter, total_samples),
 
     print_dict(scores_dict)
     if verbose:
