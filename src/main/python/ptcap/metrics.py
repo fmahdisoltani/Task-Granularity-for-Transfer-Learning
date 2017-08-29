@@ -1,17 +1,17 @@
 from collections import OrderedDict
 
 
-def accuracy_namedtuple(outputs, num_tokens=None):
+def token_accuracy(outputs, num_tokens=None):
     return token_level_accuracy(outputs.captions, outputs.predictions,
                                 num_tokens)
 
 
-def compute_loss(metric_attr):
+def loss_to_numpy(metric_attr):
     return metric_attr.loss.data.cpu().numpy()[0]
 
 
 def first_token_accuracy(outputs):
-    return accuracy_namedtuple(outputs, 1)
+    return token_accuracy(outputs, 1)
 
 
 def token_level_accuracy(captions, predictions, num_tokens=None):

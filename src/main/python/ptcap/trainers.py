@@ -9,8 +9,8 @@ from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.metrics import MetricsOperator
-from ptcap.metrics import accuracy_namedtuple
-from ptcap.metrics import compute_loss
+from ptcap.metrics import token_accuracy
+from ptcap.metrics import loss_to_numpy
 from ptcap.metrics import first_token_accuracy
 
 
@@ -66,9 +66,9 @@ class Trainer(object):
 
     def get_function_dict(self):
         function_dict = OrderedDict()
-        function_dict["loss"] = compute_loss
+        function_dict["loss"] = loss_to_numpy
 
-        function_dict["accuracy"] = accuracy_namedtuple
+        function_dict["accuracy"] = token_accuracy
 
         function_dict["first_accuracy"] = first_token_accuracy
         return function_dict
