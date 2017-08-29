@@ -84,7 +84,7 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
 
             prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
-                            predictions, epoch, sample_counter, len(dataloader),
-                            verbose)
+                            predictions, epoch, sample_counter + 1,
+                            len(dataloader), verbose)
 
         return average_loss
