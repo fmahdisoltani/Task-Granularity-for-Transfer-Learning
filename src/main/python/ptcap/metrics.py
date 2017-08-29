@@ -31,9 +31,8 @@ class ScoresOperator(object):
         """
 
         self.functions_dict = functions_dict
-        self.scores_dict = OrderedDict()
-        for score in self.functions_dict:
-            self.scores_dict["average_" + score] = 0
+        self.scores_dict = OrderedDict({"average_" + score: 0 for score in
+                            self.functions_dict})
 
     def compute_scores(self, score_attr, count):
         """
@@ -54,8 +53,8 @@ class ScoresOperator(object):
 
     def run_scores(self, score_attr):
         scores_dict = OrderedDict()
-        for index, score in enumerate(self.functions_dict):
-            scores_dict[score] = self.functions_dict[score](score_attr)
+        for score, score_function in self.functions_dict.items():
+            scores_dict[score] = score_function(score_attr)
         return scores_dict
 
     def get_average_scores(self):
