@@ -27,15 +27,14 @@ class Trainer(object):
               verbose_valid=False):
 
         for epoch in range(num_epoch):
-            self.num_epochs += 1
 
-            self.run_epoch(train_dataloader, epoch + 1, is_training=True,
+            self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            if (epoch + 1) % frequency_valid == 0:
+            if epoch % frequency_valid == 0:
                 average_loss = self.run_epoch(
-                    valid_dataloader, epoch + 1, is_training=False,
+                    valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
@@ -80,7 +79,7 @@ class Trainer(object):
             _, predictions = torch.max(probs, dim=2)
 
             prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
-                            predictions, epoch, sample_counter, len(dataloader),
-                            verbose)
+                            predictions, epoch + 1, sample_counter + 1,
+                            len(dataloader), verbose)
 
         return average_loss
