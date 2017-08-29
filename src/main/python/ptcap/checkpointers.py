@@ -1,3 +1,4 @@
+import csv
 import os
 import numpy as np
 
@@ -51,3 +52,12 @@ class Checkpointer(object):
 
         config_obj.save(folder)
         tokenizer.save_dictionaries(folder)
+
+    def save_value_csv(self, filename, value):
+        ofile = open(os.path.join(self.checkpoint_folder, filename), "a")
+
+        writer = csv.writer(ofile, delimiter=",", quoting=csv.QUOTE_ALL)
+
+        writer.writerow(value)
+
+        ofile.close()
