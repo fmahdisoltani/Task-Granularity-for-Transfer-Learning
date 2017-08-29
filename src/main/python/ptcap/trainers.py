@@ -19,6 +19,7 @@ class Trainer(object):
         self.checkpointer = Checkpointer(checkpoint_path)
         init_state = self.checkpointer.load_model( model,
                                                   optimizer, tokenizer, folder, filename)
+
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
@@ -30,7 +31,6 @@ class Trainer(object):
               verbose_valid=False):
 
         for epoch in range(num_epoch):
-            #self.num_epochs += 1
 
             average_loss_train = self.run_epoch(train_dataloader, epoch,
                             is_training=True,
@@ -39,6 +39,7 @@ class Trainer(object):
 
             if (epoch) % frequency_valid == 0:
                 average_loss_valid = self.run_epoch(
+
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
@@ -52,6 +53,7 @@ class Trainer(object):
 
             self.checkpointer.save_value_csv("train_loss.csv",
                                              [epoch, average_loss_train])
+
 
 
 

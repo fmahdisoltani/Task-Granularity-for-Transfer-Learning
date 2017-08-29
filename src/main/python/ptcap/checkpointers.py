@@ -17,7 +17,8 @@ class Checkpointer(object):
 
     def load_model(self, model, optimizer, tokenizer,
                    folder=None, filename=None):
-        pretrained_path = os.path.join(folder, filename) if folder else None
+        pretrained_path = None if not folder or not filename \
+            else os.path.join(folder, filename)
         init_epoch = 0
         if pretrained_path is None:
             print("Running the model from scratch")
@@ -35,15 +36,22 @@ class Checkpointer(object):
             print("No checkpoint found at {}".format(pretrained_path))
         return init_epoch, model, optimizer, tokenizer
 
-    def save_model(self, state, score, folder=None):
+    def save_best(self, state, score, folder=None, filename="model.best"):
         if not folder:
             folder = self.checkpoint_folder
-        torch.save(state, os.path.join(folder, "model.latest"))
+        torch.save(state, os.path.join(folder, filename))
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
             torch.save(state, os.path.join(folder, "model.best"))
+
+    def save_latest(self, state, score, folder=None, filename="model.latest"):
+        if not folder:
+            folder = self.checkpoint_folder
+        print("Saving latest model, score: {} @ epoch {}".
+              format(score, state["epoch"]))
+        torch.save(state, os.path.join(folder, filename))
 
     @classmethod
     def save_meta(cls, folder, config_obj, tokenizer):
