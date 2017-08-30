@@ -2,9 +2,6 @@ import torch
 
 import ptcap.printers as prt
 
-import tables
-
-
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
@@ -32,14 +29,12 @@ class Trainer(object):
 
         for epoch in range(num_epoch):
 
-            average_loss_train = self.run_epoch(train_dataloader, epoch,
-                            is_training=True,
-                            use_teacher_forcing=teacher_force_train,
-                            verbose=verbose_train)
+            self.run_epoch(train_dataloader, epoch, is_training=True,
+                           use_teacher_forcing=teacher_force_train,
+                           verbose=verbose_train)
 
-            if (epoch) % frequency_valid == 0:
-                average_loss_valid = self.run_epoch(
-
+            if epoch % frequency_valid == 0:
+                average_loss = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
@@ -47,14 +42,8 @@ class Trainer(object):
 
                 state_dict = self.get_state_dict()
                 # remember best loss and save checkpoint
-                self.checkpointer.save_model(state_dict, average_loss_valid)
-                self.checkpointer.save_value_csv("valid_loss.csv",
-                                                 [epoch, average_loss_valid])
-
-            self.checkpointer.save_value_csv("train_loss.csv",
-                                             [epoch, average_loss_train])
-
-
+                self.checkpointer.save_best(state_dict, average_loss)
+                self.checkpointer.save_latest(state_dict, average_loss)
 
 
     def get_state_dict(self):
