@@ -8,11 +8,12 @@ Options:
   -h --help              Show this screen.
 """
 
-import ptcap.data.preprocessing as prep
 
 from docopt import docopt
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
+
+import ptcap.data.preprocessing as prep
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.tokenizer import Tokenizer
