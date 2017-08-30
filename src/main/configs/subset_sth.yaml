@@ -1,0 +1,39 @@
+paths:
+  videos_folder: &vidpath /data/20bn-objects/videos_npz
+  annot_folder: /data/20bn-objects/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth/
+
+  train_annot:  /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_train_20170429.json.gz
+  validation_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_validation_20170429.json.gz
+  test_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_test_20170429.json.gz
+
+  pretrained_path:
+
+device:
+  use_cuda: &use_cuda True
+  synchronize_gpu: &sync True
+  gpus: [0]
+
+dataloaders:
+  batch_size: &b 16
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+
+model:
+  type:
+  kwargs: {use_cuda: *use_cuda}
+
+training:
+  num_epochs: 2000
+  learning_rate: &lr 0.01
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 1
+  teacher_force: False
+  verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
+
