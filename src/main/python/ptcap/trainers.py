@@ -2,9 +2,14 @@ import torch
 
 import ptcap.printers as prt
 
+from collections import namedtuple
+from collections import OrderedDict
+
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.metrics import (first_token_accuracy, loss_to_numpy, ScoresOperator,
+                           token_accuracy)
 
 
 class Trainer(object):
@@ -34,17 +39,17 @@ class Trainer(object):
                            verbose=verbose_train)
 
             if epoch % frequency_valid == 0:
-                average_loss = self.run_epoch(
+                average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
 
                 state_dict = self.get_state_dict()
-                # remember best loss and save checkpoint
-                self.checkpointer.save_best(state_dict, average_loss)
-                self.checkpointer.save_latest(state_dict, average_loss)
 
+                # remember best loss and save checkpoint
+                self.checkpointer.save_best(state_dict, average_scores["average_loss"])
+                self.checkpointer.save_latest(state_dict, average_scores["average_loss"])
 
     def get_state_dict(self):
         return {
@@ -54,10 +59,20 @@ class Trainer(object):
             'optimizer': self.optimizer.state_dict(),
         }
 
+    def get_function_dict(self):
+        function_dict = OrderedDict()
+        function_dict["loss"] = loss_to_numpy
+
+        function_dict["accuracy"] = token_accuracy
+
+        function_dict["first_accuracy"] = first_token_accuracy
+        return function_dict
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-
-        average_loss = 0.
+      
+        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
+        scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -68,11 +83,6 @@ class Trainer(object):
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
-            # Calculate a moving average of the loss
-            average_loss += ((loss.data.cpu().numpy() - average_loss) /
-                             (sample_counter + 1))
-            # average_loss = loss
-
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
@@ -81,8 +91,18 @@ class Trainer(object):
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
 
+            captions = captions.cpu()
+            predictions = predictions.cpu()
+
+            batch_outputs = ScoreAttr(loss, captions, predictions)
+
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                sample_counter + 1)
+
             prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
                             predictions, epoch + 1, sample_counter + 1,
                             len(dataloader), verbose)
 
-        return average_loss
+        # Take only the average of the scores in scores_dict
+        average_scores_dict = scores.get_average_scores()
+        return average_scores_dict
