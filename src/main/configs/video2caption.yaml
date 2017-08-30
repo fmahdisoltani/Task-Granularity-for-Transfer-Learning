@@ -6,7 +6,6 @@ paths:
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
   test_annot: *train_annot
-
   pretrained_path:
 
 device:
@@ -34,4 +33,3 @@ validation:
 criteria:
   score: loss
   higher_is_better: False
-
