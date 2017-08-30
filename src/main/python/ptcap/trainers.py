@@ -97,10 +97,10 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            epoch_outputs = ScoreAttr(loss, captions, predictions)
+            batch_outputs = ScoreAttr(loss, captions, predictions)
 
-            scores_dict = scores.compute_scores(epoch_outputs,
-                                                   sample_counter + 1)
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                sample_counter + 1)
 
             prt.print_stuff(scores_dict, self.tokenizer, is_training,
                             captions, predictions, epoch, sample_counter,

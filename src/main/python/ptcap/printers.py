@@ -17,9 +17,6 @@ def print_dict(scores_dict):
 def print_stuff(scores_dict, tokenizer, is_training, captions, predictions,
                 epoch_counter, sample_counter, total_samples, verbose=True):
 
-    captions = captions.cpu()
-    predictions = predictions.cpu()
-
     phase = "Training" if is_training else "Validating"
 
     print("\rEpoch {} - {} - batch {}/{} -".
