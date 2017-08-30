@@ -20,7 +20,7 @@ def print_stuff(scores_dict, tokenizer, is_training, captions, predictions,
     phase = "Training" if is_training else "Validating"
 
     print("\rEpoch {} - {} - batch {}/{} -".
-          format(epoch_counter + 1, phase, sample_counter+1, total_samples),
+          format(epoch_counter, phase, sample_counter, total_samples),
           end=" ")
 
     print_dict(scores_dict)

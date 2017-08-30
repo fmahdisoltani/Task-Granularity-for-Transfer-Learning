@@ -37,13 +37,13 @@ class Trainer(object):
         for epoch in range(num_epoch):
             self.num_epochs += 1
 
-            self.run_epoch(train_dataloader, epoch + 1, is_training=True,
+            self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
             if (epoch + 1) % frequency_valid == 0:
-                average_scores = self.run_epoch(
-                    valid_dataloader, epoch + 1, is_training=False,
+                average_loss = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
@@ -102,12 +102,10 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            prt.print_stuff(scores_dict, self.tokenizer, is_training,
-                            captions, predictions, epoch, sample_counter,
+            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
+                            predictions, epoch + 1, sample_counter + 1,
                             len(dataloader), verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
         return average_scores_dict
-
-
