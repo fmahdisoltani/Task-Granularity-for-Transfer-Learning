@@ -61,10 +61,12 @@ class Checkpointer(object):
         config_obj.save(folder)
         tokenizer.save_dictionaries(folder)
 
-    def save_value_csv(self, filename, value):
-        ofile = open(os.path.join(self.checkpoint_folder, filename), "a")
+    def save_value_csv(self, value, folder=None, filename="loss"):
+        if not folder:
+            folder = self.checkpoint_folder
+        ofile = open(os.path.join(folder, filename), "a")
 
-        writer = csv.writer(ofile, delimiter=",", quoting=csv.QUOTE_ALL)
+        writer = csv.writer(ofile, delimiter=",")
 
         writer.writerow(value)
 

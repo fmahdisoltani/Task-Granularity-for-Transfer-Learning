@@ -29,26 +29,32 @@ class Trainer(object):
 
         for epoch in range(num_epoch):
 
-            self.run_epoch(train_dataloader, epoch, is_training=True,
+            train_avg_loss = self.run_epoch(train_dataloader, epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            if epoch % frequency_valid == 0:
-                average_loss = self.run_epoch(
+            state_dict = self.get_trainer_state(epoch)
+            self.checkpointer.save_latest(state_dict, train_avg_loss)
+            self.checkpointer.save_value_csv((epoch, train_avg_loss), filename="train_loss")
+
+            # Validation
+            if epoch and epoch % frequency_valid == 0:
+                valid_avg_loss = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
 
-                state_dict = self.get_state_dict()
+                state_dict = self.get_trainer_state(epoch)
+
                 # remember best loss and save checkpoint
-                self.checkpointer.save_best(state_dict, average_loss)
-                self.checkpointer.save_latest(state_dict, average_loss)
+                self.checkpointer.save_best(state_dict, valid_avg_loss)
+                self.checkpointer.save_value_csv([epoch, valid_avg_loss], filename="valid_loss")
 
 
-    def get_state_dict(self):
+    def get_trainer_state(self, epochs_executed):
         return {
-            'epoch': self.num_epochs,
+            'epoch': epochs_executed,
             'model': self.model.state_dict(),
             'best_score': self.checkpointer.best_score,
             'optimizer': self.optimizer.state_dict(),
