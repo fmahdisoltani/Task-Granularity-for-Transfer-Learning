@@ -2,9 +2,14 @@ import torch
 
 import ptcap.printers as prt
 
+from collections import namedtuple
+from collections import OrderedDict
+
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.metrics import (first_token_accuracy, loss_to_numpy, ScoresOperator,
+                           token_accuracy)
 
 
 class Trainer(object):
@@ -29,18 +34,21 @@ class Trainer(object):
 
         for epoch in range(num_epoch):
 
-            train_avg_loss = self.run_epoch(train_dataloader, epoch, is_training=True,
+            train_average_scores = self.run_epoch(train_dataloader, epoch,
+                                                  is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
             state_dict = self.get_trainer_state(epoch)
+            train_avg_loss = train_average_scores["average_loss"]
             self.checkpointer.save_latest(state_dict, train_avg_loss)
-            self.checkpointer.save_value_csv((epoch, train_avg_loss), filename="train_loss")
+            self.checkpointer.save_value_csv((epoch, train_avg_loss),
+                                             filename="train_loss")
 
             # Validation
-            if epoch and epoch % frequency_valid == 0:
-                valid_avg_loss = self.run_epoch(
-                    valid_dataloader, epoch, is_training=False,
+            if epoch % frequency_valid == 0:
+                valid_average_scores = self.run_epoch(
+                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
@@ -48,9 +56,10 @@ class Trainer(object):
                 state_dict = self.get_trainer_state(epoch)
 
                 # remember best loss and save checkpoint
-                self.checkpointer.save_best(state_dict, valid_avg_loss)
-                self.checkpointer.save_value_csv([epoch, valid_avg_loss], filename="valid_loss")
-
+                valid_average_loss = valid_average_scores["average_loss"]
+                self.checkpointer.save_best(state_dict, valid_average_loss)
+                self.checkpointer.save_value_csv([epoch, valid_average_loss],
+                                                 filename="valid_loss")
 
     def get_trainer_state(self, epochs_executed):
         return {
@@ -60,10 +69,20 @@ class Trainer(object):
             'optimizer': self.optimizer.state_dict(),
         }
 
+    def get_function_dict(self):
+        function_dict = OrderedDict()
+        function_dict["loss"] = loss_to_numpy
+
+        function_dict["accuracy"] = token_accuracy
+
+        function_dict["first_accuracy"] = first_token_accuracy
+        return function_dict
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-
-        average_loss = 0.
+      
+        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
+        scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -74,11 +93,6 @@ class Trainer(object):
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
-            # Calculate a moving average of the loss
-            average_loss += ((loss.data.cpu().numpy() - average_loss) /
-                             (sample_counter + 1))
-            # average_loss = loss
-
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
@@ -87,8 +101,18 @@ class Trainer(object):
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
 
-            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
-                            predictions, epoch + 1, sample_counter + 1,
-                            len(dataloader), verbose)
+            captions = captions.cpu()
+            predictions = predictions.cpu()
 
-        return average_loss
+            batch_outputs = ScoreAttr(loss, captions, predictions)
+
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                sample_counter + 1)
+
+            prt.print_stuff(scores_dict, self.tokenizer,
+                            is_training, captions, predictions, epoch + 1,
+                            sample_counter + 1, len(dataloader), verbose)
+
+        # Take only the average of the scores in scores_dict
+        average_scores_dict = scores.get_average_scores()
+        return average_scores_dict
