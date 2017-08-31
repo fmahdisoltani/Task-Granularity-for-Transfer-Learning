@@ -73,4 +73,3 @@ class TestDimensions(unittest.TestCase):
                 self.assertEqual(decoded.size()[0], self.batch_size)
                 self.assertEqual(decoded.size()[2], self.vocab_size)
                 self.assertEqual(len(decoded.size()), 3)
- 
