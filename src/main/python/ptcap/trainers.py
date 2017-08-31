@@ -1,6 +1,7 @@
 import torch
 
 import ptcap.printers as prt
+import ptcap.loggers as lg
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -31,10 +32,10 @@ class Trainer(object):
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
-
+        logger = lg.info_logger()
         for epoch in range(num_epoch):
 
-            train_average_scores = self.run_epoch(train_dataloader, epoch,
+            train_average_scores = self.run_epoch(logger, train_dataloader, epoch,
                                                   is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
@@ -46,8 +47,8 @@ class Trainer(object):
                                              filename="train_loss")
 
             # Validation
-            if epoch % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(
+            if (epoch ) % frequency_valid == 0:
+                valid_average_scores = self.run_epoch(logger,
                      valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
@@ -78,11 +79,12 @@ class Trainer(object):
         function_dict["first_accuracy"] = first_token_accuracy
         return function_dict
 
-    def run_epoch(self, dataloader, epoch, is_training,
+    def run_epoch(self, logger, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
+
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
@@ -109,9 +111,17 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
+            # Print after each batch
             prt.print_stuff(scores_dict, self.tokenizer,
                             is_training, captions, predictions, epoch + 1,
                             sample_counter + 1, len(dataloader), verbose)
+
+
+        # Log at the end of epoch
+        lg.log_stuff(scores_dict, self.tokenizer, is_training, captions,
+                     predictions, epoch + 1, len(dataloader),
+                     verbose, logger, sample_counter)
+
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
