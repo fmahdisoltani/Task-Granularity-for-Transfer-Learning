@@ -43,15 +43,14 @@ class EncoderDecoder(Captioner):
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder(videos)
-        probs = self.decoder(features, captions)
+        probs = self.decoder(features, captions, use_teacher_forcing)
 
         return probs
 
 
 class CNN3dLSTM(EncoderDecoder):
     def __init__(self, encoder_output_size=128, embedding_size=31,
-                 vocab_size=33, num_hidden_lstm=71, go_token=0, use_cuda=False,
-                 gpus=None):
+                 vocab_size=33, num_hidden_lstm=71, go_token=0, gpus=None):
         print("Line 54 " * 20)
         print("gpus: {}".format(gpus))
 

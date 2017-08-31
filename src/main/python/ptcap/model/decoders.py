@@ -6,7 +6,8 @@ from torch.autograd import Variable
 
 class Decoder(nn.Module):
 
-    def forward(self, decoder_states, teacher_captions=None):
+    def forward(self, decoder_states, teacher_captions=None,
+                use_teacher_forcing=False):
         """(BxD, BxKxV) -> BxKxV"""
         raise NotImplementedError
 
@@ -20,7 +21,8 @@ class FullyConnectedDecoder(Decoder):
                                        self.caption_len * self.vocab_size)
         self.caption_mapping = nn.Embedding(self.vocab_size, self.vocab_size)
 
-    def forward(self, decoder_states, teacher_captions=None):
+    def forward(self, decoder_states, teacher_captions=None,
+                use_teacher_forcing=False):
         batch_size = decoder_states.size()[0]
         predictions = self.input_mapping(decoder_states)
         if teacher_captions is not None:
