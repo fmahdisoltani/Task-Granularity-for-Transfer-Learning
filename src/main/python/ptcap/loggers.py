@@ -1,3 +1,7 @@
+import logging
+import os
+
+
 def log_captions_and_predictions(tokenizer, captions, predictions, logger):
     for cap, pred in zip(captions, predictions):
         decoded_cap = tokenizer.decode_caption(cap.data.numpy())
@@ -17,8 +21,7 @@ def log_stuff(scores_dict, tokenizer, is_training, captions, predictions,
                 format(epoch_counter, phase, total_samples))
     log_dict(scores_dict, logger)
     if verbose:
-         log_captions_and_predictions(tokenizer, captions, predictions, logger)
-    logger.info("***********************************************")
+        log_captions_and_predictions(tokenizer, captions, predictions, logger)
 
 
 def log_dict(scores_dict, logger):
@@ -27,22 +30,17 @@ def log_dict(scores_dict, logger):
             logger.info("{}: {:.4f} -".format(key, value))
 
 
-def info_logger(verbose=False):
-    import logging
+def info_logger(folder, verbose=False):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # formatter = logging.Formatter(
-    #      '%(asctime)s - %(process)d - %(message)s')
-
-    fh = logging.FileHandler('log_filename.txt')
+    logging_path = os.path.join(folder, "log_filename.txt")
+    fh = logging.FileHandler(logging_path)
     fh.setLevel(logging.INFO)
-    # fh.setFormatter(formatter)
     logger.addHandler(fh)
 
     if verbose:
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
-        # ch.setFormatter(formatter)
         logger.addHandler(ch)
     return logger

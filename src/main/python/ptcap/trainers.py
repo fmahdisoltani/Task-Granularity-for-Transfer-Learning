@@ -20,8 +20,8 @@ class Trainer(object):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
-        init_state = self.checkpointer.load_model( model,
-                                                  optimizer, tokenizer, folder, filename)
+        init_state = self.checkpointer.load_model(model, optimizer, tokenizer,
+                                                  folder, filename)
 
         self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
@@ -32,13 +32,13 @@ class Trainer(object):
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
-        logger = lg.info_logger()
+        logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
         for epoch in range(num_epoch):
 
-            train_average_scores = self.run_epoch(logger, train_dataloader, epoch,
-                                                  is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
+            train_average_scores = (self.run_epoch(logger, train_dataloader,
+                                    epoch, is_training=True,
+                                    use_teacher_forcing=teacher_force_train,
+                                    verbose=verbose_train))
 
             state_dict = self.get_trainer_state(epoch)
             train_avg_loss = train_average_scores["average_loss"]
@@ -115,7 +115,6 @@ class Trainer(object):
             prt.print_stuff(scores_dict, self.tokenizer,
                             is_training, captions, predictions, epoch + 1,
                             sample_counter + 1, len(dataloader), verbose)
-
 
         # Log at the end of epoch
         lg.log_stuff(scores_dict, self.tokenizer, is_training, captions,
