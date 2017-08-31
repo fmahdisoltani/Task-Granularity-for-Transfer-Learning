@@ -1,3 +1,5 @@
+# Code copied from 20bn-rtorchn repo
+
 import os
 import json
 import shutil
@@ -6,7 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from skvideo.io import vwrite, ffprobe
+from skvideo.io import ffprobe, vwrite
 
 TMP_DIR = "fake_data"
 VIDEOS_DIR = os.path.join(TMP_DIR, "videos")
@@ -17,8 +19,8 @@ CSV_FILE = os.path.join(JSON_DIR, "fake.csv")
 MP4_FILENAME = 'ANY_FILE.mp4'
 VIDEO_SIZE = [20, 40, 40]
 CROP_SIZE = [8, 24, 24]
-NUM_CLASSES = 5
-NUM_SAMPLES = 10
+NUM_CLASSES = 2
+NUM_SAMPLES = 3
 VIDEO_IDS = [i % NUM_CLASSES for i in range(NUM_SAMPLES)]
 
 
@@ -68,6 +70,7 @@ def create_fake_video_data():
         # Create mpeg file
         video_path = os.path.join(video_subdir, MP4_FILENAME)
         video = create_one_fake_video(VIDEO_SIZE)
+        np.savez_compressed(video_path, video)
         vwrite(video_path, video)
         # Get duration
         duration = float(ffprobe(video_path)['video']['@duration'])
@@ -82,7 +85,8 @@ def create_fake_video_data():
 
 
 def create_one_fake_video(size):
-    return np.random.randint(0, 255, size[0] * size[1] * size[2] * 3).reshape((size[0], size[1], size[1], 3))
+    return np.random.randint(0, 255, size[0] * size[1] * size[2] * 3
+                             ).reshape((size[0], size[1], size[1], 3))
 
 
 def remove_fake_data():

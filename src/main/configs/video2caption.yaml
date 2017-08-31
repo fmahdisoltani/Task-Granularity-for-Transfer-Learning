@@ -1,6 +1,5 @@
 paths:
   videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
-  annot_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json
   checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
