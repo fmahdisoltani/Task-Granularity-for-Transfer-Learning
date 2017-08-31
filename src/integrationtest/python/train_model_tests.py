@@ -16,22 +16,26 @@ from ptcap.trainers import Trainer
 from rtorchn.preprocessing import CenterCropper
 
 if __name__ == '__main__':
-    print("start")
-    config_path = os.path.join(os.getcwd(),
+    current_directory = os.getcwd()
+    base_path_index = len(current_directory)
+    for i in range(3):
+        base_path_index = current_directory.rfind("/", 0, base_path_index)
+    base_path = current_directory[:base_path_index]
+    config_path = os.path.join(base_path,
                                "src/main/configs/integration_test.yaml")
 
     config_obj = YamlConfig(config_path)
 
     # Find paths to training, validation and test sets
     training_path = config_obj.get('paths', 'train_annot')
-    training_path = os.path.join(os.getcwd(), training_path)
+    training_path = os.path.join(base_path, training_path)
     validation_path = config_obj.get('paths', 'validation_annot')
-    validation_path = os.path.join(os.getcwd(), validation_path)
+    validation_path = os.path.join(base_path, validation_path)
 
     # Load Json annotation files
-    training_parser = JsonParser(training_path, os.path.join(os.getcwd(),
+    training_parser = JsonParser(training_path, os.path.join(base_path,
                                  config_obj.get('paths', 'videos_folder')))
-    validation_parser = JsonParser(validation_path, os.path.join(os.getcwd(),
+    validation_parser = JsonParser(validation_path, os.path.join(base_path,
                                    config_obj.get('paths', 'videos_folder')))
 
     # Build a tokenizer that contains all captions from annotation files
@@ -46,10 +50,10 @@ if __name__ == '__main__':
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
-    checkpoint_path = os.path.join(os.getcwd(),
+    checkpoint_path = os.path.join(base_path,
                                    config_obj.get('paths', 'checkpoint_folder'))
     pretrained_path = config_obj.get('paths', 'pretrained_path')
-    pretrained_path = os.path.join(os.getcwd(),
+    pretrained_path = os.path.join(base_path,
                                    pretrained_path) if pretrained_path else None
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
@@ -80,9 +84,7 @@ if __name__ == '__main__':
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
-    print("Line 73 " * 20)
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())

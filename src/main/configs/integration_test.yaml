@@ -1,9 +1,9 @@
 paths:
-  videos_folder: &vidpath /sample_data/videos
-  annot_folder: /sample_data/json
-  checkpoint_folder: /checkpoint_sample/
+  videos_folder: &vidpath sample_data/videos
+  annot_folder: sample_data/json
+  checkpoint_folder: checkpoint_sample/
 
-  train_annot: &train_annot /sample_data/json/training_sample.json
+  train_annot: &train_annot sample_data/json/training_sample.json
   validation_annot: *train_annot
   test_annot: *train_annot
 
@@ -11,11 +11,11 @@ paths:
 
 device:
   synchronize_gpu: &sync True
-  gpus: [0]
+  gpus:
 
 dataloaders:
   batch_size: &b 2
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
 
 model:
   type: RtorchnCaptioner
