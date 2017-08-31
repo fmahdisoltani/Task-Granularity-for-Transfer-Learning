@@ -7,55 +7,55 @@ from ptcap.model.captioners import *
 
 class Checkpointer(object):
 
-    def __init__(self, checkpoint_folder, pretrained_path=None,
-                 higher_is_better=False):
+    def __init__(self, checkpoint_folder, higher_is_better=False):
         self.checkpoint_folder = checkpoint_folder
-        self.pretrained_path = pretrained_path
         self.best_score = np.Inf
         self.higher_is_better = higher_is_better
         if self.higher_is_better:
             self.best_score *= -1
 
-    def load_model(self, model, optimizer, tokenizer):
+    def load_model(self, model, optimizer, tokenizer,
+                   folder=None, filename=None):
+        pretrained_path = None if not folder or not filename \
+            else os.path.join(folder, filename)
         init_epoch = 0
-        if self.pretrained_path is None:
+        if pretrained_path is None:
             print("Running the model from scratch")
-        elif os.path.isfile(self.pretrained_path):
-            folder = self.pretrained_path[:self.pretrained_path.rfind("/")]
+        elif os.path.isfile(pretrained_path):
             tokenizer = Tokenizer()
             tokenizer.load_dictionaries(folder)
-
-            checkpoint = torch.load(self.pretrained_path)
+            checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
-            model = model.load_state_dict(checkpoint["model"])
-
+            model.load_state_dict(checkpoint["model"])
             self.best_score = checkpoint["best_score"]
-
-            optimizer = optimizer.load_state_dict(checkpoint["optimizer"])
-
+            optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
-                  .format(self.pretrained_path, checkpoint["epoch"]))
+                  .format(pretrained_path, checkpoint["epoch"]))
         else:
-            print("No checkpoint found at {}".format(self.pretrained_path))
+            print("No checkpoint found at {}".format(pretrained_path))
         return init_epoch, model, optimizer, tokenizer
 
-    def save_model(self, state, score, filename="model"):
-        torch.save(state, os.path.join(self.checkpoint_folder,
-                                       filename + ".latest"))
+    def save_best(self, state, score, folder=None, filename="model.best"):
+        if not folder:
+            folder = self.checkpoint_folder
+        torch.save(state, os.path.join(folder, filename))
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
-            print("\nSaving best model, score: {} @ epoch {}".
+            print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
-            torch.save(state, os.path.join(self.checkpoint_folder,
-                                           filename + ".best"))
+            torch.save(state, os.path.join(folder, "model.best"))
+
+    def save_latest(self, state, score, folder=None, filename="model.latest"):
+        if not folder:
+            folder = self.checkpoint_folder
+        print("Saving latest model, score: {} @ epoch {}".
+              format(score, state["epoch"]))
+        torch.save(state, os.path.join(folder, filename))
 
     @classmethod
-    def save_meta(cls, config_obj, tokenizer):
-        path = config_obj.get('paths', 'checkpoint_folder')
+    def save_meta(cls, folder, config_obj, tokenizer):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        config_obj.save(os.path.join(path, "config.yaml"))
-        tokenizer.save_dictionaries(path)
-
+        config_obj.save(folder)
+        tokenizer.save_dictionaries(folder)

@@ -6,7 +6,7 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path:
+  pretrained_path:  /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample2/
 
 device:
   synchronize_gpu: &sync True
@@ -23,12 +23,12 @@ training:
   num_epochs: 200
   learning_rate: &lr 0.01
   teacher_force: True
-  verbose: True
+  verbose: False
 
 validation:
   frequency: 1
   teacher_force: False
-  verbose: True
+  verbose: False
 
 criteria:
   score: loss
