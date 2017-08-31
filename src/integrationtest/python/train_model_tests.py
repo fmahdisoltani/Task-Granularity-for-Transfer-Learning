@@ -60,18 +60,18 @@ def simulate_training_script(config_obj, dir):
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
-    checkpoint_path = os.path.join(dir, config_obj.get('paths',
+    checkpoint_folder = os.path.join(dir, config_obj.get('paths',
                                                        'checkpoint_folder'))
     pretrained_path = config_obj.get('paths', 'pretrained_path')
     pretrained_path = os.path.join(dir, pretrained_path
                                    ) if pretrained_path else None
     # Clean up checkpoint folder before training starts
-    remove_dir(checkpoint_path)
+    remove_dir(checkpoint_folder)
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
-                        prep.PadVideo([24, 96, 96]),
-                        prep.Float32Converter(),
-                        prep.PytorchTransposer()])
+                            prep.PadVideo([24, 96, 96]),
+                            prep.Float32Converter(),
+                            prep.PytorchTransposer()])
 
     val_preprocesser = Compose([CenterCropper([24, 96, 96]),
                                 prep.PadVideo([24, 96, 96]),
@@ -79,12 +79,12 @@ def simulate_training_script(config_obj, dir):
                                 prep.PytorchTransposer()])
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer,
-                                    preprocess=preprocesser)
+                                     tokenizer=tokenizer,
+                                     preprocess=preprocesser)
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-                                      tokenizer=tokenizer,
-                                      preprocess=val_preprocesser)
+                                       tokenizer=tokenizer,
+                                       preprocess=val_preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get('dataloaders', 'kwargs'))
@@ -95,6 +95,7 @@ def simulate_training_script(config_obj, dir):
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
+    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
@@ -104,12 +105,13 @@ def simulate_training_script(config_obj, dir):
                                  lr=config_obj.get('training', 'learning_rate'))
 
     # Prepare checkpoint directory and save config
-    Checkpointer.save_meta(config_obj, tokenizer)
+    Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
+    pretrained_folder = config_obj.get("paths", "pretrained_path")
     trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
-                      checkpoint_path, pretrained_path=pretrained_path,
-                      gpus=gpus)
+                      checkpoint_folder, folder=pretrained_folder,
+                      filename="model.best", gpus=gpus)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
@@ -117,10 +119,10 @@ def simulate_training_script(config_obj, dir):
                   verbose_valid)
 
     # Check checkpoint folder
-    check_saved_files(checkpoint_path, ["config.yaml", "model.best",
+    check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
                                         "model.latest", "tokenizer_dicts"])
     # Clean up checkpoint folder
-    remove_dir(checkpoint_path)
+    remove_dir(checkpoint_folder)
 
 
 if __name__ == '__main__':

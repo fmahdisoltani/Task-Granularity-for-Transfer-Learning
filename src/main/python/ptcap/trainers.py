@@ -99,7 +99,7 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            prt.print_stuff(average_loss, self.tokenizer, is_training, captions,
+            prt.print_stuff(scores_dict, self.tokenizer, is_training, captions,
                             predictions, epoch + 1, sample_counter + 1,
                             len(dataloader), verbose)
 
