@@ -66,11 +66,11 @@ if __name__ == '__main__':
                                 prep.Float32Converter(),
                                 prep.PytorchTransposer()])
 
-    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+    training_set = JpegVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocesser)
 
-    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+    validation_set = JpegVideoDataset(annotation_parser=validation_parser,
                                        tokenizer=tokenizer,
                                        preprocess=val_preprocesser)
 
