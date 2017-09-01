@@ -52,7 +52,6 @@ if __name__ == '__main__':
     verbose_valid = config_obj.get('validation', 'verbose')
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
     checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
@@ -85,7 +84,6 @@ if __name__ == '__main__':
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()

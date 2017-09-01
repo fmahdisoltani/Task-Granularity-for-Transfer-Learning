@@ -24,28 +24,24 @@ CONFIG_PATH = [os.path.join(os.getcwd(),
 CHECKPOINT_PATH = "model_checkpoints"
 
 
-def remove_dir(dir):
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-
-
 def check_saved_files(checkpoint_path, files_list):
     for file_name in files_list:
         if not os.path.exists(os.path.join(checkpoint_path, file_name)):
             raise FileNotFoundError
 
 
-def simulate_training_script(config_obj, dir):
+def simulate_training_script(config_obj, fake_dir):
     # Find paths to training, validation and test sets
-    training_path = os.path.join(dir, config_obj.get('paths', 'train_annot'))
-    validation_path = os.path.join(dir, config_obj.get('paths',
-                                                       'validation_annot'))
+    training_path = os.path.join(fake_dir,
+                                 config_obj.get('paths', 'train_annot'))
+    validation_path = os.path.join(fake_dir,
+                                   config_obj.get('paths', 'validation_annot'))
 
     # Load Json annotation files
-    json_dir = os.path.join(dir, "json")
-    training_parser = JsonParser(training_path, os.path.join(dir,
+    json_dir = os.path.join(fake_dir, "json")
+    training_parser = JsonParser(training_path, os.path.join(fake_dir,
                                  config_obj.get('paths', 'videos_folder')))
-    validation_parser = JsonParser(validation_path, os.path.join(dir,
+    validation_parser = JsonParser(validation_path, os.path.join(fake_dir,
                                    config_obj.get('paths', 'videos_folder')))
 
     # Build a tokenizer that contains all captions from annotation files
@@ -58,15 +54,14 @@ def simulate_training_script(config_obj, dir):
     verbose_valid = config_obj.get('validation', 'verbose')
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
-    checkpoint_folder = os.path.join(dir, config_obj.get('paths',
-                                                       'checkpoint_folder'))
+    checkpoint_folder = os.path.join(fake_dir, config_obj.get('paths',
+                                     'checkpoint_folder'))
     pretrained_path = config_obj.get('paths', 'pretrained_path')
-    pretrained_path = os.path.join(dir, pretrained_path
+    pretrained_path = os.path.join(fake_dir, pretrained_path
                                    ) if pretrained_path else None
     # Clean up checkpoint folder before training starts
-    remove_dir(checkpoint_folder)
+    fkdata.remove_dir(checkpoint_folder)
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
@@ -95,7 +90,6 @@ def simulate_training_script(config_obj, dir):
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
@@ -120,15 +114,14 @@ def simulate_training_script(config_obj, dir):
 
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
-                                        "model.latest", "tokenizer_dicts"])
+                                          "model.latest", "tokenizer_dicts"])
     # Clean up checkpoint folder
-    remove_dir(checkpoint_folder)
+    fkdata.remove_dir(checkpoint_folder)
 
 
 if __name__ == '__main__':
     # Make sure you have a clean start
-    fkdata.remove_fake_data()
-
+    fkdata.remove_dir(fkdata.TMP_DIR)
 
     # Create fake data first
     fkdata.create_fake_video_data()
@@ -138,4 +131,4 @@ if __name__ == '__main__':
     simulate_training_script(config, os.getcwd())
 
     # Remove everything
-    fkdata.remove_fake_data()
+    fkdata.remove_dir(fkdata.TMP_DIR)
