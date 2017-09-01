@@ -27,7 +27,7 @@ class ScoreTests(unittest.TestCase):
             random_num = np.random.rand()
             input_list.append(random_num)
             scores_dict = scores_operator.run_scores(random_num)
-            scores_dict = scores_operator.moving_average(scores_dict,
+            scores_dict = scores_operator.update_moving_average(scores_dict,
                                                            count + 1)
             expected = np.mean(input_list)
 
@@ -44,7 +44,7 @@ class ScoreTests(unittest.TestCase):
         for value in range(2):
             for count in range(self.num_epochs):
                 scores_dict = scores_operator.run_scores(value)
-                scores_dict = scores_operator.moving_average(scores_dict,
+                scores_dict = scores_operator.update_moving_average(scores_dict,
                                                                count + 1)
                 self.assertEqual(scores_dict["average_loss"], value)
 
