@@ -9,8 +9,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.metrics import (first_token_accuracy, loss_to_numpy, ScoresOperator,
-                           token_accuracy)
+from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
+                          token_accuracy)
 
 
 class Trainer(object):
@@ -34,27 +34,28 @@ class Trainer(object):
               verbose_valid=False):
         logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
         for epoch in range(num_epoch):
+            self.num_epochs += 1
+            train_average_scores = self.run_epoch(train_dataloader, epoch,
+                                                  is_training=True,
+                           use_teacher_forcing=teacher_force_train,
+                           verbose=verbose_train)
 
-            train_average_scores = (self.run_epoch(logger, train_dataloader,
-                                    epoch, is_training=True,
-                                    use_teacher_forcing=teacher_force_train,
-                                    verbose=verbose_train))
 
-            state_dict = self.get_trainer_state(epoch)
+            state_dict = self.get_trainer_state()
             train_avg_loss = train_average_scores["average_loss"]
             self.checkpointer.save_latest(state_dict, train_avg_loss)
             self.checkpointer.save_value_csv((epoch, train_avg_loss),
                                              filename="train_loss")
 
             # Validation
-            if (epoch ) % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(logger,
-                     valid_dataloader, epoch, is_training=False,
+            if (epoch + 1) % frequency_valid == 0:
+                valid_average_scores = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
                 )
 
-                state_dict = self.get_trainer_state(epoch)
+                state_dict = self.get_trainer_state()
 
                 # remember best loss and save checkpoint
                 valid_average_loss = valid_average_scores["average_loss"]
@@ -62,9 +63,9 @@ class Trainer(object):
                 self.checkpointer.save_value_csv([epoch, valid_average_loss],
                                                  filename="valid_loss")
 
-    def get_trainer_state(self, epochs_executed):
+    def get_trainer_state(self):
         return {
-            'epoch': epochs_executed,
+            'epoch': self.num_epochs,
             'model': self.model.state_dict(),
             'best_score': self.checkpointer.best_score,
             'optimizer': self.optimizer.state_dict(),
