@@ -35,6 +35,9 @@ class VideoDataset(Dataset):
     def _get_tokenized_caption(self, index):
         return self.tokenizer.encode_caption(self.captions[index])
 
+    def set_tokenizer(self, tokenizer):
+        self.tokenizer = tokenizer
+
 
 class JpegVideoDataset(VideoDataset):
     """

@@ -15,7 +15,7 @@ class Checkpointer(object):
         if self.higher_is_better:
             self.best_score *= -1
 
-    def load_model(self, model, optimizer, tokenizer,
+    def load_model(self, model, optimizer,
                    folder=None, filename=None):
         pretrained_path = None if not folder or not filename \
             else os.path.join(folder, filename)
@@ -23,8 +23,8 @@ class Checkpointer(object):
         if pretrained_path is None:
             print("Running the model from scratch")
         elif os.path.isfile(pretrained_path):
-            tokenizer = Tokenizer()
-            tokenizer.load_dictionaries(folder)
+            # tokenizer = Tokenizer()
+            # tokenizer.load_dictionaries(folder)
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
@@ -34,7 +34,7 @@ class Checkpointer(object):
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
             print("No checkpoint found at {}".format(pretrained_path))
-        return init_epoch, model, optimizer, tokenizer
+        return init_epoch, model, optimizer  #, tokenizer
 
     def save_best(self, state, score, folder=None, filename="model.best"):
         if not folder:
