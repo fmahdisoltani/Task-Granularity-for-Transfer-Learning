@@ -35,8 +35,8 @@ class Trainer(object):
         logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
         for epoch in range(num_epoch):
             self.num_epochs += 1
-            train_average_scores = self.run_epoch(train_dataloader, epoch,
-                                                  is_training=True,
+            train_average_scores = self.run_epoch(logger, train_dataloader,
+                                                  epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
@@ -49,7 +49,7 @@ class Trainer(object):
 
             # Validation
             if (epoch + 1) % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(
+                valid_average_scores = self.run_epoch(logger,
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
