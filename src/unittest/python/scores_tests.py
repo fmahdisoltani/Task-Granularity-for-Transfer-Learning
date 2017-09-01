@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.metrics import (ScoresOperator, token_level_accuracy)
+from ptcap.scores import (ScoresOperator, token_level_accuracy)
 
 
 class ScoreTests(unittest.TestCase):
