@@ -55,15 +55,11 @@ if __name__ == '__main__':
                                    config_obj.get('paths', 'videos_folder'))
 
     # Build a tokenizer that contains all captions from annotation files
-
-
     tokenizer = Tokenizer()
     if pretrained_path:
         tokenizer.load_dictionaries(pretrained_path)
     else:
         tokenizer.build_dictionaries(training_parser.get_captions())
-
-
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),

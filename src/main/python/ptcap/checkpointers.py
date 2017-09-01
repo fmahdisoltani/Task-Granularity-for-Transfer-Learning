@@ -2,7 +2,6 @@ import csv
 import os
 import numpy as np
 
-from ptcap.data.tokenizer import Tokenizer
 from ptcap.model.captioners import *
 
 
@@ -23,8 +22,6 @@ class Checkpointer(object):
         if pretrained_path is None:
             print("Running the model from scratch")
         elif os.path.isfile(pretrained_path):
-            # tokenizer = Tokenizer()
-            # tokenizer.load_dictionaries(folder)
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
@@ -34,7 +31,7 @@ class Checkpointer(object):
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
             print("No checkpoint found at {}".format(pretrained_path))
-        return init_epoch, model, optimizer  #, tokenizer
+        return init_epoch, model, optimizer
 
     def save_best(self, state, score, folder=None, filename="model.best"):
         if not folder:
