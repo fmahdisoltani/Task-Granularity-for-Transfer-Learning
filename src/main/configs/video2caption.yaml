@@ -6,7 +6,7 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path:  /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample2/
+  pretrained_path:  /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
 device:
   synchronize_gpu: &sync True
@@ -26,7 +26,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 10
   teacher_force: False
   verbose: False
 
