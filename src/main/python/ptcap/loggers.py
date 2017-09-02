@@ -44,3 +44,4 @@ def info_logger(folder, verbose=False):
         ch.setLevel(logging.DEBUG)
         logger.addHandler(ch)
     return logger
+ 
