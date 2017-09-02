@@ -1,7 +1,7 @@
 import torch
 
-import ptcap.printers as prt
 import ptcap.loggers as lg
+import ptcap.printers as prt
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -39,7 +39,6 @@ class Trainer(object):
                                                   epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
-
 
             state_dict = self.get_trainer_state()
             train_avg_loss = train_average_scores["average_loss"]
@@ -86,7 +85,6 @@ class Trainer(object):
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
-
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
             videos, captions = Variable(videos), Variable(captions)
@@ -121,7 +119,6 @@ class Trainer(object):
         lg.log_stuff(scores_dict, self.tokenizer, is_training, captions,
                      predictions, epoch + 1, len(dataloader),
                      verbose, logger, sample_counter)
-
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
