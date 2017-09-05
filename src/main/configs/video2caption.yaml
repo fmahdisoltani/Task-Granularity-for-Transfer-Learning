@@ -18,7 +18,14 @@ dataloaders:
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
-  type: RtorchnCaptioner
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: torch.optim.Adam
 
 training:
   num_epochs: 200

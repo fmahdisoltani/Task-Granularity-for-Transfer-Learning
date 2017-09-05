@@ -76,30 +76,31 @@ if __name__ == '__main__':
                                        preprocess=val_preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
-                            **config_obj.get('dataloaders', 'kwargs'))
+                            **config_obj.get("dataloaders", "kwargs"))
 
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
-                                **config_obj.get('dataloaders', 'kwargs'))
+                                **config_obj.get("dataloaders", "kwargs"))
 
+    # Get model, loss, and optimizer types from config_file
+    model_type = config_obj.get("model", "type")
+    loss_type = config_obj.get("loss", "type")
+    optimizer_type = config_obj.get("optimizer", "type")
 
-    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
-                          go_token=tokenizer.encode_token(tokenizer.GO),
-                          gpus=gpus)
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
+    # Create model, loss, and optimizer objects
+    model = eval(model_type)(vocab_size=tokenizer.get_vocab_size(),
+                             go_token=tokenizer.encode_token(tokenizer.GO),
+                             gpus=gpus)
+    loss_function = eval(loss_type)()
 
-    # Loss and Optimizer
-    loss_function = SequenceCrossEntropy()
-    params = list(captioner.parameters())
-
-    optimizer = torch.optim.Adam(params,
-                                 lr=config_obj.get('training', 'learning_rate'))
+    optimizer = eval(optimizer_type)(params=list(model.parameters()),
+                     lr=config_obj.get("training", "learning_rate"))
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+    trainer = Trainer(model, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 
