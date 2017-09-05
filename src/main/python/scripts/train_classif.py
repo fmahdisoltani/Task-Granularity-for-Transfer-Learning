@@ -87,8 +87,9 @@ if __name__ == '__main__':
     #                      gpus=gpus)
     # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
     from ptcap.model.classifiers import *
-
-    classifier = C3dClassifier()
+    all_labels = list(set(training_parser.get_labels()))
+    num_classes = len(all_labels)
+    classifier = C3dClassifier(num_classes=num_classes)
     # Loss and Optimizer
     loss_function = CrossEntropy()
     params = list(classifier.parameters())

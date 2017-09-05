@@ -73,9 +73,9 @@ class Trainer_classif(object):
         function_dict = OrderedDict()
         function_dict["loss"] = loss_to_numpy
 
-        function_dict["accuracy"] = token_accuracy
+        #function_dict["accuracy"] = token_accuracy
 
-        function_dict["first_accuracy"] = first_token_accuracy
+        #function_dict["first_accuracy"] = first_token_accuracy
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
@@ -100,20 +100,19 @@ class Trainer_classif(object):
                 self.optimizer.step()
 
             # convert probabilities to predictions
-            _, \
-            predictions = torch.max(probs, dim=1)
+            _, predictions = torch.max(probs, dim=1)
 
             labels = labels.cpu()
             predictions = predictions.cpu()
 
             batch_outputs = ScoreAttr(loss, labels, predictions)
 
-            #scores_dict = scores.compute_scores(batch_outputs,
-            #                                    sample_counter + 1)
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                sample_counter + 1)
 
-            #prt.print_stuff(scores_dict, self.tokenizer,
-            #                is_training, labels, predictions, epoch + 1,
-            #                sample_counter + 1, len(dataloader), verbose)
+            prt.print_stuff(scores_dict, self.tokenizer,
+                           is_training, labels, predictions, epoch + 1,
+                           sample_counter + 1, len(dataloader), verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
