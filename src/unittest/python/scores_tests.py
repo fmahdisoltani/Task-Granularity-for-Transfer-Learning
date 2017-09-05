@@ -7,7 +7,8 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, token_level_accuracy)
+from ptcap.scores import (ScoresOperator,
+                          token_level_accuracy, caption_level_accuracy)
 
 
 class ScoreTests(unittest.TestCase):
@@ -108,3 +109,36 @@ class TestTokenLevelAccuracy(unittest.TestCase):
                               num=num):
                 with self.assertRaises(IndexError):
                     accuracy = token_level_accuracy(captions, predictions, num)
+
+
+class TestCaptionLevelAccuracy(unittest.TestCase):
+
+    def test_all_elements_match(self):
+        captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
+        predictions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
+        with self.subTest(captions=captions, predictions=predictions):
+            accuracy = caption_level_accuracy(captions, predictions)
+            self.assertEqual(accuracy, 100)
+
+    def test_no_elements_match(self):
+        captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
+        predictions = Variable(torch.LongTensor([[7,8,9],[10,11,12]]))
+
+        with self.subTest(captions=captions, predictions=predictions):
+            accuracy = caption_level_accuracy(captions, predictions)
+            self.assertEqual(accuracy, 0)
+
+    def test_some_elements_match(self):
+        captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
+        predictions = Variable(torch.LongTensor([[1,20,30],[40,5,6]]))
+        with self.subTest(captions=captions, predictions=predictions):
+            accuracy = caption_level_accuracy(captions, predictions)
+            self.assertEqual(accuracy, 0)
+
+    def test_no_elements(self):
+        captions = Variable(torch.LongTensor([]))
+        predictions = Variable(torch.LongTensor([]))
+
+        with self.subTest(captions=captions, predictions=predictions):
+            with self.assertRaises(ValueError):
+                accuracy = caption_level_accuracy(captions, predictions)
