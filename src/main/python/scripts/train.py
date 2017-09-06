@@ -57,13 +57,13 @@ if __name__ == '__main__':
     checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
 
-    preprocesser = Compose([prep.RandomCrop([48, 96, 96]),
-                            prep.PadVideo([48, 96, 96]),
+    preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
+                            prep.PadVideo([24, 96, 96]),
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    val_preprocesser = Compose([CenterCropper([48, 96, 96]),
-                                prep.PadVideo([48, 96, 96]),
+    val_preprocesser = Compose([CenterCropper([24, 96, 96]),
+                                prep.PadVideo([24, 96, 96]),
                                 prep.Float32Converter(),
                                 prep.PytorchTransposer()])
 

@@ -113,32 +113,38 @@ class TestTokenLevelAccuracy(unittest.TestCase):
 
 class TestCaptionLevelAccuracy(unittest.TestCase):
 
-    def test_all_elements_match(self):
+    def test_all_captions_match(self):
         captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
         predictions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
-        with self.subTest(captions=captions, predictions=predictions):
-            accuracy = caption_level_accuracy(captions, predictions)
-            self.assertEqual(accuracy, 100)
 
-    def test_no_elements_match(self):
+        accuracy = caption_level_accuracy(captions, predictions)
+        self.assertEqual(accuracy, 100)
+
+    def test_no_captions_match(self):
         captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
         predictions = Variable(torch.LongTensor([[7,8,9],[10,11,12]]))
 
-        with self.subTest(captions=captions, predictions=predictions):
-            accuracy = caption_level_accuracy(captions, predictions)
-            self.assertEqual(accuracy, 0)
+        accuracy = caption_level_accuracy(captions, predictions)
+        self.assertEqual(accuracy, 0)
 
     def test_some_elements_match(self):
         captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
         predictions = Variable(torch.LongTensor([[1,20,30],[40,5,6]]))
-        with self.subTest(captions=captions, predictions=predictions):
-            accuracy = caption_level_accuracy(captions, predictions)
-            self.assertEqual(accuracy, 0)
 
-    def test_no_elements(self):
+        accuracy = caption_level_accuracy(captions, predictions)
+        self.assertEqual(accuracy, 0)
+
+    def test_no_captions(self):
         captions = Variable(torch.LongTensor([]))
         predictions = Variable(torch.LongTensor([]))
 
         with self.subTest(captions=captions, predictions=predictions):
             with self.assertRaises(ValueError):
                 accuracy = caption_level_accuracy(captions, predictions)
+
+    def test_some_captions_match(self):
+        captions = Variable(torch.LongTensor([[1,2,3],[4,5,6]]))
+        predictions = Variable(torch.LongTensor([[1,20,30],[4,5,6]]))
+
+        accuracy = caption_level_accuracy(captions, predictions)
+        self.assertEqual(accuracy, 50)
