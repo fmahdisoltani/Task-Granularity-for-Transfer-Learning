@@ -36,15 +36,6 @@ if __name__ == '__main__':
     training_path = config_obj.get('paths', 'train_annot')
     validation_path = config_obj.get('paths', 'validation_annot')
 
-    # Load Json annotation files
-    training_parser = JsonParser(training_path,
-                                 config_obj.get('paths', 'videos_folder'))
-    validation_parser = JsonParser(validation_path,
-                                   config_obj.get('paths', 'videos_folder'))
-
-    # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer(training_parser.get_captions(), user_maxlen=10)
-
     # Load attributes of config file
     num_epoch = config_obj.get('training', 'num_epochs')
     frequency_valid = config_obj.get('validation', 'frequency')
@@ -56,6 +47,19 @@ if __name__ == '__main__':
     gpus = config_obj.get("device", "gpus")
     checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
+
+    # Load Json annotation files
+    training_parser = JsonParser(training_path,
+                                 config_obj.get('paths', 'videos_folder'))
+    validation_parser = JsonParser(validation_path,
+                                   config_obj.get('paths', 'videos_folder'))
+
+    # Build a tokenizer that contains all captions from annotation files
+    tokenizer = Tokenizer()
+    if pretrained_path:
+        tokenizer.load_dictionaries(pretrained_path)
+    else:
+        tokenizer.build_dictionaries(training_parser.get_captions())
 
     preprocesser = Compose([prep.RandomCrop([48, 96, 96]),
                             prep.PadVideo([48, 96, 96]),

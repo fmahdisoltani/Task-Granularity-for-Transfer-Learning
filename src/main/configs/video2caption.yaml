@@ -29,7 +29,7 @@ training:
 validation:
   frequency: 10
   teacher_force: False
-  verbose: False
+  verbose: True
 
 criteria:
   score: loss
