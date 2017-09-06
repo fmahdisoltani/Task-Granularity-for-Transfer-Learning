@@ -36,7 +36,7 @@ class Tokenizer(object):
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
-        all_tokens = extra_tokens + list(set(tokens))
+        all_tokens = extra_tokens + sorted(set(tokens))
         print("Number of different tokens: ", len(all_tokens))
         self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
