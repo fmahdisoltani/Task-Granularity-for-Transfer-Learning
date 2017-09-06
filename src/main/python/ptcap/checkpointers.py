@@ -17,8 +17,8 @@ class Checkpointer(object):
 
     def load_model(self, model, optimizer, tokenizer,
                    folder=None, filename=None):
-        pretrained_path = None if not folder or not filename \
-            else os.path.join(folder, filename)
+        pretrained_path = None if not folder or not filename else (
+            os.path.join(folder, filename))
         init_epoch = 0
         if pretrained_path is None:
             print("Running the model from scratch")
@@ -28,7 +28,7 @@ class Checkpointer(object):
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
-            self.best_score = checkpoint["best_score"]
+            self.best_score = checkpoint["score"]
             optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
@@ -36,21 +36,22 @@ class Checkpointer(object):
             print("No checkpoint found at {}".format(pretrained_path))
         return init_epoch, model, optimizer, tokenizer
 
-    def save_best(self, state, score, folder=None, filename="model.best"):
+    def save_best(self, state, folder=None, filename="model.best"):
         if not folder:
             folder = self.checkpoint_folder
         torch.save(state, os.path.join(folder, filename))
+        score = state["score"]
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
             print("Saving best model, score: {} @ epoch {}".
                   format(score, state["epoch"]))
             torch.save(state, os.path.join(folder, "model.best"))
 
-    def save_latest(self, state, score, folder=None, filename="model.latest"):
+    def save_latest(self, state, folder=None, filename="model.latest"):
         if not folder:
             folder = self.checkpoint_folder
         print("Saving latest model, score: {} @ epoch {}".
-              format(score, state["epoch"]))
+              format(state["score"], state["epoch"]))
         torch.save(state, os.path.join(folder, filename))
 
     @classmethod

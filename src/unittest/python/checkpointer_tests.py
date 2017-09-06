@@ -5,52 +5,197 @@ import unittest
 from testfixtures import tempdir
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.data.config_parser import YamlConfig
+from ptcap.data.tokenizer import Tokenizer
 from ptcap.model.mappers import FullyConnectedMapper
+
 
 class CheckpointerTests(unittest.TestCase):
 
     def setUp(self):
-        model = FullyConnectedMapper(1,1)
-        optimizer = torch.optim.Adam(list(model.parameters()), lr=0.01)
+        self.epoch_num = 0
+        self.model = FullyConnectedMapper(1,1)
+        self.optimizer = torch.optim.Adam(list(self.model.parameters()),
+                                          lr=0.01)
+        self.score = 5
         self.state_dict = {
-            "epoch": 0,
-            "model": model.state_dict(),
-            "best_score": 5,
-            "optimizer": optimizer.state_dict(),
+            "epoch": self.epoch_num,
+            "model": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "score": self.score,
         }
 
-    def test_load_model(self):
-        pass
+    # load model with folder = None
+    # load model with filename = None
+
+
+    @tempdir()
+    def test_load_model_from_save_latest(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.score - 1
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        checkpointer.save_latest(self.state_dict)
+        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
+                                        self.model, self.optimizer, tokenizer,
+                                        temp_dir.path, "model.latest")
+        self.assertEqual(epoch_num, self.epoch_num)
+        self.assertEqual(model, self.model)
+        self.assertEqual(optimizer, self.optimizer)
+        self.assertEqual(tokenizer, tokenizer_obj)
+
+    @tempdir()
+    def test_load_model_from_save_best(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.score + 1
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        checkpointer.save_best(self.state_dict)
+        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
+            self.model, self.optimizer, tokenizer, temp_dir.path, "model.best")
+        self.assertEqual(epoch_num, self.epoch_num)
+        self.assertEqual(model, self.model)
+        self.assertEqual(optimizer, self.optimizer)
+        self.assertEqual(tokenizer, tokenizer_obj)
+
+    @tempdir()
+    def test_load_model_from_no_checkpoint(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.score - 1
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        checkpointer.save_best(self.state_dict)
+        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
+            self.model, self.optimizer, tokenizer, temp_dir.path, "model.best")
+        self.assertEqual(epoch_num, self.epoch_num)
+        self.assertEqual(model, self.model)
+        self.assertEqual(optimizer, self.optimizer)
+        self.assertEqual(tokenizer.caption_dict, tokenizer_obj.caption_dict)
+
+    @tempdir()
+    def test_load_model_from_no_predefined_folder(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        checkpointer.save_best(self.state_dict)
+        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
+            self.model, self.optimizer, tokenizer)
+        self.assertEqual(epoch_num, self.epoch_num)
+        self.assertEqual(model, self.model)
+        self.assertEqual(optimizer, self.optimizer)
+        self.assertEqual(tokenizer, tokenizer_obj)
+
+    @tempdir()
+    def test_load_model_from_predefined_folder(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        checkpointer.save_best(self.state_dict)
+        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
+            self.model, self.optimizer, tokenizer, temp_dir.path)
+        self.assertEqual(epoch_num, self.epoch_num)
+        self.assertEqual(model, self.model)
+        self.assertEqual(optimizer, self.optimizer)
+        self.assertEqual(tokenizer, tokenizer_obj)
 
     @tempdir()
     def test_save_best_higher_is_better(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path, higher_is_better=True)
-        checkpointer.best_score = self.state_dict["best_score"]
+        checkpointer.best_score = self.state_dict["score"]
         scores = [3, 7, 2, 11]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
-            best_score = self.state_dict["best_score"]
+            best_score = checkpointer.best_score
+            self.state_dict["score"] = score
             with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
                               score=score, best_score=best_score):
-                checkpointer.save_best(self.state_dict, score, temp_dir.path)
+                checkpointer.save_best(self.state_dict, temp_dir.path)
                 self.state_dict = torch.load(os.path.join(temp_dir.path,
                                                           "model.best"))
                 if score > best_score:
-                    self.assertEqual(self.state_dict["best_score"], score)
-                else:
-                    self.assertEqual(self.state_dict["best_score"], best_score)
+                    self.assertEqual(self.state_dict["score"], score)
 
-    def test_save_best_folder_None(self):
-        pass
+    @tempdir()
+    def test_save_best_higher_is_not_better(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path, higher_is_better=False)
+        checkpointer.best_score = self.state_dict["score"]
+        scores = [3, 7, 2, 11]
+        for epoch_num, score in enumerate(scores):
+            self.state_dict["epoch"] = epoch_num + 1
+            best_score = checkpointer.best_score
+            self.state_dict["score"] = score
+            with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
+                              score=score, best_score=best_score):
+                checkpointer.save_best(self.state_dict, temp_dir.path)
+                self.state_dict = torch.load(os.path.join(temp_dir.path,
+                                                          "model.best"))
+                if score < best_score:
+                    self.assertEqual(self.state_dict["score"], score)
 
-    def test_save_latest(self):
-        pass
+    @tempdir()
+    def test_save_best_folder_None(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.state_dict["score"]
+        scores = [3, 7, 2, 11]
+        for epoch_num, score in enumerate(scores):
+            self.state_dict["epoch"] = epoch_num + 1
+            best_score = checkpointer.best_score
+            self.state_dict["score"] = score
+            with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
+                              score=score, best_score=best_score):
+                checkpointer.save_best(self.state_dict)
+                self.state_dict = torch.load(os.path.join(temp_dir.path,
+                                                          "model.best"))
+                if score < best_score:
+                    self.assertEqual(self.state_dict["score"], score)
 
-    def test_save_latest_folder_None(self):
-        pass
+    @tempdir()
+    def test_save_latest(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.state_dict["score"]
+        scores = [3, 7, 2, 11]
+        for epoch_num, score in enumerate(scores):
+            self.state_dict["epoch"] = epoch_num + 1
+            self.state_dict["score"] = score
+            with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
+                              score=score):
+                checkpointer.save_latest(self.state_dict, temp_dir.path)
+                self.state_dict = torch.load(os.path.join(temp_dir.path,
+                                                          "model.latest"))
+                self.assertEqual(self.state_dict["score"], score)
+                self.assertEqual(self.state_dict["epoch"], epoch_num + 1)
 
-    def test_save_meta(self):
-        pass
+    @tempdir()
+    def test_save_latest_folder_None(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.best_score = self.state_dict["score"]
+        scores = [3, 7, 2, 11]
+        for epoch_num, score in enumerate(scores):
+            self.state_dict["epoch"] = epoch_num + 1
+            self.state_dict["score"] = score
+            with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
+                              score=score):
+                checkpointer.save_latest(self.state_dict)
+                self.state_dict = torch.load(os.path.join(temp_dir.path,
+                                                          "model.latest"))
+                self.assertEqual(self.state_dict["score"], score)
+                self.assertEqual(self.state_dict["epoch"], epoch_num + 1)
 
-    def test_save_value_csv(self):
-        pass
+    @tempdir()
+    def test_save_meta(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        config_obj = YamlConfig(config_dict={"1": 1})
+        tokenizer = Tokenizer()
+        tokenizer.build_dictionaries(["Just a dummy caption"])
+        checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
+        self.assertEqual(len(os.listdir(temp_dir.path)), 2)
