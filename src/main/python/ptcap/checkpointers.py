@@ -39,7 +39,6 @@ class Checkpointer(object):
     def save_best(self, state, folder=None, filename="model.best"):
         if not folder:
             folder = self.checkpoint_folder
-        torch.save(state, os.path.join(folder, filename))
         score = state["score"]
         if not ((score > self.best_score) ^ self.higher_is_better):
             self.best_score = score
