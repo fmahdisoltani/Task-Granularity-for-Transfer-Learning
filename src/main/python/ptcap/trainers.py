@@ -21,15 +21,18 @@ class Trainer(object):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
-        init_state = self.checkpointer.load_model(model, optimizer, tokenizer,
+
+        init_state = self.checkpointer.load_model(model, optimizer,
                                                   folder, filename)
 
-        self.num_epochs, self.model, self.optimizer, self.tokenizer = init_state
+        self.num_epochs, self.model, self.optimizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
-        # self.logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
+
         self.logger = CustomLogger(folder=checkpoint_path)
+        self.tokenizer = tokenizer
+
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
