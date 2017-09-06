@@ -25,7 +25,7 @@ loss:
   type: SequenceCrossEntropy
 
 optimizer:
-  type: torch.optim.Adam
+  type: Adam
 
 training:
   num_epochs: 200

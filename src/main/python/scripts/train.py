@@ -8,20 +8,24 @@ Options:
   -h --help              Show this screen.
 """
 
+import torch.optim
 
 from docopt import docopt
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 import ptcap.data.preprocessing as prep
+import ptcap.losses
+import ptcap.model.captioners
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.data.tokenizer import Tokenizer
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.tokenizer import Tokenizer
+
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.losses import SequenceCrossEntropy
-from ptcap.model.captioners import *
+
+from ptcap.model import *
 from ptcap.trainers import Trainer
 from rtorchn.preprocessing import CenterCropper
 
@@ -87,12 +91,12 @@ if __name__ == '__main__':
     optimizer_type = config_obj.get("optimizer", "type")
 
     # Create model, loss, and optimizer objects
-    model = eval(model_type)(vocab_size=tokenizer.get_vocab_size(),
+    model = getattr(ptcap.model.captioners, model_type)(vocab_size=tokenizer.get_vocab_size(),
                              go_token=tokenizer.encode_token(tokenizer.GO),
                              gpus=gpus)
-    loss_function = eval(loss_type)()
+    loss_function = getattr(ptcap.losses, loss_type)()
 
-    optimizer = eval(optimizer_type)(params=list(model.parameters()),
+    optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
     # Prepare checkpoint directory and save config
