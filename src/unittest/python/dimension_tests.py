@@ -16,7 +16,7 @@ class TestDimensions(unittest.TestCase):
         self.batch_size = 2
         self.vocab_size = 5
         self.caption_len = 4
-        self.num_features = 7
+        self.num_features = 256
         self.arguments = {
             'FullyConnectedEncoder': (((3, 10, 96, 96), self.num_features), {}),
             'CNN3dEncoder': ((self.num_features,), {}),
@@ -26,6 +26,10 @@ class TestDimensions(unittest.TestCase):
 
             'FullyConnectedDecoder': ((self.num_features, self.caption_len,
                                        self.vocab_size), {}),
+
+
+            'RtorchnEncoderP': ((self.num_features,), {}),
+
             'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,), {}),
 
             'RtorchnCaptioner': ((self.vocab_size,), {}),

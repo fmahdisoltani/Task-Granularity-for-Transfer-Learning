@@ -88,6 +88,7 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
 
+
     # Get model, loss, and optimizer types from config_file
     model_type = config_obj.get("model", "type")
     loss_type = config_obj.get("loss", "type")
@@ -99,7 +100,8 @@ if __name__ == '__main__':
                              gpus=gpus)
     loss_function = getattr(ptcap.losses, loss_type)()
 
-    optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
+    params = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = getattr(torch.optim, optimizer_type)(params=params,
                      lr=config_obj.get("training", "learning_rate"))
 
     # Prepare checkpoint directory and save config
