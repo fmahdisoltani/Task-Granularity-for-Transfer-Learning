@@ -35,13 +35,12 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_latest(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-                                        self.model, self.optimizer, tokenizer,
-                                        temp_dir.path, "model.latest")
+        epoch_num, model, optimizer = checkpointer.load_model(
+                                                self.model, self.optimizer,
+                                                temp_dir.path, "model.latest")
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer.caption_dict, tokenizer_obj.caption_dict)
 
     @tempdir()
     def test_load_model_from_save_best(self, temp_dir):
@@ -52,12 +51,12 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_best(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-            self.model, self.optimizer, tokenizer, temp_dir.path, "model.best")
+        epoch_num, model, optimizer = checkpointer.load_model(
+                                                    self.model, self.optimizer,
+                                                    temp_dir.path, "model.best")
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer.caption_dict, tokenizer_obj.caption_dict)
 
     @tempdir()
     def test_load_model_from_no_checkpoint(self, temp_dir):
@@ -68,12 +67,12 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_best(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-            self.model, self.optimizer, tokenizer, temp_dir.path, "model.best")
+        epoch_num, model, optimizer = checkpointer.load_model(
+                                                    self.model, self.optimizer,
+                                                    temp_dir.path, "model.best")
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer.caption_dict, tokenizer_obj.caption_dict)
 
     @tempdir()
     def test_load_model_from_no_predefined_folder(self, temp_dir):
@@ -83,12 +82,11 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_latest(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-            self.model, self.optimizer, tokenizer)
+        epoch_num, model, optimizer = checkpointer.load_model(
+            self.model, self.optimizer)
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer, tokenizer_obj)
 
     @tempdir()
     def test_load_model_from_predefined_folder(self, temp_dir):
@@ -98,12 +96,11 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_latest(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-            self.model, self.optimizer, tokenizer, temp_dir.path)
+        epoch_num, model, optimizer = checkpointer.load_model(
+            self.model, self.optimizer, temp_dir.path)
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer, tokenizer_obj)
 
     @tempdir()
     def test_load_model_from_predefined_file(self, temp_dir):
@@ -113,12 +110,11 @@ class CheckpointerTests(unittest.TestCase):
         tokenizer.build_dictionaries(["Just a dummy caption"])
         checkpointer.save_meta(temp_dir.path, config_obj, tokenizer)
         checkpointer.save_latest(self.state_dict)
-        epoch_num, model, optimizer, tokenizer_obj = checkpointer.load_model(
-            self.model, self.optimizer, tokenizer, filename="model.latest")
+        epoch_num, model, optimizer = checkpointer.load_model(
+            self.model, self.optimizer, filename="model.latest")
         self.assertEqual(epoch_num, self.epoch_num)
         self.assertEqual(model, self.model)
         self.assertEqual(optimizer, self.optimizer)
-        self.assertEqual(tokenizer, tokenizer_obj)
 
     @tempdir()
     def test_save_best_higher_is_better(self, temp_dir):
