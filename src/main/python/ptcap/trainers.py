@@ -11,6 +11,7 @@ from torch.autograd import Variable
 from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
                           token_accuracy)
+from ptcap.loggers import CustomLogger
 
 
 class Trainer(object):
@@ -27,15 +28,17 @@ class Trainer(object):
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
+        # self.logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
+        self.logger = CustomLogger(folder=checkpoint_path)
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
-        logger = lg.info_logger(folder=self.checkpointer.checkpoint_folder)
+
         for epoch in range(num_epoch):
             self.num_epochs += 1
-            train_average_scores = self.run_epoch(logger, train_dataloader,
+            train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
@@ -48,7 +51,7 @@ class Trainer(object):
 
             # Validation
             if (epoch + 1) % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(logger,
+                valid_average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
                     verbose=verbose_valid
@@ -79,7 +82,7 @@ class Trainer(object):
         function_dict["first_accuracy"] = first_token_accuracy
         return function_dict
 
-    def run_epoch(self, logger, dataloader, epoch, is_training,
+    def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
@@ -116,9 +119,9 @@ class Trainer(object):
                             sample_counter + 1, len(dataloader), verbose)
 
         # Log at the end of epoch
-        lg.log_stuff(scores_dict, self.tokenizer, is_training, captions,
+        self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
                      predictions, epoch + 1, len(dataloader),
-                     verbose, logger, sample_counter)
+                     verbose, sample_counter)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
