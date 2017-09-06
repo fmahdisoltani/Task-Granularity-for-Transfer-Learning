@@ -29,6 +29,7 @@ class TestDimensions(unittest.TestCase):
 
             'RtorchnEncoderP': ((self.num_features,), {}),
             'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,), {}),
+
             'RtorchnCaptioner': ((self.vocab_size,), {}),
             'EncoderDecoder': ((encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder,
                                 (self.num_features,),
