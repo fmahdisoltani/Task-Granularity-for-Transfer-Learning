@@ -22,6 +22,7 @@ class TestDimensions(unittest.TestCase):
                                        self.vocab_size), {}),
             'CNN3dEncoder': ((29,), {}),
             'CNN3dLSTMEncoder': ((73,), {}),
+            'RtorchnEncoderP': ((), {}),
             'LSTMDecoder': ((17, self.hidden_size, self.vocab_size, 23,), {})
         }
 

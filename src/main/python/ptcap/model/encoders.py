@@ -142,3 +142,20 @@ class CNN3dLSTMEncoder(Encoder):
         h_mean = torch.mean(lstm_outputs, dim=1)
 
         return h_mean
+
+
+class RtorchnEncoderP(Encoder):
+
+    def __init__(self):
+        super(RtorchnEncoderP, self).__init__()
+
+        from rtorchn.core.networks import FullyConvolutionalNet
+        self.net = FullyConvolutionalNet(num_classes=178, num_features=256)
+        checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
+                                'fully_conv_net_on_smtsmt_20170627/'
+                                'model.checkpoint')
+        self.net.load_state_dict(checkpoint)
+
+    def forward(self, video_batch, use_teacher_forcing=True):
+        features = self.net.extract_features(video_batch)
+        return features.mean(dim=1)

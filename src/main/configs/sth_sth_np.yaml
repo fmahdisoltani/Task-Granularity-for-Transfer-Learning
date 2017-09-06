@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data/20bn-objects/videos_npz
   annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth_templates/
 
   train_annot:  /data/20bn-objects/json/train_20170429.json.gz
   validation_annot: /data/20bn-objects/json/validation_20170429.json.gz
@@ -27,7 +27,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 5
   teacher_force: False
   verbose: True
 
