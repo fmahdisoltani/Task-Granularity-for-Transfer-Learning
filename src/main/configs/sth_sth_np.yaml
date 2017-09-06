@@ -3,9 +3,9 @@ paths:
   annot_folder: /data/20bn-objects/json
   checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth_templates/
 
-  train_annot:  /data/20bn-objects/json/train_20170429.json.gz
-  validation_annot: /data/20bn-objects/json/validation_20170429.json.gz
-  test_annot: /data/20bn-gestures/json/test_20170429.json.gz
+  train_annot:  /data/20bn-objects/json/train_20170630.json.gz
+  validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
+  test_annot: /data/20bn-gestures/json/test_20170630.json.gz
 
   pretrained_path:
 
