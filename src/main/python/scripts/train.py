@@ -98,8 +98,8 @@ if __name__ == '__main__':
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
-    params = (captioner.parameters())
 
+    params = filter(lambda p: p.requires_grad, captioner.parameters())
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 

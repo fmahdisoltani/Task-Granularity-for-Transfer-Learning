@@ -146,7 +146,7 @@ class CNN3dLSTMEncoder(Encoder):
 
 class RtorchnEncoderP(Encoder):
 
-    def __init__(self, num_features=256):
+    def __init__(self, num_features=256, tune=False):
         super(RtorchnEncoderP, self).__init__()
 
         from rtorchn.core.networks import FullyConvolutionalNet
@@ -154,7 +154,10 @@ class RtorchnEncoderP(Encoder):
         checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
                                 'fully_conv_net_on_smtsmt_20170627/'
                                 'model.checkpoint')
+
         self.net.load_state_dict(checkpoint)
+        for param in self.net.parameters():
+            param.requires_grad = tune
 
     def forward(self, video_batch, use_teacher_forcing=True):
         features = self.net.extract_features(video_batch)
