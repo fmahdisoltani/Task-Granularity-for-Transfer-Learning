@@ -27,7 +27,9 @@ class TestDimensions(unittest.TestCase):
             'FullyConnectedDecoder': ((self.num_features, self.caption_len,
                                        self.vocab_size), {}),
 
+
             'RtorchnEncoderP': ((self.num_features,), {}),
+
             'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,), {}),
 
             'RtorchnCaptioner': ((self.vocab_size,), {}),
