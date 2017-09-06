@@ -41,3 +41,6 @@ criteria:
   score: loss
   higher_is_better: False
 
+target:
+  caption_type: template
+  user_maxlen: 10

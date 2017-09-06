@@ -147,10 +147,15 @@ class CNN3dLSTMEncoder(Encoder):
 class RtorchnEncoderP(nn.Module):
 
     def __init__(self, num_features=256, tune=False):
+        """
+        :param tune: shows whether the network should be frozen or not
+        """
+
         super(RtorchnEncoderP, self).__init__()
 
         from rtorchn.core.networks import FullyConvolutionalNet
-        self.net = FullyConvolutionalNet(num_classes=178, num_features=num_features)
+        self.net = FullyConvolutionalNet(num_classes=178,
+                                         num_features=num_features)
         checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
                                 'fully_conv_net_on_smtsmt_20170627/'
                                 'model.checkpoint')

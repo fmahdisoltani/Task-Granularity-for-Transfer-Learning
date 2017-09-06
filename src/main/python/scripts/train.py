@@ -53,12 +53,16 @@ if __name__ == '__main__':
 
     # Load Json annotation files
     training_parser = JsonParser(training_path,
-                                 config_obj.get('paths', 'videos_folder'))
+                                 config_obj.get('paths', 'videos_folder'),
+                                 caption_type=config_obj.get("target",
+                                                             "caption_type"))
     validation_parser = JsonParser(validation_path,
-                                   config_obj.get('paths', 'videos_folder'))
+                                   config_obj.get('paths', 'videos_folder'),
+                                   caption_type=config_obj.get("target",
+                                                               "caption_type"))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(user_maxlen=config_obj.get("targets", "user_maxlen"))
     if pretrained_path:
         tokenizer.load_dictionaries(pretrained_path)
     else:
@@ -76,7 +80,8 @@ if __name__ == '__main__':
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
-                                     preprocess=preprocesser)
+                                     preprocess=preprocesser,
+                                     )
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
                                        tokenizer=tokenizer,
@@ -102,7 +107,8 @@ if __name__ == '__main__':
 
     params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = getattr(torch.optim, optimizer_type)(params=params,
-                     lr=config_obj.get("training", "learning_rate"))
+                     lr=config_obj.get("training", "learning_rate"),
+                                                     )
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
