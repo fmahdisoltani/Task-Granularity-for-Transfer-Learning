@@ -30,7 +30,7 @@ training:
   num_epochs: 200
   learning_rate: &lr 0.01
   teacher_force: True
-  verbose: False
+  verbose: True
 
 validation:
   frequency: 5
@@ -41,6 +41,6 @@ criteria:
   score: loss
   higher_is_better: False
 
-target:
+targets:
   caption_type: template
   user_maxlen: 10

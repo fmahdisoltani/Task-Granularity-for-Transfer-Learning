@@ -54,11 +54,11 @@ if __name__ == '__main__':
     # Load Json annotation files
     training_parser = JsonParser(training_path,
                                  config_obj.get('paths', 'videos_folder'),
-                                 caption_type=config_obj.get("target",
+                                 caption_type=config_obj.get("targets",
                                                              "caption_type"))
     validation_parser = JsonParser(validation_path,
                                    config_obj.get('paths', 'videos_folder'),
-                                   caption_type=config_obj.get("target",
+                                   caption_type=config_obj.get("targets",
                                                                "caption_type"))
 
     # Build a tokenizer that contains all captions from annotation files
