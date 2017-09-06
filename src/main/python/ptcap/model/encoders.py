@@ -146,11 +146,11 @@ class CNN3dLSTMEncoder(Encoder):
 
 class RtorchnEncoderP(Encoder):
 
-    def __init__(self):
+    def __init__(self, num_features=256):
         super(RtorchnEncoderP, self).__init__()
 
         from rtorchn.core.networks import FullyConvolutionalNet
-        self.net = FullyConvolutionalNet(num_classes=178, num_features=256)
+        self.net = FullyConvolutionalNet(num_classes=178, num_features=num_features)
         checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
                                 'fully_conv_net_on_smtsmt_20170627/'
                                 'model.checkpoint')
