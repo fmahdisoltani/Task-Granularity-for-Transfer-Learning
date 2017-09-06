@@ -33,7 +33,6 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-
         for epoch in range(num_epoch):
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader, epoch,
