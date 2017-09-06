@@ -25,7 +25,6 @@ from ptcap.data.tokenizer import Tokenizer
 
 from ptcap.data.annotation_parser import JsonParser
 
-from ptcap.model import *
 from ptcap.trainers import Trainer
 from rtorchn.preprocessing import CenterCropper
 
