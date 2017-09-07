@@ -1,3 +1,5 @@
+import torch
+
 from collections import OrderedDict
 
 
@@ -18,6 +20,13 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
     equal_values = captions[:, 0:num_tokens].eq(
         predictions[:, 0:num_tokens])
     accuracy = equal_values.float().mean().data.numpy()[0] * 100.0
+    return accuracy
+
+
+def caption_level_accuracy(captions, predictions):
+    _, caption_len = captions.size()
+    equal_values = torch.sum(captions.eq(predictions), dim=1)
+    accuracy = equal_values.eq(caption_len).float().mean().data.numpy()[0] * 100.0
     return accuracy
 
 
