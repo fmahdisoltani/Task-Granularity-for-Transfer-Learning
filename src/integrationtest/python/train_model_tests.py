@@ -1,7 +1,6 @@
 # Code largely inspired by 20bn-rtorchn's repo
 
 import os
-import shutil
 
 import fake_data as fkdata
 import ptcap.data.preprocessing as prep

@@ -1,31 +1,33 @@
 # Code copied from 20bn-rtorchn repo
 
-import os
 import json
+import os
 import shutil
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+
 import numpy as np
-from skvideo.io import ffprobe, vwrite
 
 TMP_DIR = "fake_data"
 VIDEOS_DIR = os.path.join(TMP_DIR, "videos")
 JSON_DIR = os.path.join(TMP_DIR, "json")
-JSON_FILE = os.path.join(JSON_DIR, "fake.json")
 CSV_FILE = os.path.join(JSON_DIR, "fake.csv")
-MP4_FILENAME = 'ANY_FILE.mp4'
-VIDEO_SIZE = [20, 40, 40]
+JSON_FILE = os.path.join(JSON_DIR, "fake.json")
+
 CROP_SIZE = [8, 24, 24]
+MP4_FILENAME = 'ANY_FILE.mp4'
 NUM_CLASSES = 2
 NUM_SAMPLES = 3
 VIDEO_LABELS = [i % NUM_CLASSES for i in range(NUM_SAMPLES)]
+VIDEO_SIZE = [20, 40, 40]
+
 
 
 def create_fake_json():
-    """Inspired from https://github.com/TwentyBN/20bn-realtimenet/blob/master/smoke_test.py
-    Credits to Ingo F."""
+    """
+        Inspired from https://github.com/TwentyBN/20bn-realtimenet/blob/master/smoke_test.py
+        Credits to Ingo F.
+    """
+
     json_content = [{
         "id": i,
         "file": "{}/{}".format(i, MP4_FILENAME),
