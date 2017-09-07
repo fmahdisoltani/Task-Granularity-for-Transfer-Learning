@@ -9,10 +9,15 @@ class Checkpointer(object):
 
     def __init__(self, checkpoint_folder, higher_is_better=False):
         self.checkpoint_folder = checkpoint_folder
-        self.best_score = np.Inf
         self.higher_is_better = higher_is_better
+        self.best_score = np.Inf
         if self.higher_is_better:
             self.best_score *= -1
+
+    def set_best_score(self, score=None):
+        if score:
+            if not ((score > self.best_score) ^ self.higher_is_better):
+                self.best_score = score
 
     def load_model(self, model, optimizer, folder=None, filename=None):
         pretrained_path = None if not folder or not filename else (
@@ -24,7 +29,7 @@ class Checkpointer(object):
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
-            self.best_score = checkpoint["score"]
+            self.set_best_score(checkpoint["score"])
             optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
@@ -36,11 +41,10 @@ class Checkpointer(object):
         if not folder:
             folder = self.checkpoint_folder
         score = state["score"]
-        if not ((score > self.best_score) ^ self.higher_is_better):
-            self.best_score = score
-            print("Saving best model, score: {:.4f} @ epoch {}".
-                  format(score, state["epoch"]))
-            torch.save(state, os.path.join(folder, filename))
+        self.set_best_score(score)
+        print("Saving best model, score: {:.4f} @ epoch {}".
+              format(score, state["epoch"]))
+        torch.save(state, os.path.join(folder, filename))
 
     def save_latest(self, state, folder=None, filename="model.latest"):
         if not folder:

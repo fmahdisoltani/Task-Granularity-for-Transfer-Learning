@@ -39,7 +39,7 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        valid_average_loss = None
+        valid_avg_loss = None
 
         for epoch in range(num_epoch):
             self.num_epochs += 1
@@ -50,7 +50,7 @@ class Trainer(object):
 
             train_avg_loss = train_average_scores["average_loss"]
 
-            state_dict = self.get_trainer_state(valid_average_loss)
+            state_dict = self.get_trainer_state(valid_avg_loss)
 
             self.checkpointer.save_latest(state_dict, train_avg_loss)
             self.checkpointer.save_value_csv((epoch, train_avg_loss),
@@ -65,12 +65,12 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                valid_average_loss = valid_average_scores["average_loss"]
+                valid_avg_loss = valid_average_scores["average_loss"]
 
-                state_dict = self.get_trainer_state(valid_average_loss)
+                state_dict = self.get_trainer_state(valid_avg_loss)
 
-                self.checkpointer.save_best(state_dict, valid_average_loss)
-                self.checkpointer.save_value_csv([epoch, valid_average_loss],
+                self.checkpointer.save_best(state_dict, valid_avg_loss)
+                self.checkpointer.save_value_csv([epoch, valid_avg_loss],
                                                  filename="valid_loss")
 
     def get_trainer_state(self, score):
