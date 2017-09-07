@@ -1,11 +1,11 @@
 paths:
   videos_folder: &vidpath /data/20bn-objects/videos_npz
   annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth_templates/
 
-  train_annot:  /data/20bn-objects/json/train_20170429.json.gz
-  validation_annot: /data/20bn-objects/json/validation_20170429.json.gz
-  test_annot: /data/20bn-gestures/json/test_20170429.json.gz
+  train_annot:  /data/20bn-objects/json/train_20170630.json.gz
+  validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
+  test_annot: /data/20bn-gestures/json/test_201700630.json.gz
 
   pretrained_path:
 
@@ -18,8 +18,14 @@ dataloaders:
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
-  type:
+  type: CNN3dLSTM
+  kwargs: {}
 
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: Adam
 training:
   num_epochs: 200
   learning_rate: &lr 0.01
@@ -27,7 +33,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 5
   teacher_force: False
   verbose: True
 
@@ -35,3 +41,6 @@ criteria:
   score: loss
   higher_is_better: False
 
+targets:
+  caption_type: template
+  user_maxlen: 10
