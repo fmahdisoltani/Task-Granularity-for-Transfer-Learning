@@ -30,7 +30,7 @@ training:
   num_epochs: 200
   learning_rate: &lr 0.01
   teacher_force: True
-  verbose: True
+  verbose: False
 
 validation:
   frequency: 5
