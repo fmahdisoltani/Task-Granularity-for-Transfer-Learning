@@ -56,7 +56,7 @@ class CheckpointerTests(unittest.TestCase):
         epoch_num, model, optimizer = checkpointer.load_model(
                                                 self.model, self.optimizer,
                                                 temp_dir.path, "model.latest")
-        assert mock_torch_load.call_count == 1
+        self.assertTrue(mock_torch_load.call_count == 1)
         self.check_loaded_objects(epoch_num, model, optimizer)
 
     @patch.object(torch, "load", autospec=True)
@@ -70,7 +70,7 @@ class CheckpointerTests(unittest.TestCase):
         epoch_num, model, optimizer = checkpointer.load_model(
                                                     self.model, self.optimizer,
                                                     temp_dir.path, "model.best")
-        assert mock_torch_load.call_count == 1
+        self.assertTrue(mock_torch_load.call_count == 1)
         self.check_loaded_objects(epoch_num, model, optimizer)
 
     @patch.object(torch, "load")
