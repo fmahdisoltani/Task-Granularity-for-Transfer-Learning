@@ -32,14 +32,13 @@ class Trainer(object):
 
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
+        self.score = None
 
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
-
-        valid_avg_loss = None
 
         for epoch in range(num_epoch):
             self.num_epochs += 1
@@ -50,7 +49,7 @@ class Trainer(object):
 
             train_avg_loss = train_average_scores["average_loss"]
 
-            state_dict = self.get_trainer_state(valid_avg_loss)
+            state_dict = self.get_trainer_state()
 
             self.checkpointer.save_latest(state_dict, train_avg_loss)
             self.checkpointer.save_value_csv((epoch, train_avg_loss),
@@ -65,20 +64,20 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                valid_avg_loss = valid_average_scores["average_loss"]
+                self.score = valid_average_scores["average_loss"]
 
-                state_dict = self.get_trainer_state(valid_avg_loss)
+                state_dict = self.get_trainer_state()
 
-                self.checkpointer.save_best(state_dict, valid_avg_loss)
-                self.checkpointer.save_value_csv([epoch, valid_avg_loss],
+                self.checkpointer.save_best(state_dict, self.score)
+                self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
 
-    def get_trainer_state(self, score):
+    def get_trainer_state(self):
         return {
             'epoch': self.num_epochs,
             'model': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
-            'score': score,
+            'score': self.score,
         }
 
     def get_function_dict(self):
