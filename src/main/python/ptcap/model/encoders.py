@@ -157,8 +157,8 @@ class RtorchnEncoderP(nn.Module):
         self.net = FullyConvolutionalNet(num_classes=178,
                                          num_features=num_features)
         checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
-                                'fully_conv_net_on_smtsmt_20170627/'
-                                'model.checkpoint')
+                                'pretrained_nets/'
+                                'fully_conv_net_on_smtsmt_20170627/model.checkpoint')
 
         self.net.load_state_dict(checkpoint)
         for param in self.net.parameters():

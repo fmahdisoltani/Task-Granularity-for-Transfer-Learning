@@ -1,11 +1,11 @@
 paths:
   videos_folder: &vidpath /data/20bn-objects/videos_npz
   annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/ckp_sth_templates/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/ckp_sth_exp_frozen_pret/
 
-  train_annot:  /data/20bn-objects/json/train_20170627.json.gz
-  validation_annot: /data/20bn-objects/json/validation_20170627.json.gz
-  test_annot: /data/20bn-gestures/json/test_20170627.json.gz
+  train_annot:  /data/20bn-objects/json/train_20170630.json.gz
+  validation_annot: /data/20bn-objects/json/validation_2017063.json.gz
+  test_annot: /data/20bn-objects/json/test_20170630.json.gz
 
   pretrained_path:
 
@@ -42,5 +42,5 @@ criteria:
   higher_is_better: False
 
 targets:
-  caption_type: template
+  caption_type: label
   user_maxlen: 10
