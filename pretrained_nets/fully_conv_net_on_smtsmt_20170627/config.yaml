@@ -1,0 +1,75 @@
+callbacks:
+  base_logger:
+    args: [1]
+    type: BaseLogger
+  early_stopping:
+    args: [valid_loss, 10, true]
+    type: EarlyStopping
+  logs_checkpoint:
+    args: [/home/gberger/model_checkpoints/fully_conv_net_on_smtsmt_20170627]
+    type: HistoryCheckpoint
+  min_is_best: true
+  model_checkpoint:
+    args: [/home/gberger/model_checkpoints/fully_conv_net_on_smtsmt_20170627, valid_loss,
+      true]
+    type: ModelCheckpoint
+  monitor: valid_loss
+dataloaders:
+  batch_size: 16
+  kwargs: {batch_size: 16, num_workers: 16, pin_memory: true}
+  num_batches_per_epoch: 2500
+datasets:
+  kwargs: {}
+  label_preprocessing:
+    num_classes: 178
+    test: &id001
+      args: [178]
+      type: OneHotConverter
+    train: *id001
+    validation: *id001
+  type: NumpyVideoDataset
+  video_preprocessing:
+    test: &id003
+      args: &id002
+      - [48, 96, 96]
+      kwargs: {scale: 64.0}
+      type: default_evaluation_preprocesser
+    train:
+      args: *id002
+      kwargs: {scale: 64.0}
+      type: default_data_augmenter
+    validation: *id003
+device:
+  gpus: &id004 [0]
+  synchronize_gpu: true
+  use_cuda: true
+loss:
+  args: [true]
+  type: CrossEntropy3D
+metrics: [top1, top5]
+model:
+  args: [178]
+  file: smtsmt
+  kwargs:
+    gpus: *id004
+    use_cuda: true
+  type: FullyConvolutionalNet
+optimizer:
+  kwargs: {lr: 0.001}
+  type: Adam
+paths: {annot_path: /data/20bn-objects/json, checkpoint: /home/gberger/model_checkpoints/fully_conv_net_on_smtsmt_20170627,
+  test_annot: test_20170627.json.gz, train_annot: train_20170627.json.gz, validation_annot: validation_20170627.json.gz,
+  videos_path: /data/gberger/20bn-objects}
+preparers:
+  test: &id005
+    label_preparation:
+      args: []
+      type: JesterLabelPreparation
+    type: JsonPreparer
+    video_preparation:
+      args: [/data/gberger/20bn-objects]
+      type: RootJoiner
+  train: *id005
+  validation: *id005
+training: {learning_rate: 0.001, num_epochs: 200, patience: 10, pretrained_model: /path/to/checkpoint/dir,
+  resume: false, verbose: true}
