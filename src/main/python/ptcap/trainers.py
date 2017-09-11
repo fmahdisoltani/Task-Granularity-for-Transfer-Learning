@@ -33,7 +33,6 @@ class Trainer(object):
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
 
-
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
