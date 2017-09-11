@@ -32,6 +32,7 @@ class Trainer(object):
 
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
+        self.score = None
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -45,10 +46,12 @@ class Trainer(object):
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            state_dict = self.get_trainer_state()
             train_avg_loss = train_average_scores["average_loss"]
-            self.checkpointer.save_latest(state_dict, train_avg_loss)
-            self.checkpointer.save_value_csv((epoch, train_avg_loss),
+
+            state_dict = self.get_trainer_state()
+
+            self.checkpointer.save_latest(state_dict)
+            self.checkpointer.save_value_csv([epoch, train_avg_loss],
                                              filename="train_loss")
 
             # Validation
@@ -59,20 +62,21 @@ class Trainer(object):
                     verbose=verbose_valid
                 )
 
+                # remember best loss and save checkpoint
+                self.score = valid_average_scores["average_loss"]
+
                 state_dict = self.get_trainer_state()
 
-                # remember best loss and save checkpoint
-                valid_average_loss = valid_average_scores["average_loss"]
-                self.checkpointer.save_best(state_dict, valid_average_loss)
-                self.checkpointer.save_value_csv([epoch, valid_average_loss],
+                self.checkpointer.save_best(state_dict)
+                self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
 
     def get_trainer_state(self):
         return {
             'epoch': self.num_epochs,
             'model': self.model.state_dict(),
-            'best_score': self.checkpointer.best_score,
             'optimizer': self.optimizer.state_dict(),
+            'score': self.score,
         }
 
     def get_function_dict(self):
