@@ -9,4 +9,4 @@ install:
   - pyb install_dependencies -X
 
 script:
-  - pyb run_unit_tests -X
+  - pyb -X
