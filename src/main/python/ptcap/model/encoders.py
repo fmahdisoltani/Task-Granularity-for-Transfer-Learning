@@ -50,6 +50,8 @@ class CNN3dEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
+        self.activations = {}
+
     def forward(self, videos):
         # Video encoding
         self.conv1_layer = self.conv1(videos)

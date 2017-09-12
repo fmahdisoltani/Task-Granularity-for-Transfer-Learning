@@ -14,16 +14,35 @@ from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
 from ptcap.loggers import CustomLogger
 
 
-def write_values(variables):
-    for key in vars(variables):
-        if "data" in key:
-            variables["data"]["numpy"]
-        elif "numpy" in key:
-            variables["numpy"]
+def write_values(writer, instance, name, global_step):
+    # Just take state_dict for weights and biases
+    # Use the activation dict to obtain
+    if "numpy" in vars(instance):
+        writer.add_histogram(tag=name, values=getattr(instance, "numpy")(), global_step=global_step)
+    elif "data" in vars(instance):
+        write_values(writer, getattr(instance, "data"), name, global_step)
+    elif "grad" in vars(instance):
+        if getattr(instance, "grad") is None:
+            print("Found an instance with 'grad' attribute equal to `None`,"
+                  " did you declare .retain_grad() for all of the instances"
+                  " in the graph?")
+            raise RuntimeError
+        else:
+            write_values(writer, getattr(instance, "grad"), name, global_step)
+    else:
+        for key in dir(instance):
+            # Write values of non-private methods
+            if key[0] != "_":
+                try:
+                    vars(getattr(instance, key))
+                    write_values(writer, getattr(instance, key), key,
+                                 global_step)
+                except TypeError:
+                    continue
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer,
+    def __init__(self, model, loss_function, optimizer, tokenizer, writer,
                  checkpoint_path, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
@@ -41,6 +60,7 @@ class Trainer(object):
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
         self.score = None
+        self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -116,8 +136,8 @@ class Trainer(object):
             if is_training:
                 self.model.zero_grad()
                 self.model.encoder.conv4_layer.retain_grad()
-                write_values(self.model.encoder)
                 loss.backward()
+                write_values(self.writer, self.model, epoch, "model")
                 self.optimizer.step()
 
             # convert probabilities to predictions

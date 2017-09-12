@@ -120,7 +120,7 @@ def simulate_training_script(config_obj, fake_dir):
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, writer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 
