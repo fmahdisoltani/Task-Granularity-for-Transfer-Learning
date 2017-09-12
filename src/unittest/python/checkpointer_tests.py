@@ -40,8 +40,8 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_set_best_score(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
-        scores = [None, 13, 17, 11, 23]
-        expected = [np.Inf, 13, 13, 11, 11]
+        scores = [None, 13.0, 17.0, 11.0, 23.0]
+        expected = [np.Inf, 13.0, 13.0, 11.0, 11.0]
         for i, score in enumerate(scores):
             with self.subTest(score=score, expected=expected[i]):
                 checkpointer.set_best_score(score)
@@ -62,7 +62,7 @@ class CheckpointerTests(unittest.TestCase):
     @patch.object(torch, "load", autospec=True)
     @tempdir()
     def test_load_model_from_save_best(self, mock_torch_load, temp_dir):
-        self.state_dict["score"] = 5
+        self.state_dict["score"] = 5.0
         mock_torch_load.return_value = self.state_dict
         checkpointer = Checkpointer(temp_dir.path)
         checkpointer.best_score = self.state_dict["score"] + 1
@@ -113,7 +113,7 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_best_higher_is_better(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path, higher_is_better=True)
-        scores = [3, 7, 2, 11]
+        scores = [3.0, 7.0, 2.0, 11.0]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
             best_score = checkpointer.best_score
@@ -129,7 +129,7 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_best_higher_is_not_better(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path, higher_is_better=False)
-        scores = [3, 7, 2, 11]
+        scores = [3.0, 7.0, 2.0, 11.0]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
             best_score = checkpointer.best_score
@@ -145,7 +145,7 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_best_folder_None(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
-        scores = [3, 7, 2, 11]
+        scores = [3.0, 7.0, 2.0, 11.0]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
             best_score = checkpointer.best_score
@@ -161,7 +161,7 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_latest(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
-        scores = [3, 7, 2, 11]
+        scores = [3.0, 7.0, 2.0, 11.0]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
             self.state_dict["score"] = score
@@ -176,7 +176,7 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_latest_folder_None(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
-        scores = [3, 7, 2, 11]
+        scores = [3.0, 7.0, 2.0, 11.0]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
             self.state_dict["score"] = score
@@ -233,6 +233,6 @@ class CheckpointerTests(unittest.TestCase):
         checkpointer.save_latest(self.state_dict)
         checkpointer.load_model(self.model, self.optimizer, temp_dir.path,
                                 "model.latest")
-        self.state_dict["score"] = 3
+        self.state_dict["score"] = 3.0
         checkpointer.save_best(self.state_dict)
         self.assertEqual(checkpointer.best_score, self.state_dict["score"])
