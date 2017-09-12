@@ -8,22 +8,25 @@ Options:
   -h --help              Show this screen.
 """
 
+import torch.optim
 
 from docopt import docopt
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 import ptcap.data.preprocessing as prep
+import ptcap.losses
+import ptcap.model.captioners
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.data.tokenizer import Tokenizer
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.config_parser import YamlConfig
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.tokenizer import Tokenizer
+
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.losses import SequenceCrossEntropy
-from ptcap.model.captioners import *
+
 from ptcap.trainers import Trainer
-from rtorchn.preprocessing import CenterCropper
+from rtorchn.data.preprocessing import CenterCropper
 
 if __name__ == '__main__':
     # Get argument
@@ -36,15 +39,6 @@ if __name__ == '__main__':
     training_path = config_obj.get('paths', 'train_annot')
     validation_path = config_obj.get('paths', 'validation_annot')
 
-    # Load Json annotation files
-    training_parser = JsonParser(training_path,
-                                 config_obj.get('paths', 'videos_folder'))
-    validation_parser = JsonParser(validation_path,
-                                   config_obj.get('paths', 'videos_folder'))
-
-    # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer(training_parser.get_captions())
-
     # Load attributes of config file
     num_epoch = config_obj.get('training', 'num_epochs')
     frequency_valid = config_obj.get('validation', 'frequency')
@@ -52,10 +46,22 @@ if __name__ == '__main__':
     verbose_valid = config_obj.get('validation', 'verbose')
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    # use_cuda = config_obj.get('device', 'use_cuda')
     gpus = config_obj.get("device", "gpus")
     checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
+
+    # Load Json annotation files
+    training_parser = JsonParser(training_path,
+                                 config_obj.get('paths', 'videos_folder'))
+    validation_parser = JsonParser(validation_path,
+                                   config_obj.get('paths', 'videos_folder'))
+
+    # Build a tokenizer that contains all captions from annotation files
+    tokenizer = Tokenizer()
+    if pretrained_path:
+        tokenizer.load_dictionaries(pretrained_path)
+    else:
+        tokenizer.build_dictionaries(training_parser.get_captions())
 
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
@@ -76,30 +82,31 @@ if __name__ == '__main__':
                                        preprocess=val_preprocesser)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
-                            **config_obj.get('dataloaders', 'kwargs'))
+                            **config_obj.get("dataloaders", "kwargs"))
 
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
-                                **config_obj.get('dataloaders', 'kwargs'))
+                                **config_obj.get("dataloaders", "kwargs"))
 
+    # Get model, loss, and optimizer types from config_file
+    model_type = config_obj.get("model", "type")
+    loss_type = config_obj.get("loss", "type")
+    optimizer_type = config_obj.get("optimizer", "type")
 
-    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
-                          go_token=tokenizer.encode_token(tokenizer.GO),
-                          gpus=gpus)
-    # captioner = RtorchnCaptioner(tokenizer.get_vocab_size())
+    # Create model, loss, and optimizer objects
+    model = getattr(ptcap.model.captioners, model_type)(vocab_size=tokenizer.get_vocab_size(),
+                             go_token=tokenizer.encode_token(tokenizer.GO),
+                             gpus=gpus)
+    loss_function = getattr(ptcap.losses, loss_type)()
 
-    # Loss and Optimizer
-    loss_function = SequenceCrossEntropy()
-    params = list(captioner.parameters())
-
-    optimizer = torch.optim.Adam(params,
-                                 lr=config_obj.get('training', 'learning_rate'))
+    optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
+                     lr=config_obj.get("training", "learning_rate"))
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+    trainer = Trainer(model, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 

@@ -21,3 +21,11 @@ A repo containing video captioning models written in PyTorch. To understand the 
 1. At least 50% line coverage
 2. Commit python files as well as their tests
 3. The person merging the pull request should not have taken part in developing it
+
+### Pull Request (PR) Rules
+
+1. Check the code does not break before a PR is created.
+2. The power subset of the contributors should take care of the PR.
+3. No requests about the original code, create an issue or PR instead.
+4. Most (all if possible) changes should be requested in the first iteration.
+5. Be vocal when you disagree.
