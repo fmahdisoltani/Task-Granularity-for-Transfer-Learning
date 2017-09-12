@@ -14,6 +14,14 @@ from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
 from ptcap.loggers import CustomLogger
 
 
+def write_values(variables):
+    for key in vars(variables):
+        if "data" in key:
+            variables["data"]["numpy"]
+        elif "numpy" in key:
+            variables["numpy"]
+
+
 class Trainer(object):
     def __init__(self, model, loss_function, optimizer, tokenizer,
                  checkpoint_path, folder=None, filename=None, gpus=None):
@@ -96,15 +104,19 @@ class Trainer(object):
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
-            videos, captions = Variable(videos), Variable(captions)
+            videos, captions = (Variable(videos),
+                                Variable(captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
+            self.model.encoder.conv3_layer.retain_grad()
 
             if is_training:
                 self.model.zero_grad()
+                self.model.encoder.conv4_layer.retain_grad()
+                write_values(self.model.encoder)
                 loss.backward()
                 self.optimizer.step()
 

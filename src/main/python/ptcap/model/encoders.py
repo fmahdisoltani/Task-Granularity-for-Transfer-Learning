@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 
@@ -50,25 +52,27 @@ class CNN3dEncoder(Encoder):
 
     def forward(self, videos):
         # Video encoding
-        h = self.conv1(videos)
-        h = self.pool1(h)
+        self.conv1_layer = self.conv1(videos)
+        self.pool1_layer = self.pool1(self.conv1_layer)
 
-        h = self.conv2(h)
-        h = self.pool2(h)
+        self.conv2_layer = self.conv2(self.pool1_layer)
+        self.pool2_layer = self.pool2(self.conv2_layer)
 
-        h = self.conv3(h)
-        h = self.pool3(h)
+        self.conv3_layer = self.conv3(self.pool2_layer)
+        self.pool3_layer = self.pool3(self.conv3_layer)
 
-        h = self.conv4(h)
-        h = self.conv5(h)
-        h = self.conv6(h)
+        self.conv4_layer = self.conv4(self.pool3_layer)
+        self.conv5_layer = self.conv5(self.conv4_layer)
+        self.conv6_layer = self.conv6(self.conv5_layer)
 
-        h = self.pool4(h)  # batch_size * num_features * num_step * w * h
+        self.pool4_layer = self.pool4(self.conv6_layer)  # batch_size * num_features * num_step * w * h
 
-        h = h.mean(2)
-        h = h.view(h.size()[0:2])
+        self.mean_pool = self.pool4_layer.mean(2)
+        mean_pool = self.mean_pool.view(self.mean_pool.size()[0:2])
 
-        return h
+        self.conv1_layer.retain_grad()
+
+        return mean_pool
 
 
 class CNN3dLSTMEncoder(Encoder):

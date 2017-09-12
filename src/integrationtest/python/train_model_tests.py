@@ -101,10 +101,12 @@ def simulate_training_script(config_obj, fake_dir):
         for key in captioner_state_dict:
             weights = []
             layer = captioner_state_dict[key]
-            layer_grad = layer.grad
-            for val in layer.view(-1):
-                weights.append(float(val))
-            writer.add_histogram(tag=key, values=np.array(weights), global_step=step)
+            #layer_grad = layer.grad
+            # for val in layer.view(-1):
+            #     weights.append(float(val))
+            # writer.add_histogram(tag=key, values=np.array(weights), global_step=step)
+            writer.add_histogram(tag=key, values=layer.numpy(),
+                                 global_step=step)
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
