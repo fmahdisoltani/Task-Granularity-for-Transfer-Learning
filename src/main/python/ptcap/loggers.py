@@ -40,4 +40,4 @@ class CustomLogger(object):
     def log_dict(self, scores_dict):
         for key, value in scores_dict.items():
             if "average" in key:
-                self.logger.info("{}: {:.4f} -".format(key, value))
+                self.logger.info("{}: {:.4} -".format(key, value))

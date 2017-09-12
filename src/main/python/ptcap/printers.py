@@ -11,7 +11,7 @@ def print_captions_and_predictions(tokenizer, captions, predictions):
 
 def print_dict(scores_dict):
     for key, value in scores_dict.items():
-        print("{}: {:.4f} -".format(key, value), end=" ")
+        print("{}: {:.4} -".format(key, value), end=" ")
 
 
 def print_stuff(scores_dict, tokenizer, is_training, captions, predictions,
