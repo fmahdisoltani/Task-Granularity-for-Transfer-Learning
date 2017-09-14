@@ -9,40 +9,15 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.loggers import CustomLogger
 from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
                           token_accuracy)
-from ptcap.loggers import CustomLogger
+from ptcap.tensorboardY import Seq2seqAdapter
 
-
-def write_values(writer, instance, name, global_step):
-    # Just take state_dict for weights and biases
-    # Use the activation dict to obtain
-    if "numpy" in vars(instance):
-        writer.add_histogram(tag=name, values=getattr(instance, "numpy")(), global_step=global_step)
-    elif "data" in vars(instance):
-        write_values(writer, getattr(instance, "data"), name, global_step)
-    elif "grad" in vars(instance):
-        if getattr(instance, "grad") is None:
-            print("Found an instance with 'grad' attribute equal to `None`,"
-                  " did you declare .retain_grad() for all of the instances"
-                  " in the graph?")
-            raise RuntimeError
-        else:
-            write_values(writer, getattr(instance, "grad"), name, global_step)
-    else:
-        for key in dir(instance):
-            # Write values of non-private methods
-            if key[0] != "_":
-                try:
-                    vars(getattr(instance, key))
-                    write_values(writer, getattr(instance, key), key,
-                                 global_step)
-                except TypeError:
-                    continue
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer, writer,
+    def __init__(self, model, loss_function, optimizer, tokenizer,
                  checkpoint_path, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
@@ -60,7 +35,7 @@ class Trainer(object):
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
         self.score = None
-        self.writer = writer
+        self.writer = Seq2seqAdapter()
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -131,14 +106,18 @@ class Trainer(object):
                 captions = captions.cuda(self.gpus[0])
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
-            self.model.encoder.conv3_layer.retain_grad()
+
+            global_step = len(dataloader) * epoch + sample_counter
+            self.writer.add_state_dict(self.model, global_step, is_training)
+            self.writer.add_variables([self.model.encoder.hidden], global_step,
+                                      is_training)
 
             if is_training:
                 self.model.zero_grad()
-                self.model.encoder.conv4_layer.retain_grad()
                 loss.backward()
-                write_values(self.writer, self.model, epoch, "model")
                 self.optimizer.step()
+                self.writer.add_gradients([self.model.encoder.hidden],
+                                          global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -151,6 +130,7 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
+            self.writer.add_scalars(scores_dict, global_step, is_training)
             # Print after each batch
             prt.print_stuff(scores_dict, self.tokenizer,
                             is_training, captions, predictions, epoch + 1,

@@ -50,31 +50,33 @@ class CNN3dEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.activations = {}
+        self.hidden = {}
 
     def forward(self, videos):
         # Video encoding
-        self.conv1_layer = self.conv1(videos)
-        self.pool1_layer = self.pool1(self.conv1_layer)
+        self.hidden["conv1_layer"] = self.conv1(videos)
+        self.hidden["pool1_layer"] = self.pool1(self.hidden["conv1_layer"])
 
-        self.conv2_layer = self.conv2(self.pool1_layer)
-        self.pool2_layer = self.pool2(self.conv2_layer)
+        self.hidden["conv2_layer"] = self.conv2(self.hidden["pool1_layer"])
+        self.hidden["pool2_layer"] = self.pool2(self.hidden["conv2_layer"])
 
-        self.conv3_layer = self.conv3(self.pool2_layer)
-        self.pool3_layer = self.pool3(self.conv3_layer)
+        self.hidden["conv3_layer"] = self.conv3(self.hidden["pool2_layer"])
+        self.hidden["pool3_layer"] = self.pool3(self.hidden["conv3_layer"])
 
-        self.conv4_layer = self.conv4(self.pool3_layer)
-        self.conv5_layer = self.conv5(self.conv4_layer)
-        self.conv6_layer = self.conv6(self.conv5_layer)
+        self.hidden["conv4_layer"] = self.conv4(self.hidden["pool3_layer"])
+        self.hidden["conv5_layer"] = self.conv5(self.hidden["conv4_layer"])
+        self.hidden["conv6_layer"] = self.conv6(self.hidden["conv5_layer"])
 
-        self.pool4_layer = self.pool4(self.conv6_layer)  # batch_size * num_features * num_step * w * h
+        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])  # batch_size * num_features * num_step * w * h
 
-        self.mean_pool = self.pool4_layer.mean(2)
-        mean_pool = self.mean_pool.view(self.mean_pool.size()[0:2])
+        self.hidden["mean_pool"] = self.hidden["pool4_layer"].mean(2)
+        self.hidden["output"] = self.hidden["mean_pool"].view(
+                                self.hidden["mean_pool"].size()[0:2])
 
-        self.conv1_layer.retain_grad()
+        for key in self.hidden:
+            self.hidden[key].retain_grad()
 
-        return mean_pool
+        return self.hidden["output"]
 
 
 class CNN3dLSTMEncoder(Encoder):
