@@ -51,6 +51,8 @@ class LSTMDecoder(Decoder):
         self.gpus = gpus
         self.go_token = go_token
 
+        self.hidden = {}
+
     def init_hidden(self, features):
         """
         Hidden states of the LSTM are initialized with features.
@@ -85,13 +87,18 @@ class LSTMDecoder(Decoder):
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
             captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+            self.hidden["token_probs"], _ = self.apply_lstm(
+                                            features, captions_with_go_token)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            self.hidden["token_probs"] = self.predict(features,
+                                                      go_part, num_step)
 
-        return probs
+        for key in self.hidden:
+            self.hidden[key].retain_grad()
+
+        return self.hidden["token_probs"]
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
 

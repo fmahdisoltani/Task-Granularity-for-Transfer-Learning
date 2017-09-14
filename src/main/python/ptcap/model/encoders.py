@@ -67,7 +67,8 @@ class CNN3dEncoder(Encoder):
         self.hidden["conv5_layer"] = self.conv5(self.hidden["conv4_layer"])
         self.hidden["conv6_layer"] = self.conv6(self.hidden["conv5_layer"])
 
-        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])  # batch_size * num_features * num_step * w * h
+        # batch_size * num_features * num_step * w * h
+        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])
 
         self.hidden["mean_pool"] = self.hidden["pool4_layer"].mean(2)
         self.hidden["output"] = self.hidden["mean_pool"].view(
@@ -116,6 +117,8 @@ class CNN3dLSTMEncoder(Encoder):
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
+        self.hidden = {}
+
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
         c0 = Variable(torch.zeros(1, batch_size, self.num_features))
@@ -127,26 +130,29 @@ class CNN3dLSTMEncoder(Encoder):
     def forward(self, videos):
         # Video encoding
 
-        h = self.conv1(videos)
-        h = self.pool1(h)
+        self.hidden["conv1_layer"] = self.conv1(videos)
+        self.hidden["pool1_layer"] = self.pool1(self.hidden["conv1_layer"])
 
-        h = self.conv2(h)
-        h = self.pool2(h)
+        self.hidden["conv2_layer"] = self.conv2(self.hidden["pool1_layer"])
+        self.hidden["pool2_layer"] = self.pool2(self.hidden["conv2_layer"])
 
-        h = self.conv3(h)
-        h = self.pool3(h)
+        self.hidden["conv3_layer"] = self.conv3(self.hidden["pool2_layer"])
+        self.hidden["pool3_layer"] = self.pool3(self.hidden["conv3_layer"])
 
-        h = self.conv4(h)
-        h = self.conv5(h)
-        h = self.conv6(h)
-        h = self.pool4(h)
+        self.hidden["conv4_layer"] = self.conv4(self.hidden["pool3_layer"])
+        self.hidden["conv5_layer"] = self.conv5(self.hidden["conv4_layer"])
+        self.hidden["conv6_layer"] = self.conv6(self.hidden["conv5_layer"])
 
-        h = h.view(h.size()[0:3])
+        # batch_size * num_features * num_step * w * h
+        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])
+
+        h = self.hidden["pool4_layer"].view(
+                                        self.hidden["pool4_layer"].size()[0:3])
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
         lstm_hidden = self.init_hidden(batch_size=h.size()[0])
-        lstm_outputs, _ = self.lstm(h, lstm_hidden)
+        self.hidden["lstm_outputs"], _ = self.lstm(h, lstm_hidden)
 
-        h_mean = torch.mean(lstm_outputs, dim=1)
+        self.hidden["output"] = torch.mean(self.hidden["lstm_outputs"], dim=1)
 
-        return h_mean
+        return self.hidden["output"]
