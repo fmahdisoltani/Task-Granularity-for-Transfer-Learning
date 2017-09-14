@@ -2,13 +2,9 @@
 
 import os
 
-import numpy as np
-import torch
-
 import fake_data as fkdata
 import ptcap.data.preprocessing as prep
 
-from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
@@ -24,7 +20,6 @@ from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
-CONFIG_PATH = ["/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/integration_test.yaml"]
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -95,19 +90,6 @@ def simulate_training_script(config_obj, fake_dir):
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
 
-    writer = SummaryWriter()
-    captioner_state_dict = captioner.state_dict()
-    for step in range(10):
-        for key in captioner_state_dict:
-            weights = []
-            layer = captioner_state_dict[key]
-            #layer_grad = layer.grad
-            # for val in layer.view(-1):
-            #     weights.append(float(val))
-            # writer.add_histogram(tag=key, values=np.array(weights), global_step=step)
-            writer.add_histogram(tag=key, values=layer.numpy(),
-                                 global_step=step)
-
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())
@@ -120,7 +102,7 @@ def simulate_training_script(config_obj, fake_dir):
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, writer,
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 
