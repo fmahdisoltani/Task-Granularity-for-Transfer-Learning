@@ -56,8 +56,8 @@ class ScoresOperator(object):
         """
 
         scores_dict = self.run_scores(score_attr)
-        # Calculate a moving average of the scores.
-        scores_dict = self.moving_average(scores_dict, count)
+        # Calculate and update the moving average of the scores.
+        scores_dict = self.update_moving_average(scores_dict, count)
         return scores_dict
 
     def run_scores(self, score_attr):
@@ -70,7 +70,9 @@ class ScoresOperator(object):
         return {key: self.scores_dict[key] for key in self.scores_dict
                 if "average" in key}
 
-    def moving_average(self, scores_dict, count):
+    def update_moving_average(self, scores_dict, count):
+        assert count > 0
+        scores_dict = dict(scores_dict)
         scores_list = list(scores_dict.keys())
         for score in scores_list:
             average_score = "average_" + score
