@@ -15,7 +15,6 @@ from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
 from ptcap.tensorboardY import Seq2seqAdapter
 
 
-
 class Trainer(object):
     def __init__(self, model, loss_function, optimizer, tokenizer,
                  checkpoint_path, folder=None, filename=None, gpus=None):
@@ -108,17 +107,16 @@ class Trainer(object):
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter
-            self.writer.add_state_dict(self.model, global_step, is_training)
-            model_activations = [self.model.encoder.hidden,
-                                 self.model.decoder.hidden]
-            self.writer.add_variables(model_activations, global_step,
-                                      is_training)
+            self.writer.add_state_dict(self.model, global_step)
 
             if is_training:
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                self.writer.add_gradients(model_activations, global_step)
+
+            model_activations = [self.model.encoder.hidden,
+                                 self.model.decoder.hidden]
+            self.writer.add_variables(model_activations, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -131,16 +129,17 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            self.writer.add_scalars(scores_dict, global_step, is_training)
+            self.writer.add_scalars(scores.get_average_scores(), global_step,
+                                    is_training)
             # Print after each batch
             prt.print_stuff(scores_dict, self.tokenizer,
                             is_training, captions, predictions, epoch + 1,
                             sample_counter + 1, len(dataloader), verbose)
 
         # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
-                     predictions, epoch + 1, len(dataloader),
-                     verbose, sample_counter)
+        self.logger.log_stuff(scores_dict, self.tokenizer, is_training,
+                              captions, predictions, epoch + 1, len(dataloader),
+                              verbose, sample_counter)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()

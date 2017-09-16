@@ -4,6 +4,28 @@ from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 
 
+def update_dict(master_dict, vars_tuple, num_step):
+    for key, var in vars_tuple:
+        [master_dict.update({key + "_" + str(i): var[:, i]}) for i in
+         range(num_step)]
+
+
+def register_grad(master_dict, vars_tuple, num_step=None):
+    for key, value in vars_tuple:
+        value.register_hook(save_grad(master_dict, key, num_step))
+
+
+def save_grad(master_dict, name, num_step=None):
+    def hook(grad):
+        if num_step is not None:
+            [master_dict.update({name + "_" + str(i) + "_grad": grad[:, i]})
+             for i in range(num_step)]
+        else:
+            master_dict[name + "_grad"] = grad
+
+    return hook
+
+
 class TensorboardAdapter(object):
     """
         An interface that uses tensorboard pytorch to visualize the contents of
@@ -25,39 +47,31 @@ class TensorboardAdapter(object):
         else:
             print("add_graph was not executed because model_output=None")
 
-    def add_state_dict(self, model, global_step, is_training):
+    def add_state_dict(self, model, global_step):
         """
             Visualizes the contents of model.state_dict().
         """
-        pad = "_train" if is_training else "_valid"
+
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key + pad, value.numpy(),
+            self.summary_writer.add_histogram(key, value.numpy(),
                                               global_step)
 
-    def add_gradients(self, vars_dict_list, global_step):
-        """
-            Visualizes the gradient of the variables in vars_dict_list.
-        """
-        for var_dict in vars_dict_list:
-            for key, value in var_dict.items():
-                self.summary_writer.add_histogram(
-                    key + "_gradient", value.grad.data.numpy(), global_step)
-
-    def add_variables(self, vars_dict_list, global_step, is_training):
+    def add_variables(self, vars_dict_list, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
-        pad = "_train" if is_training else "_valid"
+
         for var_dict in vars_dict_list:
             for key, value in var_dict.items():
-                self.summary_writer.add_histogram(key + pad, value.data.numpy(),
+                self.summary_writer.add_histogram(key, value.data.numpy(),
                                                   global_step)
 
     def add_scalars(self, scalars_dict, global_step, is_training):
         """
             Visualizes the contents of scalars_dict which must be scalar.
         """
+
         pad = "_train" if is_training else "_valid"
         for key, value in scalars_dict.items():
             self.summary_writer.add_scalar(key + pad, value, global_step)
@@ -66,6 +80,7 @@ class TensorboardAdapter(object):
         """
             Closes the summary_writer.
         """
+
         self.summary_writer.close()
 
 
