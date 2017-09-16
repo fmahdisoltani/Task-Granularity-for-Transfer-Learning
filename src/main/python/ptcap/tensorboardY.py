@@ -31,6 +31,7 @@ class TensorboardAdapter(object):
         An interface that uses tensorboard pytorch to visualize the contents of
         the pytorch model.
     """
+
     def __init__(self, log_dir=None):
         self.summary_writer = SummaryWriter(log_dir=log_dir)
 
@@ -38,6 +39,7 @@ class TensorboardAdapter(object):
         """
             Adds a visualization of the model's computation graph.
         """
+
         if input_dims is not None:
             input_variable = Variable(torch.rand(*input_dims),
                                       requires_grad=True)
@@ -90,6 +92,7 @@ class Seq2seqAdapter(TensorboardAdapter):
         models as the dynamic between the inputs and the labels is different
         compared to conventional feedforward classifiers.
     """
+
     def __init__(self, log_dir=None):
         super(Seq2seqAdapter, self).__init__(log_dir=log_dir)
 
