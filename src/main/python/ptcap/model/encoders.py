@@ -152,15 +152,15 @@ class CNN3dLSTMEncoder(Encoder):
                                         self.hidden["pool4_layer"].size()[0:3])
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
-        lstm_hidden = self.init_hidden(batch_size=h.size()[0])
+        lstm_hidden = self.init_hidden(batch_size=h.size(0))
         lstm_outputs, lstm_hidden = (self.lstm(h, lstm_hidden))
 
         self.hidden["features"] = torch.mean(lstm_outputs, dim=1)
 
-        vars_tuple = [("lstm_outputs", lstm_outputs)]
+        vars_tuple = [("encoder_lstm_outputs", lstm_outputs)]
 
         register_grad(self.gradients, self.hidden.items())
-        update_dict(self.hidden, vars_tuple, h.size()[1])
-        register_grad(self.gradients, vars_tuple, h.size()[1])
+        update_dict(self.hidden, vars_tuple, h.size(1))
+        register_grad(self.gradients, vars_tuple, h.size(1))
 
         return self.hidden["features"]

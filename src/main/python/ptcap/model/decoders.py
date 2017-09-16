@@ -82,7 +82,6 @@ class LSTMDecoder(Decoder):
             sequence.
         """
 
-        use_teacher_forcing = True
         batch_size, num_step = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
         if self.use_cuda:
@@ -99,7 +98,8 @@ class LSTMDecoder(Decoder):
             probs, lstm_out_projections, lstm_outputs = self.predict(
                 features, go_part, num_step)
 
-        key_list = ["lstm_output", "lstm_out_proj", "token_prob"]
+        key_list = ["decoder_lstm_output", "decoder_lstm_out_proj",
+                    "token_prob"]
         var_list = [lstm_outputs, lstm_out_projections, probs]
 
         update_dict(self.hidden, zip(key_list, var_list), num_step)
