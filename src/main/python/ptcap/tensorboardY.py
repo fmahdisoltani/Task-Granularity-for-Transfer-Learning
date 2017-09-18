@@ -59,24 +59,23 @@ class TensorboardAdapter(object):
             self.summary_writer.add_histogram(key, value.numpy(),
                                               global_step)
 
-    def add_variables(self, vars_dict_list, global_step):
+    def add_variables(self, vars_dict, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
 
-        for var_dict in vars_dict_list:
-            for key, value in var_dict.items():
-                self.summary_writer.add_histogram(key, value.data.numpy(),
-                                                  global_step)
+        for key, value in vars_dict.items():
+            self.summary_writer.add_histogram(key, value.data.numpy(),
+                                              global_step)
 
     def add_scalars(self, scalars_dict, global_step, is_training):
         """
             Visualizes the contents of scalars_dict which must be scalar.
         """
 
-        pad = "_train" if is_training else "_valid"
+        pad = "train_" if is_training else "valid_"
         for key, value in scalars_dict.items():
-            self.summary_writer.add_scalar(key + pad, value, global_step)
+            self.summary_writer.add_scalar(pad + key, value, global_step)
 
     def close(self):
         """
@@ -100,7 +99,6 @@ class Seq2seqAdapter(TensorboardAdapter):
         assert len(pair_dims) == 2
         if pair_dims is not None:
             label_variable = Variable(torch.zeros(*pair_dims[1]).long())
-
             model_output = model(
                 (Variable(torch.zeros(*pair_dims[0]), requires_grad=True),
                  label_variable), **kwargs)

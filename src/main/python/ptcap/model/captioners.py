@@ -40,10 +40,14 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args)
         self.decoder = decoder(*decoder_args)
 
+        self.hidden = {}
+
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder(videos)
         probs = self.decoder(features, captions, use_teacher_forcing)
+
+        self.hidden = dict(self.encoder.hidden, **self.decoder.hidden)
 
         return probs
 
@@ -57,7 +61,7 @@ class CNN3dLSTM(EncoderDecoder):
 
         encoder_args = (encoder_output_size, gpus)
 
-        super(CNN3dLSTM, self).__init__(CNN3dEncoder, LSTMDecoder,
+        super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
                                         encoder_args=encoder_args,
                                         decoder_args=decoder_args,
                                         gpus=gpus)

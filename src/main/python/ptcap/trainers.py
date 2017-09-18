@@ -109,8 +109,7 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                model_activations = [self.model.encoder.hidden,
-                                     self.model.decoder.hidden]
+                model_activations = self.model.hidden
                 self.writer.add_variables(model_activations, global_step)
                 self.writer.add_state_dict(self.model, global_step)
 
@@ -118,8 +117,8 @@ class Trainer(object):
                 loss.backward()
                 self.optimizer.step()
 
-                model_gradients = [self.model.encoder.gradients,
-                                   self.model.decoder.gradients]
+                model_gradients = dict(self.model.encoder.gradients,
+                                       **self.model.decoder.gradients)
                 self.writer.add_variables(model_gradients, global_step)
 
             # convert probabilities to predictions
