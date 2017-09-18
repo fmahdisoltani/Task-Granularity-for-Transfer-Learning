@@ -35,6 +35,31 @@ class TensorboardAdapter(object):
     def __init__(self, log_dir=None):
         self.summary_writer = SummaryWriter(log_dir=log_dir)
 
+    def add_gradients(self, model, global_step):
+        """
+            Adds a visualization of the model's gradients.
+        """
+
+        diff = 0
+
+        for i, param in enumerate(model.parameters()):
+            match = False
+            while not match:
+                state_name, state_value = list(model.state_dict().items()
+                                               )[i + diff]
+                param_size = param.data.view(-1).size(0)
+                state_size = state_value.view(-1).size(0)
+
+                if (param_size == state_size) and (
+                            param.data.eq(state_value).sum() == param_size):
+                    self.summary_writer.add_histogram(state_name + "_grad",
+                                                      param.grad.data.numpy(),
+                                                      global_step)
+                    match = True
+                else:
+                    diff += 1
+                    match = False
+
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
             Adds a visualization of the model's computation graph.
@@ -49,6 +74,15 @@ class TensorboardAdapter(object):
         else:
             print("add_graph was not executed because model_output=None")
 
+    def add_scalars(self, scalars_dict, global_step, is_training):
+        """
+            Visualizes the contents of scalars_dict which must be scalar.
+        """
+
+        pad = "_train" if is_training else "_valid"
+        for key, value in scalars_dict.items():
+            self.summary_writer.add_scalar(key + pad, value, global_step)
+
     def add_state_dict(self, model, global_step):
         """
             Visualizes the contents of model.state_dict().
@@ -56,8 +90,7 @@ class TensorboardAdapter(object):
 
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.numpy(),
-                                              global_step)
+            self.summary_writer.add_histogram(key, value.numpy(), global_step)
 
     def add_variables(self, vars_dict_list, global_step):
         """
@@ -68,15 +101,6 @@ class TensorboardAdapter(object):
             for key, value in var_dict.items():
                 self.summary_writer.add_histogram(key, value.data.numpy(),
                                                   global_step)
-
-    def add_scalars(self, scalars_dict, global_step, is_training):
-        """
-            Visualizes the contents of scalars_dict which must be scalar.
-        """
-
-        pad = "_train" if is_training else "_valid"
-        for key, value in scalars_dict.items():
-            self.summary_writer.add_scalar(key + pad, value, global_step)
 
     def close(self):
         """

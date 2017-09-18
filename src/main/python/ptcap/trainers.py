@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 
 import ptcap.loggers as lg
@@ -116,11 +118,10 @@ class Trainer(object):
 
                 self.model.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
                 self.optimizer.step()
 
-                model_gradients = [self.model.encoder.gradients,
-                                   self.model.decoder.gradients]
-                self.writer.add_variables(model_gradients, global_step)
+                self.writer.add_gradients(self.model, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)

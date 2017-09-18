@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from ptcap.tensorboardY import (update_dict, register_grad)
+from ptcap.tensorboardY import update_dict
 
 
 class Decoder(nn.Module):
@@ -53,7 +53,6 @@ class LSTMDecoder(Decoder):
         self.gpus = gpus
         self.go_token = go_token
 
-        self.gradients = {}
         self.hidden = {}
 
     def init_hidden(self, features):
@@ -103,7 +102,6 @@ class LSTMDecoder(Decoder):
         var_list = [lstm_outputs, lstm_out_projections, probs]
 
         update_dict(self.hidden, zip(key_list, var_list), num_step)
-        register_grad(self.gradients, zip(key_list, var_list), num_step)
 
         return probs
 

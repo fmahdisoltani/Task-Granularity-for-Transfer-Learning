@@ -1,12 +1,10 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.tensorboardY import register_grad, update_dict
+from ptcap.tensorboardY import update_dict
 
 
 class Encoder(nn.Module):
@@ -52,7 +50,6 @@ class CNN3dEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.gradients = {}
         self.hidden = {}
 
     def forward(self, videos):
@@ -76,8 +73,6 @@ class CNN3dEncoder(Encoder):
         self.hidden["mean_pool"] = self.hidden["pool4_layer"].mean(2)
         self.hidden["features"] = self.hidden["mean_pool"].view(
                                 self.hidden["mean_pool"].size()[0:2])
-
-        register_grad(self.gradients, self.hidden.items())
 
         return self.hidden["features"]
 
@@ -119,7 +114,6 @@ class CNN3dLSTMEncoder(Encoder):
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
-        self.gradients = {}
         self.hidden = {}
 
     def init_hidden(self, batch_size):
@@ -159,8 +153,6 @@ class CNN3dLSTMEncoder(Encoder):
 
         vars_tuple = [("encoder_lstm_outputs", lstm_outputs)]
 
-        register_grad(self.gradients, self.hidden.items())
         update_dict(self.hidden, vars_tuple, h.size(1))
-        register_grad(self.gradients, vars_tuple, h.size(1))
 
         return self.hidden["features"]
