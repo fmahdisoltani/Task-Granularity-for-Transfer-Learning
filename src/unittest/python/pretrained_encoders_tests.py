@@ -36,9 +36,8 @@ class TestPretrainedEncoders(unittest.TestCase):
         encoder = PretrainedEncoder(
             self.model, os.path.join(temp_dir.path, self.model_name))
         encoded = encoder(self.input)
-        self.assertEqual(encoded.size()[0], self.batch_size)
-        self.assertEqual(encoded.size()[1], self.features)
-        self.assertEqual(len(encoded.size()), 2)
+        expected_encoding = self.model(self.input)
+        self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
 
     @tempdir()
     def test_load_pretrained_encoder_with_dict_attr(self, temp_dir):
@@ -47,6 +46,5 @@ class TestPretrainedEncoders(unittest.TestCase):
         encoder = PretrainedEncoder(self.model, os.path.join(
             temp_dir.path, self.model_name), "model")
         encoded = encoder(self.input)
-        self.assertEqual(encoded.size()[0], self.batch_size)
-        self.assertEqual(encoded.size()[1], self.features)
-        self.assertEqual(len(encoded.size()), 2)
+        expected_encoding = self.model(self.input)
+        self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
