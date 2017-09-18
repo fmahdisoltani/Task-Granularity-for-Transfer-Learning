@@ -1,4 +1,4 @@
-import numpy as np
+import os
 
 import torch
 
@@ -14,11 +14,10 @@ from ptcap.checkpointers import Checkpointer
 from ptcap.loggers import CustomLogger
 from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
                           token_accuracy)
-from ptcap.tensorboardY import Seq2seqAdapter
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer,
+    def __init__(self, model, loss_function, optimizer, tokenizer, writer,
                  checkpoint_path, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
@@ -36,7 +35,7 @@ class Trainer(object):
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
         self.score = None
-        self.writer = Seq2seqAdapter()
+        self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,

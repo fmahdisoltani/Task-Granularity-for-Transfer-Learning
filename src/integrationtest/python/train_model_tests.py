@@ -15,11 +15,13 @@ from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.model.captioners import *
+from ptcap.tensorboardY import Seq2seqAdapter
 from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
+
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -97,12 +99,14 @@ def simulate_training_script(config_obj, fake_dir):
     optimizer = torch.optim.Adam(params,
                                  lr=config_obj.get('training', 'learning_rate'))
 
+    writer = Seq2seqAdapter(os.path.join(fake_dir, fkdata.TMP_DIR, "runs"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(captioner, loss_function, optimizer, tokenizer,
+    trainer = Trainer(captioner, loss_function, optimizer, tokenizer, writer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 
