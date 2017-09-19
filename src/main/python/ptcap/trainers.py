@@ -9,8 +9,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
-                          token_accuracy)
+from ptcap.scores import (caption_accuracy, first_token_accuracy, loss_to_numpy,
+                          ScoresOperator, token_accuracy)
 from ptcap.loggers import CustomLogger
 
 
@@ -87,6 +87,8 @@ class Trainer(object):
         function_dict["accuracy"] = token_accuracy
 
         function_dict["first_accuracy"] = first_token_accuracy
+
+        function_dict["caption_accuracy"] = caption_accuracy
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
@@ -126,9 +128,9 @@ class Trainer(object):
                             sample_counter + 1, len(dataloader), verbose)
 
         # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
-                     predictions, epoch + 1, len(dataloader),
-                     verbose, sample_counter)
+        self.logger.log_stuff(scores_dict, self.tokenizer, is_training,
+                              captions, predictions, epoch + 1, len(dataloader),
+                              verbose, sample_counter)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
