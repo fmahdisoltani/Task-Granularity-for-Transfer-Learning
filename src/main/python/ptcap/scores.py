@@ -93,6 +93,10 @@ class MultiScorerOperator(ScoresOperator):
         self.tokenizer = tokenizer
 
     def expand_key(self, key):
+        """
+            Expand BLEU to BLEU@1, BLEU@2, BLEU@3, and BLEU@4.
+        """
+
         self.scores_dict.pop(self.average + "_" + key)
         self.scores_dict.update({self.average + "_" + key + "@" + str(i + 1): 0
                                  for i in range(self.multiscorer.scorers[key]._n
