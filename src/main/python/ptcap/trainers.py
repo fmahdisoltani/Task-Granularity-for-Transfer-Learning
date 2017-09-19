@@ -9,9 +9,13 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
-                          token_accuracy)
+from ptcap.scores import (first_token_accuracy, loss_to_numpy,
+                          MultiScorerOperator, token_accuracy)
 from ptcap.loggers import CustomLogger
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 
 
 class Trainer(object):
@@ -31,6 +35,8 @@ class Trainer(object):
                               if self.use_cuda else loss_function)
 
         self.logger = CustomLogger(folder=checkpoint_path)
+        self.multiscorer = MultiScorer(BLEU=Bleu(4), METEOR=Meteor(),
+                                       ROUGE_L=Rouge())
         self.tokenizer = tokenizer
         self.score = None
 
@@ -82,20 +88,26 @@ class Trainer(object):
 
     def get_function_dict(self):
         function_dict = OrderedDict()
+
         function_dict["loss"] = loss_to_numpy
 
         function_dict["accuracy"] = token_accuracy
 
         function_dict["first_accuracy"] = first_token_accuracy
+
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
       
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
-        scores = ScoresOperator(self.get_function_dict())
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
+                                             "predictions")
 
-        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+        scores = MultiScorerOperator(self.get_function_dict(), self.multiscorer,
+                                     self.tokenizer)
+
+        for sample_counter, (videos, string_captions,
+                             captions) in enumerate(dataloader):
 
             videos, captions = Variable(videos), Variable(captions)
             if self.use_cuda:
@@ -115,7 +127,8 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions)
+            batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
