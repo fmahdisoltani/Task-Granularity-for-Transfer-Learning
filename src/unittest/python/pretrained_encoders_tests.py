@@ -14,19 +14,15 @@ from ptcap.model.mappers import FullyConnectedMapper
 class TestPretrainedEncoders(unittest.TestCase):
     def setUp(self):
         input_size = 2
-        self.features = 3
-        self.batch_size = 5
-        self.epoch_num = 0
-        self.model = FullyConnectedMapper(input_size, self.features)
+        self.model = FullyConnectedMapper(input_size, 3)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
-        self.score = None
         self.state_dict = {
-            "epoch": self.epoch_num,
+            "epoch": 0,
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
-            "score": self.score,
+            "score": None,
         }
-        self.input = Variable(torch.zeros(self.batch_size, input_size))
+        self.input = Variable(torch.zeros(5, input_size))
         self.model_name = "test_model"
 
     @tempdir()
