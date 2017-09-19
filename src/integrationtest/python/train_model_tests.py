@@ -20,6 +20,7 @@ from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
+
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -86,9 +87,13 @@ def simulate_training_script(config_obj, fake_dir):
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
                                 **config_obj.get('dataloaders', 'kwargs'))
 
-    captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
+    model = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
+
+    # Parallelize model across different GPUs, if specified
+    captioner = model if gpus is None else (
+        torch.nn.parallel.DataParallel(model, device_ids=gpus))
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()

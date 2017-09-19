@@ -96,17 +96,23 @@ if __name__ == '__main__':
     model = getattr(ptcap.model.captioners, model_type)(vocab_size=tokenizer.get_vocab_size(),
                              go_token=tokenizer.encode_token(tokenizer.GO),
                              gpus=gpus)
+
+    # Parallelize model across different GPUs, if specified
+    parallel_model = model if gpus is None else (
+        torch.nn.parallel.DataParallel(model, device_ids=gpus))
+
     loss_function = getattr(ptcap.losses, loss_type)()
 
-    optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
-                     lr=config_obj.get("training", "learning_rate"))
+    optimizer = getattr(torch.optim, optimizer_type)(params=list(
+        parallel_model.parameters()), lr=config_obj.get("training",
+                                                        "learning_rate"))
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(model, loss_function, optimizer, tokenizer,
+    trainer = Trainer(parallel_model, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 
