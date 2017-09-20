@@ -26,18 +26,34 @@ def save_grad(master_dict, name, num_step=None):
     return hook
 
 
-def fh(module, inp, out):
-    print("******backward_pass BEGIN********")
-    print("Number of parameters")
-    print(len(list(module.parameters())))
-    print("Number of named parameters")
-    print(len(list(module.named_parameters())))
-    # for name, value in module.named_parameters():
-    #     print(name)
-    #     print(value)
-    print(inp.size())
-    print(out.size())
-    print("*******backward_pass END*********")
+def forward_hook_closure(master_dict, name, index=None, aggregate_steps=True):
+    def forward_hook(module, input_tensor, output_tensor):
+        forward_value = output_tensor
+        if index is not None:
+            forward_value = forward_value[index]
+        if aggregate_steps is True:
+            master_dict[name + "_forward"] = forward_value
+        else:
+            _, num_step, _ = forward_value.size()
+            for i in range(num_step):
+                master_dict[name + "_forward_" + str(i)] = forward_value[:, i]
+
+    return forward_hook
+
+
+def backward_hook_closure(master_dict, name, index=None, aggregate_steps=False):
+    def backward_hook(module, input_tensor, output_tensor):
+        backward_value = output_tensor
+        if index is not None:
+            backward_value = backward_value[index]
+        if aggregate_steps is True:
+            master_dict[name + "_backward"] = backward_value
+        else:
+            _, num_step, _ = backward_value.size()
+            for i in range(num_step):
+                master_dict[name + "_backward_" + str(i)] = backward_value[:, i]
+
+    return backward_hook
 
 
 def bh(module, inp, out):
@@ -49,8 +65,10 @@ def bh(module, inp, out):
     # for name, value in module.named_parameters():
     #     print(name)
     #     print(value)
-    print(inp.size())
-    print(out.size())
+    print("Input size")
+    print(inp[0].size())
+    print("Output size")
+    print(out[0].size())
     print("*******backward_pass END*********")
 
 

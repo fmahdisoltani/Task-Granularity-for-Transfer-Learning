@@ -15,7 +15,6 @@ from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.model.captioners import *
-from ptcap.tensorboardY import fh, bh
 from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
@@ -92,10 +91,6 @@ def simulate_training_script(config_obj, fake_dir):
     captioner = CNN3dLSTM(vocab_size=tokenizer.get_vocab_size(),
                           go_token=tokenizer.encode_token(tokenizer.GO),
                           gpus=gpus)
-
-    captioner.register_forward_hook(fh)
-    captioner.register_backward_hook(bh)
-
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()
     params = list(captioner.parameters())

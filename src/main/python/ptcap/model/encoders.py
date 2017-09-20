@@ -6,7 +6,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.tensorboardY import register_grad, update_dict, fh
+from ptcap.tensorboardY import (register_grad, update_dict,
+                                forward_hook_closure, backward_hook_closure)
 
 
 class Encoder(nn.Module):
@@ -94,9 +95,12 @@ class CNN3dLSTMEncoder(Encoder):
         self.num_features = num_features
         self.use_cuda = True if gpus else False
         self.gpus = gpus
+
+        self.activations = {}
+        self.gradients = {}
+
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
-        self.conv1.register_forward_hook(fh)
         self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv3 = CNN3dLayer(32, 64, (3, 3, 3), nn.ReLU(),
@@ -119,8 +123,11 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
+        self.lstm.register_forward_hook(
+            forward_hook_closure(self.activations, "encoder_lstm", 0))
+        self.lstm.register_backward_hook(
+            backward_hook_closure(self.gradients, "encoder_lstm", 0))
 
-        self.gradients = {}
         self.hidden = {}
 
     def init_hidden(self, batch_size):
