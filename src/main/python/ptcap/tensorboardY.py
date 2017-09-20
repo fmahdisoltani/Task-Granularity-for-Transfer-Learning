@@ -26,6 +26,34 @@ def save_grad(master_dict, name, num_step=None):
     return hook
 
 
+def fh(module, inp, out):
+    print("******backward_pass BEGIN********")
+    print("Number of parameters")
+    print(len(list(module.parameters())))
+    print("Number of named parameters")
+    print(len(list(module.named_parameters())))
+    # for name, value in module.named_parameters():
+    #     print(name)
+    #     print(value)
+    print(inp.size())
+    print(out.size())
+    print("*******backward_pass END*********")
+
+
+def bh(module, inp, out):
+    print("******backward_pass BEGIN********")
+    print("Number of parameters")
+    print(len(list(module.parameters())))
+    print("Number of named parameters")
+    print(len(list(module.named_parameters())))
+    # for name, value in module.named_parameters():
+    #     print(name)
+    #     print(value)
+    print(inp.size())
+    print(out.size())
+    print("*******backward_pass END*********")
+
+
 class TensorboardAdapter(object):
     """
         An interface that uses tensorboard pytorch to visualize the contents of

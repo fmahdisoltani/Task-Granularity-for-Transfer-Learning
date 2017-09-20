@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.tensorboardY import register_grad, update_dict
+from ptcap.tensorboardY import register_grad, update_dict, fh
 
 
 class Encoder(nn.Module):
@@ -96,6 +96,7 @@ class CNN3dLSTMEncoder(Encoder):
         self.gpus = gpus
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
+        self.conv1.register_forward_hook(fh)
         self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv3 = CNN3dLayer(32, 64, (3, 3, 3), nn.ReLU(),

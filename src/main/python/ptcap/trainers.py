@@ -117,6 +117,9 @@ class Trainer(object):
                 loss.backward()
                 self.optimizer.step()
 
+                for name, value in self.model.named_parameters():
+                    k = (name, value)
+
                 model_gradients = dict(self.model.encoder.gradients,
                                        **self.model.decoder.gradients)
                 self.writer.add_variables(model_gradients, global_step)
