@@ -47,7 +47,8 @@ class EncoderDecoder(Captioner):
         features = self.encoder(videos)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
-        self.hidden = dict(self.encoder.hidden, **self.decoder.hidden)
+        self.activations = dict(self.encoder.activations,
+                                **self.decoder.activations)
 
         return probs
 

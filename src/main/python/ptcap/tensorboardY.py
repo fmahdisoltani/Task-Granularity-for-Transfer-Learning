@@ -4,28 +4,6 @@ from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 
 
-def update_dict(master_dict, vars_tuple, num_step):
-    for key, var in vars_tuple:
-        [master_dict.update({key + "_" + str(i): var[:, i]}) for i in
-         range(num_step)]
-
-
-def register_grad(master_dict, vars_tuple, num_step=None):
-    for key, value in vars_tuple:
-        value.register_hook(save_grad(master_dict, key, num_step))
-
-
-def save_grad(master_dict, name, num_step=None):
-    def hook(grad):
-        if num_step is not None:
-            [master_dict.update({name + "_" + str(i) + "_grad": grad[:, i]})
-             for i in range(num_step)]
-        else:
-            master_dict[name + "_grad"] = grad
-
-    return hook
-
-
 def forward_hook_closure(master_dict, name, index=None, aggregate_steps=True):
     def forward_hook(module, input_tensor, output_tensor):
         forward_value = output_tensor
@@ -39,37 +17,6 @@ def forward_hook_closure(master_dict, name, index=None, aggregate_steps=True):
                 master_dict[name + "_forward_" + str(i)] = forward_value[:, i]
 
     return forward_hook
-
-
-def backward_hook_closure(master_dict, name, index=None, aggregate_steps=False):
-    def backward_hook(module, input_tensor, output_tensor):
-        backward_value = output_tensor
-        if index is not None:
-            backward_value = backward_value[index]
-        if aggregate_steps is True:
-            master_dict[name + "_backward"] = backward_value
-        else:
-            _, num_step, _ = backward_value.size()
-            for i in range(num_step):
-                master_dict[name + "_backward_" + str(i)] = backward_value[:, i]
-
-    return backward_hook
-
-
-def bh(module, inp, out):
-    print("******backward_pass BEGIN********")
-    print("Number of parameters")
-    print(len(list(module.parameters())))
-    print("Number of named parameters")
-    print(len(list(module.named_parameters())))
-    # for name, value in module.named_parameters():
-    #     print(name)
-    #     print(value)
-    print("Input size")
-    print(inp[0].size())
-    print("Output size")
-    print(out[0].size())
-    print("*******backward_pass END*********")
 
 
 class TensorboardAdapter(object):

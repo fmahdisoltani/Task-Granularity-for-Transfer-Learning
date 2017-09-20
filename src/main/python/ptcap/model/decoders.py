@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from ptcap.tensorboardY import (update_dict, register_grad)
+from ptcap.tensorboardY import forward_hook_closure
 
 
 class Decoder(nn.Module):
@@ -41,6 +41,8 @@ class LSTMDecoder(Decoder):
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
 
+        self.activations = {}
+
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
@@ -52,9 +54,6 @@ class LSTMDecoder(Decoder):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.go_token = go_token
-
-        self.gradients = {}
-        self.hidden = {}
 
     def init_hidden(self, features):
         """
@@ -71,12 +70,10 @@ class LSTMDecoder(Decoder):
         This method computes the forward pass of the decoder with or without
         teacher forcing. It should be noted that the <GO> token is
         automatically appended to the input captions.
-
         Args:
             features: Video features extracted by the encoder.
             captions: Video captions (required if use_teacher_forcing=True).
             use_teacher_forcing: Whether to use teacher forcing or not.
-
         Returns:
             The probability distribution over the vocabulary across the entire
             sequence.
@@ -90,20 +87,11 @@ class LSTMDecoder(Decoder):
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
             captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, lstm_out_projections, lstm_outputs = self.apply_lstm(
-                features, captions_with_go_token)
+            probs, _ = self.apply_lstm(features, captions_with_go_token)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs, lstm_out_projections, lstm_outputs = self.predict(
-                features, go_part, num_step)
-
-        key_list = ["decoder_lstm_output", "decoder_lstm_out_proj",
-                    "token_prob"]
-        var_list = [lstm_outputs, lstm_out_projections, probs]
-
-        update_dict(self.hidden, zip(key_list, var_list), num_step)
-        register_grad(self.gradients, zip(key_list, var_list), num_step)
+            probs = self.predict(features, go_part, num_step)
 
         return probs
 
@@ -113,34 +101,38 @@ class LSTMDecoder(Decoder):
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
+
         # Project features in a 'vocab_size'-dimensional space
         lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
                                          0)
         probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
 
-        return probs, lstm_out_projected, lstm_output
+        return probs, lstm_hidden
 
     def predict(self, features, go_tokens, num_step=1):
         lstm_input = go_tokens
-        lstm_hidden = None
-        lstm_outputs = []
-        lstm_out_projections = []
         output_probs = []
+        lstm_hidden = None
 
         for i in range(num_step):
-            probs, lstm_out_projected, lstm_output = self.apply_lstm(
-                features, lstm_input, lstm_hidden)
+            probs, lstm_hidden = self.apply_lstm(features, lstm_input,
+                                                 lstm_hidden)
 
-            lstm_outputs.append(lstm_output)
-            lstm_out_projections.append(lstm_out_projected)
             output_probs.append(probs)
-
             # Greedy decoding
             _, preds = torch.max(probs, dim=2)
+
             lstm_input = preds
 
-        concat_probs = torch.cat(output_probs, dim=1)
-        concat_lstm_out_projections = torch.cat(lstm_out_projections, dim=1)
-        concat_lstm_outputs = torch.cat(lstm_outputs, dim=1)
+        concatenated_probs = torch.cat(output_probs, dim=1)
+        return concatenated_probs
 
-        return concat_probs, concat_lstm_out_projections, concat_lstm_outputs
+    def register_forward_hooks(self):
+        self.embedding.register_forward_hook(
+            forward_hook_closure(self.activations, "decoder_embedding"))
+        self.lstm.register_forward_hook(
+            forward_hook_closure(self.activations, "decoder_lstm"))
+        self.linear.register_forward_hook(
+            forward_hook_closure(self.activations, "decoder_linear"))
+        self.logsoftmax.register_forward_hook(
+            forward_hook_closure(self.activations, "decoder_logsoftmax"))

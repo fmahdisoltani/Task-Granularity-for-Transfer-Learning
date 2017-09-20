@@ -109,20 +109,13 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                model_activations = self.model.hidden
+                model_activations = self.model.activations
                 self.writer.add_variables(model_activations, global_step)
                 self.writer.add_state_dict(self.model, global_step)
 
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-
-                for name, value in self.model.named_parameters():
-                    k = (name, value)
-
-                model_gradients = dict(self.model.encoder.gradients,
-                                       **self.model.decoder.gradients)
-                self.writer.add_variables(model_gradients, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
