@@ -21,6 +21,8 @@ class TestDimensions(unittest.TestCase):
             'FullyConnectedEncoder': (((3, 10, 96, 96), self.num_features), {}),
             'CNN3dEncoder': ((self.num_features,), {}),
             'CNN3dLSTMEncoder': ((self.num_features,), {}),
+            'PretrainedEncoder': ((encoders.CNN3dLSTMEncoder(self.num_features),
+                                   ), {}),
 
             'FullyConnectedMapper': ((4, 10), {}),
 
