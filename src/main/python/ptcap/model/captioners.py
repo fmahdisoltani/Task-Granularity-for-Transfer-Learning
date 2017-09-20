@@ -40,7 +40,7 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args)
         self.decoder = decoder(*decoder_args)
 
-        self.hidden = {}
+        self.activations = {}
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
