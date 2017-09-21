@@ -30,6 +30,8 @@ class CNN3dEncoder(Encoder):
     def __init__(self, num_features=128, gpus=None):
         super(CNN3dEncoder, self).__init__()
 
+        self.activations = {}
+
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
