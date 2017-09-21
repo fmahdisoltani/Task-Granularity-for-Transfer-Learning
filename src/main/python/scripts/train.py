@@ -22,9 +22,8 @@ from ptcap.checkpointers import Checkpointer
 from ptcap.data.config_parser import YamlConfig
 from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
-
 from ptcap.data.annotation_parser import JsonParser
-
+from ptcap.loggers import CustomLogger
 from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
@@ -104,9 +103,12 @@ if __name__ == '__main__':
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
+    # Setup the logger
+    logger = CustomLogger(folder=checkpoint_folder, verbose=False)
+
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")
-    trainer = Trainer(model, loss_function, optimizer, tokenizer,
+    trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
                       checkpoint_folder, folder=pretrained_folder,
                       filename="model.best", gpus=gpus)
 

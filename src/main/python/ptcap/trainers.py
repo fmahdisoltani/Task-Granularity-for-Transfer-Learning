@@ -6,13 +6,12 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.loggers import CustomLogger
 from ptcap.scores import (ScoresOperator, first_token_accuracy, loss_to_numpy,
                           token_accuracy)
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer,
+    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
                  checkpoint_path, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
@@ -27,7 +26,7 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.logger = CustomLogger(folder=checkpoint_path, verbose=False)
+        self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
 
