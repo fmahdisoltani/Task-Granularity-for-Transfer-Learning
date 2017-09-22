@@ -40,14 +40,6 @@ if __name__ == '__main__':
     validation_path = config_obj.get('paths', 'validation_annot')
 
     # Load attributes of config file
-    num_epoch = config_obj.get('training', 'num_epochs')
-    frequency_valid = config_obj.get('validation', 'frequency')
-    verbose_train = config_obj.get('training', 'verbose')
-    verbose_valid = config_obj.get('validation', 'verbose')
-    teacher_force_train = config_obj.get('training', 'teacher_force')
-    teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    gpus = config_obj.get("device", "gpus")
-    checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
 
     # Load Json annotation files
@@ -88,28 +80,35 @@ if __name__ == '__main__':
                                 **config_obj.get("dataloaders", "kwargs"))
 
     # Get model, loss, and optimizer types from config_file
+    gpus = config_obj.get("device", "gpus")
     model_type = config_obj.get("model", "type")
-    loss_type = config_obj.get("loss", "type")
-    optimizer_type = config_obj.get("optimizer", "type")
-
     # Create model, loss, and optimizer objects
-    model = getattr(ptcap.model.captioners, model_type)(vocab_size=tokenizer.get_vocab_size(),
-                             go_token=tokenizer.encode_token(tokenizer.GO),
-                             gpus=gpus)
+    model = getattr(ptcap.model.captioners, model_type)(
+        vocab_size=tokenizer.get_vocab_size(),
+        go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus)
+
+    loss_type = config_obj.get("loss", "type")
     loss_function = getattr(ptcap.losses, loss_type)()
 
+    optimizer_type = config_obj.get("optimizer", "type")
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
+    checkpoint_folder = config_obj.get('paths', 'checkpoint_folder')
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Trainer
-    pretrained_folder = config_obj.get("paths", "pretrained_path")
     trainer = Trainer(model, loss_function, optimizer, tokenizer,
-                      checkpoint_folder, folder=pretrained_folder,
+                      checkpoint_folder, folder=pretrained_path,
                       filename="model.best", gpus=gpus)
 
+    num_epoch = config_obj.get('training', 'num_epochs')
+    frequency_valid = config_obj.get('validation', 'frequency')
+    verbose_train = config_obj.get('training', 'verbose')
+    verbose_valid = config_obj.get('validation', 'verbose')
+    teacher_force_train = config_obj.get('training', 'teacher_force')
+    teacher_force_valid = config_obj.get('validation', 'teacher_force')
     # Train the Model
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
                   teacher_force_train, teacher_force_valid, verbose_train,
