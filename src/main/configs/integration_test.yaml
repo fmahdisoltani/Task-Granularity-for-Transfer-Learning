@@ -13,14 +13,21 @@ device:
   gpus:
 
 dataloaders:
-  batch_size: &b 1
+  batch_size: &b 2
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
 
 model:
-  type: RtorchnCaptioner
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: Adam
 
 training:
-  num_epochs: 1
+  num_epochs: 2
   learning_rate: &lr 0.01
   teacher_force: True
   verbose: True
