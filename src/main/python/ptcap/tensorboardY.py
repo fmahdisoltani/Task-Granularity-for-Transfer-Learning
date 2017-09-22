@@ -33,25 +33,10 @@ class TensorboardAdapter(object):
             Adds a visualization of the model's gradients.
         """
 
-        diff = 0
-
-        for i, param in enumerate(model.parameters()):
-            match = False
-            while not match:
-                state_name, state_value = list(model.state_dict().items()
-                                               )[i + diff]
-                param_size = param.data.view(-1).size(0)
-                state_size = state_value.view(-1).size(0)
-
-                if (param_size == state_size) and (
-                            param.data.eq(state_value).sum() == param_size):
-                    self.summary_writer.add_histogram(state_name + "_grad",
-                                                      param.grad.data.numpy(),
-                                                      global_step)
-                    match = True
-                else:
-                    diff += 1
-                    match = False
+        for param_name, param_value in model.named_parameters():
+            self.summary_writer.add_histogram(param_name + "_grad",
+                                              param_value.grad.cpu().data.numpy(),
+                                              global_step)
 
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
@@ -83,13 +68,14 @@ class TensorboardAdapter(object):
 
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.numpy(), global_step)
+            self.summary_writer.add_histogram(key, value.cpu().numpy(), global_step)
 
-    def add_variables(self, vars_dict, global_step):
+    def add_activations(self, model, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
 
+        vars_dict = model.activations
         for key, value in vars_dict.items():
             self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
                                               global_step)
