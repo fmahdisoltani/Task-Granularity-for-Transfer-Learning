@@ -67,11 +67,11 @@ if __name__ == '__main__':
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
-                                     preprocess=preprocesser)
+                                     preprocess=preprocessor)
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
                                        tokenizer=tokenizer,
-                                       preprocess=val_preprocesser)
+                                       preprocess=val_preprocessor)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
