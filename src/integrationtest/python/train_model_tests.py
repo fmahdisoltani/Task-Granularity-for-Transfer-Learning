@@ -48,6 +48,10 @@ if __name__ == '__main__':
 
     caption(YamlConfig(CONFIG_PATH[1]), os.getcwd())
 
+    # Check checkpoint folder
+    check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
+                                          "model.latest", "tokenizer_dicts"])
+
     # Clean up checkpoint folder
     fkdata.remove_dir(checkpoint_folder)
 
