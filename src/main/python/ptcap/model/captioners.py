@@ -5,6 +5,7 @@ from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import (CNN3dEncoder,
                                   CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
+from ptcap.tensorboardY import merge_dicts_on_forward_hook
 
 
 class Captioner(nn.Module):
@@ -41,16 +42,18 @@ class EncoderDecoder(Captioner):
         self.decoder = decoder(*decoder_args)
 
         self.activations = {}
+        self.register_forward_hooks(self.activations)
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder(videos)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
-        self.activations = dict(self.encoder.activations,
-                                **self.decoder.activations)
-
         return probs
+
+    def register_forward_hooks(self, master_dict):
+        self.register_forward_hook(merge_dicts_on_forward_hook(
+            master_dict, *(self.encoder.activations, self.decoder.activations)))
 
 
 class CNN3dLSTM(EncoderDecoder):

@@ -19,6 +19,13 @@ def forward_hook_closure(master_dict, name, index=None, aggregate_steps=True):
     return forward_hook
 
 
+def merge_dicts_on_forward_hook(master_dict, *args):
+    def merge_dicts(module, input_tensor, output_tensor):
+        for dictionary in args:
+            master_dict.update(dictionary)
+    return merge_dicts
+
+
 class TensorboardAdapter(object):
     """
         An interface that uses tensorboard pytorch to visualize the contents of
@@ -58,7 +65,7 @@ class TensorboardAdapter(object):
         """
 
         for key, value in vars_dict.items():
-            self.summary_writer.add_histogram(key, value.data.numpy(),
+            self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
                                               global_step)
 
     def add_scalars(self, scalars_dict, global_step, is_training):

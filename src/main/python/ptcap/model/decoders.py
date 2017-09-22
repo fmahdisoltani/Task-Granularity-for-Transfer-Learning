@@ -41,8 +41,6 @@ class LSTMDecoder(Decoder):
         super(LSTMDecoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
 
-        self.activations = {}
-
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
@@ -54,6 +52,9 @@ class LSTMDecoder(Decoder):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.go_token = go_token
+
+        self.activations = {}
+        self.register_forward_hooks(self.activations)
 
     def init_hidden(self, features):
         """
@@ -127,12 +128,12 @@ class LSTMDecoder(Decoder):
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
 
-    def register_forward_hooks(self):
+    def register_forward_hooks(self, master_dict):
         self.embedding.register_forward_hook(
-            forward_hook_closure(self.activations, "decoder_embedding"))
+            forward_hook_closure(master_dict, "decoder_embedding"))
         self.lstm.register_forward_hook(
-            forward_hook_closure(self.activations, "decoder_lstm"))
+            forward_hook_closure(master_dict, "decoder_lstm", 0, False))
         self.linear.register_forward_hook(
-            forward_hook_closure(self.activations, "decoder_linear"))
+            forward_hook_closure(master_dict, "decoder_linear"))
         self.logsoftmax.register_forward_hook(
-            forward_hook_closure(self.activations, "decoder_logsoftmax"))
+            forward_hook_closure(master_dict, "decoder_logsoftmax"))
