@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.tensorboardY import update_dict
+from ptcap.tensorboardY import forward_hook_closure
 
 
 class Encoder(nn.Module):
@@ -50,31 +50,53 @@ class CNN3dEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.hidden = {}
+        self.activations = self.register_forward_hooks()
 
     def forward(self, videos):
         # Video encoding
-        self.hidden["conv1_layer"] = self.conv1(videos)
-        self.hidden["pool1_layer"] = self.pool1(self.hidden["conv1_layer"])
+        h = self.conv1(videos)
+        h = self.pool1(h)
 
-        self.hidden["conv2_layer"] = self.conv2(self.hidden["pool1_layer"])
-        self.hidden["pool2_layer"] = self.pool2(self.hidden["conv2_layer"])
+        h = self.conv2(h)
+        h = self.pool2(h)
 
-        self.hidden["conv3_layer"] = self.conv3(self.hidden["pool2_layer"])
-        self.hidden["pool3_layer"] = self.pool3(self.hidden["conv3_layer"])
+        h = self.conv3(h)
+        h = self.pool3(h)
 
-        self.hidden["conv4_layer"] = self.conv4(self.hidden["pool3_layer"])
-        self.hidden["conv5_layer"] = self.conv5(self.hidden["conv4_layer"])
-        self.hidden["conv6_layer"] = self.conv6(self.hidden["conv5_layer"])
+        h = self.conv4(h)
+        h = self.conv5(h)
+        h = self.conv6(h)
 
-        # batch_size * num_features * num_step * w * h
-        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])
+        h = self.pool4(h)  # batch_size * num_features * num_step * w * h
 
-        self.hidden["mean_pool"] = self.hidden["pool4_layer"].mean(2)
-        self.hidden["features"] = self.hidden["mean_pool"].view(
-                                self.hidden["mean_pool"].size()[0:2])
+        h = h.mean(2)
+        h = h.view(h.size()[0:2])
 
-        return self.hidden["features"]
+        return h
+
+    def register_forward_hooks(self):
+        master_dict = {}
+        self.conv1.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv1"))
+        self.conv2.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv2"))
+        self.conv3.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv3"))
+        self.conv4.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv4"))
+        self.conv5.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv5"))
+        self.conv6.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv6"))
+        self.pool1.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool1"))
+        self.pool2.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool2"))
+        self.pool3.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool3"))
+        self.pool4.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool4"))
+        return master_dict
 
 
 class CNN3dLSTMEncoder(Encoder):
@@ -89,6 +111,7 @@ class CNN3dLSTMEncoder(Encoder):
         self.num_features = num_features
         self.use_cuda = True if gpus else False
         self.gpus = gpus
+
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
@@ -114,7 +137,8 @@ class CNN3dLSTMEncoder(Encoder):
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
-        self.hidden = {}
+        self.activations = self.register_forward_hooks()
+
 
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
@@ -126,33 +150,53 @@ class CNN3dLSTMEncoder(Encoder):
 
     def forward(self, videos):
         # Video encoding
-        self.hidden["conv1_layer"] = self.conv1(videos)
-        self.hidden["pool1_layer"] = self.pool1(self.hidden["conv1_layer"])
 
-        self.hidden["conv2_layer"] = self.conv2(self.hidden["pool1_layer"])
-        self.hidden["pool2_layer"] = self.pool2(self.hidden["conv2_layer"])
+        h = self.conv1(videos)
+        h = self.pool1(h)
 
-        self.hidden["conv3_layer"] = self.conv3(self.hidden["pool2_layer"])
-        self.hidden["pool3_layer"] = self.pool3(self.hidden["conv3_layer"])
+        h = self.conv2(h)
+        h = self.pool2(h)
 
-        self.hidden["conv4_layer"] = self.conv4(self.hidden["pool3_layer"])
-        self.hidden["conv5_layer"] = self.conv5(self.hidden["conv4_layer"])
-        self.hidden["conv6_layer"] = self.conv6(self.hidden["conv5_layer"])
+        h = self.conv3(h)
+        h = self.pool3(h)
 
-        # batch_size * num_features * num_step * w * h
-        self.hidden["pool4_layer"] = self.pool4(self.hidden["conv6_layer"])
+        h = self.conv4(h)
+        h = self.conv5(h)
+        h = self.conv6(h)
+        h = self.pool4(h)
 
-        h = self.hidden["pool4_layer"].view(
-                                        self.hidden["pool4_layer"].size()[0:3])
+        h = h.view(h.size()[0:3])
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
-        lstm_hidden = self.init_hidden(batch_size=h.size(0))
-        lstm_outputs, lstm_hidden = (self.lstm(h, lstm_hidden))
+        lstm_hidden = self.init_hidden(batch_size=h.size()[0])
+        lstm_outputs, _ = self.lstm(h, lstm_hidden)
 
-        self.hidden["features"] = torch.mean(lstm_outputs, dim=1)
+        h_mean = torch.mean(lstm_outputs, dim=1)
 
-        vars_tuple = [("encoder_lstm_outputs", lstm_outputs)]
+        return h_mean
 
-        update_dict(self.hidden, vars_tuple, h.size(1))
-
-        return self.hidden["features"]
+    def register_forward_hooks(self):
+        master_dict = {}
+        self.conv1.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv1"))
+        self.conv2.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv2"))
+        self.conv3.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv3"))
+        self.conv4.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv4"))
+        self.conv5.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv5"))
+        self.conv6.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_conv6"))
+        self.pool1.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool1"))
+        self.pool2.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool2"))
+        self.pool3.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool3"))
+        self.pool4.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_pool4"))
+        self.lstm.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_lstm", 0, True))
+        return master_dict

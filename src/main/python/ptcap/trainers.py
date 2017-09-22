@@ -110,8 +110,7 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                model_activations = [self.model.encoder.hidden,
-                                     self.model.decoder.hidden]
+                model_activations = self.model.activations
                 self.writer.add_variables(model_activations, global_step)
                 self.writer.add_state_dict(self.model, global_step)
 

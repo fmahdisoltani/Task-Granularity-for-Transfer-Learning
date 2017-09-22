@@ -4,26 +4,19 @@ from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 
 
-def update_dict(master_dict, vars_tuple, num_step):
-    for key, var in vars_tuple:
-        [master_dict.update({key + "_" + str(i): var[:, i]}) for i in
-         range(num_step)]
-
-
-def register_grad(master_dict, vars_tuple, num_step=None):
-    for key, value in vars_tuple:
-        value.register_hook(save_grad(master_dict, key, num_step))
-
-
-def save_grad(master_dict, name, num_step=None):
-    def hook(grad):
-        if num_step is not None:
-            [master_dict.update({name + "_" + str(i) + "_grad": grad[:, i]})
-             for i in range(num_step)]
+def forward_hook_closure(master_dict, name, index=None, aggregate_steps=True):
+    def forward_hook(module, input_tensor, output_tensor):
+        forward_value = output_tensor
+        if index is not None:
+            forward_value = forward_value[index]
+        if aggregate_steps is True:
+            master_dict[name + "_forward"] = forward_value
         else:
-            master_dict[name + "_grad"] = grad
+            _, num_step, _ = forward_value.size()
+            for i in range(num_step):
+                master_dict[name + "_forward_" + str(i)] = forward_value[:, i]
 
-    return hook
+    return forward_hook
 
 
 class TensorboardAdapter(object):
@@ -92,15 +85,14 @@ class TensorboardAdapter(object):
         for key, value in model_state_dict.items():
             self.summary_writer.add_histogram(key, value.numpy(), global_step)
 
-    def add_variables(self, vars_dict_list, global_step):
+    def add_variables(self, vars_dict, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
 
-        for var_dict in vars_dict_list:
-            for key, value in var_dict.items():
-                self.summary_writer.add_histogram(key, value.data.numpy(),
-                                                  global_step)
+        for key, value in vars_dict.items():
+            self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
+                                              global_step)
 
     def close(self):
         """
@@ -124,7 +116,6 @@ class Seq2seqAdapter(TensorboardAdapter):
         assert len(pair_dims) == 2
         if pair_dims is not None:
             label_variable = Variable(torch.zeros(*pair_dims[1]).long())
-
             model_output = model(
                 (Variable(torch.zeros(*pair_dims[0]), requires_grad=True),
                  label_variable), **kwargs)
