@@ -55,12 +55,12 @@ if __name__ == '__main__':
     else:
         tokenizer.build_dictionaries(training_parser.get_captions())
 
-    preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
+    preprocessor = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
                             prep.Float32Converter(),
                             prep.PytorchTransposer()])
 
-    val_preprocesser = Compose([CenterCropper([24, 96, 96]),
+    val_preprocessor = Compose([CenterCropper([24, 96, 96]),
                                 prep.PadVideo([24, 96, 96]),
                                 prep.Float32Converter(),
                                 prep.PytorchTransposer()])
