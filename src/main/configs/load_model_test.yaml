@@ -6,8 +6,8 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path:
-  pretrained_model:
+  pretrained_path: checkpoint_sample
+  pretrained_model: model.best
 
 device:
   synchronize_gpu: &sync True
@@ -41,4 +41,3 @@ validation:
 criteria:
   score: loss
   higher_is_better: False
-

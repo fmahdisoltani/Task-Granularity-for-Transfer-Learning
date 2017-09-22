@@ -7,8 +7,13 @@ import fake_data as fkdata
 from ptcap.data.config_parser import YamlConfig
 from ptcap.ptcap import caption
 
-CONFIG_PATH = [os.path.join(os.getcwd(),
-                            "src/main/configs/integration_test.yaml")]
+CONFIG_PATH = [os.path.join(
+    os.getcwd(), "src/main/configs/integration_test.yaml"), os.path.join(
+    os.getcwd(), "src/main/configs/load_model_test.yaml")]
+
+CONFIG_PATH = ["/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/integration_test.yaml",
+               "/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/load_model_test.yaml"]
+
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -40,6 +45,9 @@ if __name__ == '__main__':
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
                                           "model.latest", "tokenizer_dicts"])
+
+    caption(YamlConfig(CONFIG_PATH[1]), os.getcwd())
+
     # Clean up checkpoint folder
     fkdata.remove_dir(checkpoint_folder)
 

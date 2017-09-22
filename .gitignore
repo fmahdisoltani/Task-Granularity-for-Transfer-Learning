@@ -109,5 +109,8 @@ sample_data/
 # mac storage
 .DS_Store
 
+# personal scripts
+myscript
+
 
 

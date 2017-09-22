@@ -30,6 +30,7 @@ def caption(config_obj, relative_path=""):
     frequency_valid = config_obj.get('validation', 'frequency')
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get('training', 'num_epochs')
+    pretrained_model_name = config_obj.get('paths', 'pretrained_model')
     pretrained_path = config_obj.get('paths', 'pretrained_path')
     pretrained_path = os.path.join(relative_path, pretrained_path
                                    ) if pretrained_path else None
@@ -37,6 +38,8 @@ def caption(config_obj, relative_path=""):
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     verbose_train = config_obj.get('training', 'verbose')
     verbose_valid = config_obj.get('validation', 'verbose')
+    videos_folder = os.path.join(relative_path, config_obj.get('paths',
+                                                               'videos_folder'))
 
     # Get model, loss, and optimizer types from config_file
     model_type = config_obj.get("model", "type")
@@ -44,10 +47,8 @@ def caption(config_obj, relative_path=""):
     optimizer_type = config_obj.get("optimizer", "type")
 
     # Load Json annotation files
-    training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get('paths', 'videos_folder')))
-    validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   config_obj.get('paths', 'videos_folder')))
+    training_parser = JsonParser(training_path, videos_folder)
+    validation_parser = JsonParser(validation_path, videos_folder)
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer()
@@ -96,7 +97,7 @@ def caption(config_obj, relative_path=""):
     # Trainer
     trainer = Trainer(model, loss_function, optimizer, tokenizer,
                       checkpoint_folder, folder=pretrained_path,
-                      filename="model.best", gpus=gpus)
+                      filename=pretrained_model_name, gpus=gpus)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
