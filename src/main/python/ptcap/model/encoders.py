@@ -52,9 +52,7 @@ class CNN3dEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.activations = {}
-
-        self.register_forward_hooks(self.activations)
+        self.activations = self.register_forward_hooks()
 
     def forward(self, videos):
         # Video encoding
@@ -78,7 +76,8 @@ class CNN3dEncoder(Encoder):
 
         return h
 
-    def register_forward_hooks(self, master_dict):
+    def register_forward_hooks(self):
+        master_dict = {}
         self.conv1.register_forward_hook(
             forward_hook_closure(master_dict, "encoder_conv1"))
         self.conv2.register_forward_hook(
@@ -99,6 +98,7 @@ class CNN3dEncoder(Encoder):
             forward_hook_closure(master_dict, "encoder_pool3"))
         self.pool4.register_forward_hook(
             forward_hook_closure(master_dict, "encoder_pool4"))
+        return master_dict
 
 
 class CNN3dLSTMEncoder(Encoder):
@@ -139,8 +139,7 @@ class CNN3dLSTMEncoder(Encoder):
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
-        self.activations = {}
-        self.register_forward_hooks(self.activations)
+        self.activations = self.register_forward_hooks()
 
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
@@ -177,7 +176,8 @@ class CNN3dLSTMEncoder(Encoder):
 
         return h_mean
 
-    def register_forward_hooks(self, master_dict):
+    def register_forward_hooks(self):
+        master_dict = {}
         self.conv1.register_forward_hook(
             forward_hook_closure(master_dict, "encoder_conv1"))
         self.conv2.register_forward_hook(
@@ -200,3 +200,4 @@ class CNN3dLSTMEncoder(Encoder):
             forward_hook_closure(master_dict, "encoder_pool4"))
         self.lstm.register_forward_hook(
             forward_hook_closure(master_dict, "encoder_lstm", 0, True))
+        return master_dict

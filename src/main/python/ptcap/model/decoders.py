@@ -53,8 +53,7 @@ class LSTMDecoder(Decoder):
         self.gpus = gpus
         self.go_token = go_token
 
-        self.activations = {}
-        self.register_forward_hooks(self.activations)
+        self.activations = self.register_forward_hooks()
 
     def init_hidden(self, features):
         """
@@ -128,7 +127,8 @@ class LSTMDecoder(Decoder):
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
 
-    def register_forward_hooks(self, master_dict):
+    def register_forward_hooks(self):
+        master_dict = {}
         self.embedding.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_embedding"))
         self.lstm.register_forward_hook(
@@ -137,3 +137,4 @@ class LSTMDecoder(Decoder):
             forward_hook_closure(master_dict, "decoder_linear"))
         self.logsoftmax.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_logsoftmax"))
+        return master_dict

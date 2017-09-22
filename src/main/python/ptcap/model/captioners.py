@@ -41,8 +41,7 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args)
         self.decoder = decoder(*decoder_args)
 
-        self.activations = {}
-        self.register_forward_hooks(self.activations)
+        self.activations = self.register_forward_hooks()
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
@@ -51,9 +50,11 @@ class EncoderDecoder(Captioner):
 
         return probs
 
-    def register_forward_hooks(self, master_dict):
+    def register_forward_hooks(self):
+        master_dict = {}
         self.register_forward_hook(merge_dicts_on_forward_hook(
             master_dict, *(self.encoder.activations, self.decoder.activations)))
+        return master_dict
 
 
 class CNN3dLSTM(EncoderDecoder):
