@@ -20,7 +20,7 @@ from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
-
+CONFIG_PATH = ["/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/integration_test.yaml"]
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -92,8 +92,10 @@ def simulate_training_script(config_obj, fake_dir):
                           gpus=gpus)
 
     # Parallelize model across different GPUs, if specified
-    captioner = model if gpus is None else (
-        torch.nn.parallel.DataParallel(model, device_ids=gpus))
+    # captioner = model if gpus is None else (
+    #     torch.nn.parallel.DataParallel(model, device_ids=gpus))
+
+    captioner = model
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()

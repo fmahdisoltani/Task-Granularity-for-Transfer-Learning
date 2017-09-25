@@ -37,18 +37,21 @@ class LSTMDecoder(Decoder):
                  num_hidden_lstm, go_token=0, gpus=None):
 
         super(LSTMDecoder, self).__init__()
+        self.gpus = gpus
         self.num_hidden_lstm = num_hidden_lstm
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.embedding = self.embedding.cuda(gpus[0])
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+        self.lstm.cuda(1)
 
-        self.linear = nn.Linear(hidden_size, vocab_size)
-        self.logsoftmax = nn.LogSoftmax()
+        self.linear = nn.Linear(hidden_size, vocab_size).cuda(gpus[0])
+        self.logsoftmax = nn.LogSoftmax().cuda(gpus[0])
         self.use_cuda = True if gpus else False
-        self.gpus = gpus
+
         self.go_token = go_token
 
     def init_hidden(self, features):
@@ -85,6 +88,7 @@ class LSTMDecoder(Decoder):
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
             captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            # captions_with_go_token = torch.nn.parallel.DataParallel(captions_with_go_token, device_ids= self.gpus)
             probs, _ = self.apply_lstm(features, captions_with_go_token)
 
         else:
