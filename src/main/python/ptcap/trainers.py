@@ -9,9 +9,10 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
+from ptcap.loggers import CustomLogger
 from ptcap.scores import (caption_accuracy, first_token_accuracy, loss_to_numpy,
                           ScoresOperator, token_accuracy)
-from ptcap.loggers import CustomLogger
+from ptcap.tensorboardY import Seq2seqAdapter
 
 
 class Trainer(object):
@@ -33,7 +34,7 @@ class Trainer(object):
         self.logger = CustomLogger(folder=checkpoint_path)
         self.tokenizer = tokenizer
         self.score = None
-
+        self.writer = Seq2seqAdapter()
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -99,14 +100,21 @@ class Trainer(object):
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
-            videos, captions = Variable(videos), Variable(captions)
+            videos, captions = (Variable(videos),
+                                Variable(captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
+            global_step = len(dataloader) * epoch + sample_counter
+
             if is_training:
+                model_activations = self.model.activations
+                self.writer.add_variables(model_activations, global_step)
+                self.writer.add_state_dict(self.model, global_step)
+
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
@@ -122,6 +130,8 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
+            self.writer.add_scalars(scores.get_average_scores(), global_step,
+                                    is_training)
             # Print after each batch
             prt.print_stuff(scores_dict, self.tokenizer,
                             is_training, captions, predictions, epoch + 1,
