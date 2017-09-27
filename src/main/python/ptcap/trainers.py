@@ -2,23 +2,20 @@ import os
 
 import torch
 
-import ptcap.loggers as lg
-import ptcap.printers as prt
-
 from collections import namedtuple
 from collections import OrderedDict
 
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.loggers import CustomLogger
-from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
+from ptcap.scores import (ScoresOperator, first_token_accuracy, loss_to_numpy,
                           token_accuracy)
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer, writer,
-                 checkpoint_path, folder=None, filename=None, gpus=None):
+    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
+                 writer, checkpoint_path, folder=None, filename=None,
+                 gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -32,7 +29,7 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.logger = CustomLogger(folder=checkpoint_path)
+        self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
         self.writer = writer
@@ -93,6 +90,9 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+
+        # Log at the beginning of epoch
+        self.logger.log_epoch_begin(is_training, epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
@@ -133,16 +133,16 @@ class Trainer(object):
 
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)
-            # Print after each batch
-            prt.print_stuff(scores_dict, self.tokenizer,
-                            is_training, captions, predictions, epoch + 1,
-                            sample_counter + 1, len(dataloader), verbose)
 
-        # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training,
-                              captions, predictions, epoch + 1, len(dataloader),
-                              verbose, sample_counter)
+            # Log at the end of batch
+            self.logger.log_batch_end(
+                scores_dict, self.tokenizer, captions, predictions, is_training,
+                sample_counter + 1, len(dataloader), verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
+
+        # Log at the end of epoch
+        self.logger.log_epoch_end(average_scores_dict)
+
         return average_scores_dict
