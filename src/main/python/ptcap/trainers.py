@@ -51,8 +51,8 @@ class Trainer(object):
 
             state_dict = self.get_trainer_state()
 
-            self.checkpointer.save_latest(state_dict, train_avg_loss)
-            self.checkpointer.save_value_csv((epoch, train_avg_loss),
+            self.checkpointer.save_latest(state_dict)
+            self.checkpointer.save_value_csv([epoch, train_avg_loss],
                                              filename="train_loss")
 
             # Validation
@@ -68,7 +68,7 @@ class Trainer(object):
 
                 state_dict = self.get_trainer_state()
 
-                self.checkpointer.save_best(state_dict, self.score)
+                self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
 
