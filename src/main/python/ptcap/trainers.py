@@ -10,7 +10,7 @@ from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
-                          token_accuracy)
+                          token_accuracy, caption_level_accuracy)
 from ptcap.loggers import CustomLogger
 
 
@@ -83,6 +83,9 @@ class Trainer(object):
         function_dict["accuracy"] = token_accuracy
 
         function_dict["first_accuracy"] = first_token_accuracy
+
+        #function_dict["caption_accuracy"] = caption_level_accuracy
+
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
