@@ -16,7 +16,7 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.model.captioners import *
 from ptcap.trainers import Trainer
-from rtorchn.preprocessing import CenterCropper
+from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]

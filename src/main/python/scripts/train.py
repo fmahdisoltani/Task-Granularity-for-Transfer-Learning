@@ -26,7 +26,7 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.data.annotation_parser import JsonParser
 
 from ptcap.trainers import Trainer
-from rtorchn.preprocessing import CenterCropper
+from rtorchn.data.preprocessing import CenterCropper
 
 if __name__ == '__main__':
     # Get argument
