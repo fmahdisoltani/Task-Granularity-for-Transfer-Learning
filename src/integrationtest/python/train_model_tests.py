@@ -7,6 +7,7 @@ import fake_data as fkdata
 from ptcap.data.config_parser import YamlConfig
 from ptcap.ptcap import caption
 
+
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
 CHECKPOINT_PATH = "model_checkpoints"

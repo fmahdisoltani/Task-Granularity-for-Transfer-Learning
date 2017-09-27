@@ -13,6 +13,7 @@ from docopt import docopt
 from ptcap.data.config_parser import YamlConfig
 from ptcap.ptcap import caption
 
+
 if __name__ == '__main__':
     # Get argument
     args = docopt(__doc__)
