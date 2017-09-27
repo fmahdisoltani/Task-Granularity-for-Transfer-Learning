@@ -1,3 +1,6 @@
+import time
+
+import numpy as np
 import torch
 
 from tensorboardX import SummaryWriter
@@ -34,9 +37,9 @@ class TensorboardAdapter(object):
         """
 
         for param_name, param_value in model.named_parameters():
-            self.summary_writer.add_histogram(param_name + "_grad",
-                                              param_value.grad.cpu().data.numpy(),
-                                              global_step)
+            self.summary_writer.add_histogram(
+                param_name + "_grad", param_value.grad.clone().cpu().data.numpy(),
+                global_step)
 
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
@@ -68,7 +71,9 @@ class TensorboardAdapter(object):
 
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.cpu().numpy(), global_step)
+            self.summary_writer.add_histogram(key,
+                                              value.clone().cpu().numpy(),
+                                              global_step)
 
     def add_activations(self, model, global_step):
         """
@@ -76,9 +81,16 @@ class TensorboardAdapter(object):
         """
 
         vars_dict = model.activations
+        intervals = []
+        a = time.time()
         for key, value in vars_dict.items():
-            self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
-                                              global_step)
+            c = time.time()
+            v = value.clone().cpu().data.numpy()
+            intervals.append(time.time() - c)
+            self.summary_writer.add_histogram(key, v, global_step)
+        b = time.time()
+        print("\ntensorboard takes {}\n".format(b - a))
+        print("putting variable on cpu takes {}\n".format(np.sum(intervals)))
 
     def close(self):
         """

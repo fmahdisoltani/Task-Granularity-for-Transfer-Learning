@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 
 class CustomLogger(object):
@@ -34,7 +35,7 @@ class CustomLogger(object):
         self.logger.info("*" * 30)
 
     def log_batch_begin(self):
-        raise NotImplementedError
+        pass
 
     def log_batch_end(self, scores_dict, tokenizer, captions, predictions,
                       is_training, sample_counter, total_samples, verbose):

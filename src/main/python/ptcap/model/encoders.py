@@ -177,26 +177,26 @@ class CNN3dLSTMEncoder(Encoder):
 
     def register_forward_hooks(self):
         master_dict = {}
-        self.conv1.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv1"))
-        self.conv2.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv2"))
-        self.conv3.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv3"))
-        self.conv4.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv4"))
-        self.conv5.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv5"))
-        self.conv6.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_conv6"))
-        self.pool1.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_pool1"))
-        self.pool2.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_pool2"))
-        self.pool3.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_pool3"))
-        self.pool4.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_pool4"))
+        # self.conv1.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv1"))
+        # self.conv2.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv2"))
+        # self.conv3.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv3"))
+        # self.conv4.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv4"))
+        # self.conv5.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv5"))
+        # self.conv6.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_conv6"))
+        # self.pool1.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_pool1"))
+        # self.pool2.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_pool2"))
+        # self.pool3.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_pool3"))
+        # self.pool4.register_forward_hook(
+        #     forward_hook_closure(master_dict, "encoder_pool4"))
         self.lstm.register_forward_hook(
-            forward_hook_closure(master_dict, "encoder_lstm", 0, True))
+            forward_hook_closure(master_dict, "encoder_lstm", 0, False))
         return master_dict

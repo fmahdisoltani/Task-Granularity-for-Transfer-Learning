@@ -23,6 +23,8 @@ from rtorchn.data.preprocessing import CenterCropper
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
 
+CONFIG_PATH = ["/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/integration_test.yaml"]
+
 CHECKPOINT_PATH = "model_checkpoints"
 
 

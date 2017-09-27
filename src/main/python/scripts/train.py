@@ -107,7 +107,7 @@ if __name__ == '__main__':
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Setup the logger
-    logger = CustomLogger(folder=checkpoint_folder, verbose=False)
+    logger = CustomLogger(folder=checkpoint_folder, verbose=True)
 
     # Trainer
     pretrained_folder = config_obj.get("paths", "pretrained_path")

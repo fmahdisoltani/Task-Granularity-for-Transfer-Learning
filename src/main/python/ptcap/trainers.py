@@ -1,4 +1,4 @@
-import os
+import time
 
 import torch
 
@@ -39,6 +39,8 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
+        a = time.time()
+
         for epoch in range(num_epoch):
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
@@ -70,6 +72,10 @@ class Trainer(object):
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
+
+        b = time.time()
+
+        print("Training took {}".format(b-a))
 
     def get_trainer_state(self):
         return {
@@ -110,15 +116,24 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
+                a = time.time()
                 self.writer.add_activations(self.model, global_step)
+                b = time.time()
                 self.writer.add_state_dict(self.model, global_step)
+                c = time.time()
 
                 self.model.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
                 self.optimizer.step()
+                d = time.time()
 
                 self.writer.add_gradients(self.model, global_step)
+                e = time.time()
+                print("Adding activations took {}".format(b - a))
+                print("Adding the state dict took {}".format(c - b))
+                print("Backpropagation took {}".format(d - c))
+                print("Adding gradients took {}".format(e - d))
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -131,8 +146,12 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
+            p = time.time()
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)
+            q = time.time()
+            print("Adding scalars took {}".format(q - p))
+            print("-------------------------------------")
 
             # Log at the end of batch
             self.logger.log_batch_end(

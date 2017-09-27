@@ -129,12 +129,12 @@ class LSTMDecoder(Decoder):
 
     def register_forward_hooks(self):
         master_dict = {}
-        self.embedding.register_forward_hook(
-            forward_hook_closure(master_dict, "decoder_embedding"))
-        self.lstm.register_forward_hook(
-            forward_hook_closure(master_dict, "decoder_lstm", 0, False))
-        self.linear.register_forward_hook(
-            forward_hook_closure(master_dict, "decoder_linear"))
-        self.logsoftmax.register_forward_hook(
-            forward_hook_closure(master_dict, "decoder_logsoftmax"))
+        # self.embedding.register_forward_hook(
+        #     forward_hook_closure(master_dict, "decoder_embedding"))
+        # self.lstm.register_forward_hook(
+        #     forward_hook_closure(master_dict, "decoder_lstm", 0, False))
+        # self.linear.register_forward_hook(
+        #     forward_hook_closure(master_dict, "decoder_linear"))
+        # self.logsoftmax.register_forward_hook(
+        #     forward_hook_closure(master_dict, "decoder_logsoftmax"))
         return master_dict
