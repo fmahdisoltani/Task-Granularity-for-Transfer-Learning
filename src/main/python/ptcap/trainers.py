@@ -1,3 +1,5 @@
+import os
+
 import torch
 
 from collections import namedtuple
@@ -6,14 +8,14 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (ScoresOperator, caption_accuracy,
+from ptcap.scores import (ScoresOperator, caption_accuracy, 
                           first_token_accuracy, loss_to_numpy, token_accuracy)
-from ptcap.tensorboardY import Seq2seqAdapter
 
 
 class Trainer(object):
     def __init__(self, model, loss_function, optimizer, tokenizer, logger,
-                 checkpoint_path, folder=None, filename=None, gpus=None):
+                 writer, checkpoint_path, folder=None, filename=None,
+                 gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -30,7 +32,7 @@ class Trainer(object):
         self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
-        self.writer = Seq2seqAdapter()
+        self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -110,13 +112,15 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                model_activations = self.model.activations
-                self.writer.add_variables(model_activations, global_step)
+                self.writer.add_activations(self.model, global_step)
                 self.writer.add_state_dict(self.model, global_step)
 
                 self.model.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
                 self.optimizer.step()
+
+                self.writer.add_gradients(self.model, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
