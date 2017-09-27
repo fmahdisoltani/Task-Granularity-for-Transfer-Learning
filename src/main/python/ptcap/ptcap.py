@@ -14,6 +14,7 @@ from ptcap.data.annotation_parser import JsonParser
 from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
+from ptcap.tensorboardY import Seq2seqAdapter
 from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
@@ -91,6 +92,8 @@ def caption(config_obj, relative_path=""):
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
+    writer = Seq2seqAdapter(os.path.join(relative_path, "runs"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
@@ -99,7 +102,7 @@ def caption(config_obj, relative_path=""):
 
     # Trainer
     trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
-                      checkpoint_folder, folder=pretrained_path,
+                      writer, checkpoint_folder, folder=pretrained_path,
                       filename="model.best", gpus=gpus)
 
     # Train the Model

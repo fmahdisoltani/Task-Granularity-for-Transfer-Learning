@@ -23,3 +23,4 @@ if __name__ == '__main__':
 
     # Run captioning model
     caption(config_obj)
+

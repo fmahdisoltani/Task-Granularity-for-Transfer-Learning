@@ -28,6 +28,16 @@ class TensorboardAdapter(object):
     def __init__(self, log_dir=None):
         self.summary_writer = SummaryWriter(log_dir=log_dir)
 
+    def add_gradients(self, model, global_step):
+        """
+            Adds a visualization of the model's gradients.
+        """
+
+        for param_name, param_value in model.named_parameters():
+            self.summary_writer.add_histogram(param_name + "_grad",
+                                              param_value.grad.cpu().data.numpy(),
+                                              global_step)
+
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
             Adds a visualization of the model's computation graph.
@@ -42,6 +52,15 @@ class TensorboardAdapter(object):
         else:
             print("add_graph was not executed because model_output=None")
 
+    def add_scalars(self, scalars_dict, global_step, is_training):
+        """
+            Visualizes the contents of scalars_dict which must be scalar.
+        """
+
+        pad = "_train" if is_training else "_valid"
+        for key, value in scalars_dict.items():
+            self.summary_writer.add_scalar(key + pad, value, global_step)
+
     def add_state_dict(self, model, global_step):
         """
             Visualizes the contents of model.state_dict().
@@ -49,26 +68,17 @@ class TensorboardAdapter(object):
 
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.numpy(),
-                                              global_step)
+            self.summary_writer.add_histogram(key, value.cpu().numpy(), global_step)
 
-    def add_variables(self, vars_dict, global_step):
+    def add_activations(self, model, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
 
+        vars_dict = model.activations
         for key, value in vars_dict.items():
             self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
                                               global_step)
-
-    def add_scalars(self, scalars_dict, global_step, is_training):
-        """
-            Visualizes the contents of scalars_dict which must be scalar.
-        """
-
-        pad = "train_" if is_training else "valid_"
-        for key, value in scalars_dict.items():
-            self.summary_writer.add_scalar(pad + key, value, global_step)
 
     def close(self):
         """
