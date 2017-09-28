@@ -1,7 +1,6 @@
-import torch
+import os
 
-import ptcap.loggers as lg
-import ptcap.printers as prt
+import torch
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -10,16 +9,18 @@ from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.loggers import CustomLogger
-from ptcap.scores import (first_token_accuracy, loss_to_numpy, ScoresOperator,
-                          token_accuracy, caption_level_accuracy)
-
 from ptcap.tensorboardY import Seq2seqAdapter
+
+from ptcap.scores import (ScoresOperator, caption_accuracy,
+                          first_token_accuracy, loss_to_numpy, token_accuracy)
+
 
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer,
-                 checkpoint_path, folder=None, filename=None, gpus=None):
+    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
+                 writer, checkpoint_path, folder=None, filename=None,
+                 gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -33,10 +34,10 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.logger = CustomLogger(folder=checkpoint_path)
+        self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
-        self.writer = Seq2seqAdapter()
+        self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -93,10 +94,14 @@ class Trainer(object):
 
         #function_dict["caption_accuracy"] = caption_level_accuracy
 
+        function_dict["caption_accuracy"] = caption_accuracy
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+
+        # Log at the beginning of epoch
+        self.logger.log_epoch_begin(is_training, epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
@@ -114,13 +119,14 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                model_activations = self.model.activations
-                self.writer.add_variables(model_activations, global_step)
+                self.writer.add_activations(self.model, global_step)
                 self.writer.add_state_dict(self.model, global_step)
-
                 self.model.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
                 self.optimizer.step()
+
+                self.writer.add_gradients(self.model, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -135,16 +141,16 @@ class Trainer(object):
 
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)
-            # Print after each batch
-            prt.print_stuff(scores_dict, self.tokenizer,
-                            is_training, captions, predictions, epoch + 1,
-                            sample_counter + 1, len(dataloader), verbose)
 
-        # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training,
-                              captions, predictions, epoch + 1, len(dataloader),
-                              verbose, sample_counter)
+            # Log at the end of batch
+            self.logger.log_batch_end(
+                scores_dict, self.tokenizer, captions, predictions, is_training,
+                sample_counter + 1, len(dataloader), verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
+
+        # Log at the end of epoch
+        self.logger.log_epoch_end(average_scores_dict)
+
         return average_scores_dict
