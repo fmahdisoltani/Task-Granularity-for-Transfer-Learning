@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data/20bn-objects/videos_npz
   annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/ckp_sth_templates/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/ckp_sth_templates_frozen/
   train_annot:  /data/20bn-objects/json/train_20170630.json.gz
   validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
   test_annot: /data/20bn-gestures/json/test_20170630.json.gz
@@ -26,7 +26,7 @@ optimizer:
   type: Adam
 training:
   num_epochs: 200
-  learning_rate: &lr 0.01
+  learning_rate: &lr 0.001
   teacher_force: True
   verbose: False
 

@@ -13,11 +13,11 @@ device:
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 2
+  batch_size: &b 16
   kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
 
 model:
-  type: CNN3dLSTM
+  type: RtorchnCaptionerP
   kwargs: {}
 
 loss:
@@ -25,7 +25,6 @@ loss:
 
 optimizer:
   type: Adam
-
 training:
   num_epochs: 200
   learning_rate: &lr 0.01
@@ -33,10 +32,14 @@ training:
   verbose: False
 
 validation:
-  frequency: 10
+  frequency: 5
   teacher_force: False
   verbose: True
 
 criteria:
   score: loss
   higher_is_better: False
+
+targets:
+  caption_type: template
+  user_maxlen: 10
