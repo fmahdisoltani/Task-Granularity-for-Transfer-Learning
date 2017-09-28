@@ -105,13 +105,18 @@ class Trainer(object):
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
+            aa = time.time()
             videos, captions = (Variable(videos),
                                 Variable(captions))
+            bb = time.time()
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
+            cc = time.time()
             probs = self.model((videos, captions), use_teacher_forcing)
+            dd = time.time()
             loss = self.loss_function(probs, captions)
+            ee = time.time()
 
             global_step = len(dataloader) * epoch + sample_counter
 
@@ -133,13 +138,16 @@ class Trainer(object):
                 print("Adding activations took {}".format(b - a))
                 print("Adding the state dict took {}".format(c - b))
                 print("Backpropagation took {}".format(d - c))
-                print("Adding gradients took {}".format(e - d))
+                print("Adding gradients took {}\n".format(e - d))
+
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
 
+            ff = time.time()
             captions = captions.cpu()
             predictions = predictions.cpu()
+            gg = time.time()
 
             batch_outputs = ScoreAttr(loss, captions, predictions)
 
@@ -150,13 +158,23 @@ class Trainer(object):
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)
             q = time.time()
-            print("Adding scalars took {}".format(q - p))
-            print("-------------------------------------")
+            print("Adding scalars took {}\n".format(q - p))
 
+            hh = time.time()
             # Log at the end of batch
             self.logger.log_batch_end(
                 scores_dict, self.tokenizer, captions, predictions, is_training,
                 sample_counter + 1, len(dataloader), verbose)
+            ii = time.time()
+
+            print("Putting videos and captions on GPU {}".format(cc - bb))
+            print("Forward pass {}".format(dd - cc))
+            print("Computing loss {}".format(ee - dd))
+            print("Putting predictions and captions on CPU {}".format(gg - ff))
+            print("Logging on batch end {}\n".format(ii - hh))
+            print("Total batch time {}".format(ii - aa))
+            print("=" * 30)
+
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
