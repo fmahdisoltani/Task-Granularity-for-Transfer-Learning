@@ -42,7 +42,7 @@ class Checkpointer(object):
             folder = self.checkpoint_folder
         score = state["score"]
         self.set_best_score(score)
-        print("Saving best model, score: {:.4f} @ epoch {}".
+        print("Saving best model, score: {:.4} @ epoch {}".
               format(score, state["epoch"]))
         torch.save(state, os.path.join(folder, filename))
 
