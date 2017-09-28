@@ -8,8 +8,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (ScoresOperator, first_token_accuracy, loss_to_numpy,
-                          token_accuracy)
+from ptcap.scores import (ScoresOperator, caption_accuracy, 
+                          first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
@@ -86,6 +86,8 @@ class Trainer(object):
         function_dict["accuracy"] = token_accuracy
 
         function_dict["first_accuracy"] = first_token_accuracy
+
+        function_dict["caption_accuracy"] = caption_accuracy
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
