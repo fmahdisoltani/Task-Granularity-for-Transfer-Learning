@@ -19,7 +19,7 @@ from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
 
-def caption(config_obj, relative_path=""):
+def train_model(config_obj, relative_path=""):
     # Find paths to training, validation and test sets
     training_path = os.path.join(relative_path,
                                  config_obj.get('paths', 'train_annot'))

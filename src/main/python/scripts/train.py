@@ -11,7 +11,7 @@ Options:
 from docopt import docopt
 
 from ptcap.data.config_parser import YamlConfig
-from ptcap.ptcap import caption
+from ptcap.main import train_model
 
 
 if __name__ == '__main__':
@@ -22,5 +22,5 @@ if __name__ == '__main__':
     config_obj = YamlConfig(args['<config_path>'])
 
     # Run captioning model
-    caption(config_obj)
+    train_model(config_obj)
 

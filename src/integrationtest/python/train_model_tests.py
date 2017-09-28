@@ -5,7 +5,7 @@ import os
 import fake_data as fkdata
 
 from ptcap.data.config_parser import YamlConfig
-from ptcap.ptcap import caption
+from ptcap.main import train_model
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     fkdata.remove_dir(checkpoint_folder)
 
     # Run captioning model
-    caption(config_obj, os.getcwd())
+    train_model(config_obj, os.getcwd())
 
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
