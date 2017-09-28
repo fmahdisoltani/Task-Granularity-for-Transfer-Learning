@@ -92,7 +92,7 @@ def train_model(config_obj, relative_path=""):
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
-    writer = Seq2seqAdapter(os.path.join(relative_path, "runs"))
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
