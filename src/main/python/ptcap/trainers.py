@@ -15,8 +15,6 @@ from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
-
-
 class Trainer(object):
     def __init__(self, model, loss_function, optimizer, tokenizer, logger,
                  writer, checkpoint_path, folder=None, filename=None,

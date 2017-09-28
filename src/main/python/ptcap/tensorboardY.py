@@ -71,7 +71,6 @@ class TensorboardAdapter(object):
         for key, value in model_state_dict.items():
             self.summary_writer.add_histogram(key, value.cpu().numpy(),
                                               global_step)
-            self.summary_writer.add_histogram(key, value.cpu().numpy(), global_step)
 
     def add_activations(self, model, global_step):
         """
