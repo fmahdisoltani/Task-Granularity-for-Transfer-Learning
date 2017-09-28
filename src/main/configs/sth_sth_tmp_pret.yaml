@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data/20bn-objects/videos_npz
   annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_sth_templates_frozen/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_sth_templates_frozen2/
   train_annot:  /data/20bn-objects/json/train_20170630.json.gz
   validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
   test_annot: /data/20bn-gestures/json/test_20170630.json.gz
