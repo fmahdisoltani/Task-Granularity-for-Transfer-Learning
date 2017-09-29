@@ -1,0 +1,70 @@
+paths:
+  videos_folder: directory containing all the videos
+  annot_folder: directory containing all the json files
+  checkpoint_folder: directory in which the model should be saved
+
+  train_annot:  path to the train json file
+  validation_annot: path to the validation json file
+  test_annot: path to the test json file
+
+pretrained:
+  pretrained_folder: the directory in which the model was checkpointed
+  pretrained_file: the name of the file in `pretrained_folder`
+
+device:
+  synchronize_gpu: If True, the gpus are synchronized in multigpu case
+  gpus: List of gpus to be used
+
+dataloaders:
+  kwargs: {batch_size: the batch size,
+           num_workers: number of workers retrieving the input,
+           pin_memory: If True, gpu memory gets pinned}
+
+model:
+  type: model class
+  kwargs: {encoder_type: encoder class, decoder_type: decoder class,
+           encoder_output_size: number of features extracted by the encoder,
+           embedding_size: the size of the decoder input embeddings,
+           num_hidden_lstm: number of neurons in the decoder's lstm}
+
+loss:
+  type: the type of the loss function
+
+optimizer:
+  type: &optimizer the type of the optimizer
+  kwargs: {lr: initial learning rate}
+
+scheduler:
+  type: the type of the scheduler
+  kwargs: {factor: the rate at which the lr will be reduced,
+           min_lr: minimum learning rate after which training stops,
+           optimizer: *optimizer,
+           patience: number of epochs with no improvement after which lr will be reduced,
+           threshold: threshold for measuring the new optimum}
+
+training:
+  num_epochs: Number of training epochs to perform
+  clip_grad: the value at which the gradient is clipped
+  teacher_force: If True, teacher forcing is used
+  verbose: If True, the outputs of the model will be printed to stdout along with the true captions
+
+validation:
+  frequency: The frequency at which the script should run validation in terms of the number of epochs
+  teacher_force: If True, teacher forcing is used
+  verbose: If True, the outputs of the model will be printed to stdout along with the true captions
+
+criteria:
+  score: the criteria used to evaluate the performance of the model
+  higher_is_better: True if optimizing for the highest score
+
+targets:
+  caption_type: template/label
+
+tokenizer:
+  kwargs: {user_maxlen: Sets the maximum length of all captions,
+           cutoff: Tokens occurring less than `cutoff` will be represented by the `UNK` symbol}
+
+logging:
+  verbose: True if the logger should output to stdout
+  tensorboard_frequency: The frequency at which the model parameters will be logged
+                         If `None`, the model parameters will not be logged
