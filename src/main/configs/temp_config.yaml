@@ -1,0 +1,64 @@
+paths:
+  videos_folder: fake_data/videos
+  checkpoint_folder: checkpoint_sample/
+
+  train_annot:  &train_annot fake_data/json/fake.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
+
+pretrained:
+  pretrained_folder:
+  pretrained_file:
+
+device:
+  synchronize_gpu: True
+  gpus:
+
+dataloaders:
+  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
+
+model:
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.01}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: threshold for measuring the new optimum}
+
+training:
+  num_epochs: Number of training epochs to perform
+  clip_grad: the value at which the gradient is clipped
+  teacher_force: If True, teacher forcing is used
+  verbose: If True, the outputs of the model will be printed to stdout along with the true captions
+
+validation:
+  frequency: The frequency at which the script should run validation in terms of the number of epochs
+  teacher_force: If True, teacher forcing is used
+  verbose: If True, the outputs of the model will be printed to stdout along with the true captions
+
+criteria:
+  score: the criteria used to evaluate the performance of the model
+  higher_is_better: True if optimizing for the highest score
+
+targets:
+  caption_type: template/label
+
+tokenizer:
+  kwargs: {user_maxlen: Sets the maximum length of all captions,
+           cutoff: Tokens occurring less than `cutoff` will be represented by the `UNK` symbol}
+
+logging:
+  verbose: True if the logger should output to stdout
+  tensorboard_frequency: The frequency at which the model parameters will be logged
+                         If `None`, the model parameters will not be logged

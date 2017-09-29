@@ -10,7 +10,7 @@ paths:
 
 device:
   synchronize_gpu: &sync True
-  gpus:
+  gpus: [0]
 
 dataloaders:
   batch_size: &b 2
@@ -27,7 +27,7 @@ optimizer:
   type: Adam
 
 training:
-  num_epochs: 2
+  num_epochs: 2000
   learning_rate: &lr 0.01
   teacher_force: True
   verbose: True
