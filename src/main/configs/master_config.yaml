@@ -54,7 +54,7 @@ validation:
   verbose: If True, the outputs of the model will be printed to stdout along with the true captions
 
 criteria:
-  score: The criteria used to evaluate the performance of the model
+  score: the criteria used to evaluate the performance of the model
   higher_is_better: True if optimizing for the highest score
 
 targets:
