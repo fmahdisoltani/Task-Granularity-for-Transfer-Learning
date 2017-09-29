@@ -2,7 +2,7 @@ paths:
   videos_folder: fake_data/videos
   checkpoint_folder: checkpoint_sample/
 
-  train_annot:  &train_annot fake_data/json/fake.json
+  train_annot: &train_annot fake_data/json/fake.json
   validation_annot: *train_annot
   test_annot: *train_annot
 
