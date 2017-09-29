@@ -6,6 +6,7 @@ import ptcap.data.preprocessing as prep
 import ptcap.losses
 import ptcap.model.captioners
 
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
@@ -92,6 +93,8 @@ def train_model(config_obj, relative_path=""):
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
+    scheduler = ReduceLROnPlateau(optimizer, verbose=True, patience=3, min_lr= 1e-8)
+
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
 
     # Prepare checkpoint directory and save config
@@ -101,7 +104,7 @@ def train_model(config_obj, relative_path=""):
     logger = CustomLogger(folder=checkpoint_folder, verbose=False)
 
     # Trainer
-    trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
+    trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
                       writer, checkpoint_folder, folder=pretrained_path,
                       filename="model.best", gpus=gpus)
 

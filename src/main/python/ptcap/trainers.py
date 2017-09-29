@@ -13,7 +13,7 @@ from ptcap.scores import (ScoresOperator, caption_accuracy,
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
+    def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpoint_path, folder=None, filename=None,
                  gpus=None):
 
@@ -21,17 +21,17 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
 
-        init_state = self.checkpointer.load_model(model, optimizer,
+        init_state = self.checkpointer.load_model(model, scheduler,
                                                   folder, filename)
 
-        self.num_epochs, self.model, self.optimizer = init_state
+        self.num_epochs, self.model, self.scheduler = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
         self.logger = logger
         self.tokenizer = tokenizer
-        self.score = None
+        self.score = 100
         self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
@@ -63,19 +63,27 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_loss"]
+                self.score = valid_average_scores["average_accuracy"]
+
+                self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
 
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
+                if (self.scheduler.optimizer.param_group['lr'] ==
+                        self.scheduler.min_lrs[0]):
+                    break
+
+        self.logger.log_train_end(self.scheduler.best, self.scheduler.min_lrs[0])
+
 
     def get_trainer_state(self):
         return {
             'epoch': self.num_epochs,
             'model': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
+            'optimizer': self.scheduler.optimizer.state_dict(),
             'score': self.score,
         }
 
@@ -109,19 +117,6 @@ class Trainer(object):
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
-            global_step = len(dataloader) * epoch + sample_counter
-
-            if is_training:
-                self.writer.add_activations(self.model, global_step)
-                self.writer.add_state_dict(self.model, global_step)
-
-                self.model.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
-                self.optimizer.step()
-
-                self.writer.add_gradients(self.model, global_step)
-
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
 
@@ -132,6 +127,19 @@ class Trainer(object):
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
+
+            global_step = len(dataloader) * epoch + sample_counter
+
+            if is_training:
+                self.writer.add_activations(self.model, global_step)
+                self.writer.add_state_dict(self.model, global_step)
+
+                self.model.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
+                self.scheduler.optimizer.step()
+
+                self.writer.add_gradients(self.model, global_step)
 
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)

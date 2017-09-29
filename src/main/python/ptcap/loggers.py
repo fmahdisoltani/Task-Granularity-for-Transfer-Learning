@@ -58,3 +58,9 @@ class CustomLogger(object):
     def log_epoch_end(self, scores_dict):
         self.log_dict(scores_dict)
         self.logger.info("\n")
+
+    def log_train_end(self, best_score, min_lr):
+        self.logger.info("Learning rate is equal to the minimum learning rate ("
+                         "{:.4})".format(min_lr))
+        self.logger.info("Best model has a score of {:.4}".format())
+        self.logger.info("Training complete!!!")
