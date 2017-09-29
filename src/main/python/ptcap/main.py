@@ -53,7 +53,7 @@ def train_model(config_obj, relative_path=""):
                                    config_obj.get('paths', 'videos_folder')))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
         tokenizer.load_dictionaries(pretrained_folder)
     else:
