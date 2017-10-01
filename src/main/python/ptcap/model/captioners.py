@@ -5,6 +5,8 @@ from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import (CNN3dEncoder,
                                   CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
+from ptcap.model.pretrained_encoders import RtorchnEncoderP
+
 
 
 class Captioner(nn.Module):
@@ -69,3 +71,18 @@ class CNN3dLSTM(EncoderDecoder):
                                         decoder_args=decoder_args,
                                         gpus=gpus)
 
+
+class RtorchnCaptionerP(EncoderDecoder):
+    def __init__(self, encoder_output_size=256, embedding_size=256,
+                 vocab_size=33, num_hidden_lstm=512, go_token=0, use_cuda=False,
+                 gpus=None):
+
+        decoder_args = (embedding_size, encoder_output_size,
+                        vocab_size, num_hidden_lstm, go_token, gpus)
+
+        encoder_args = ()
+
+        super(RtorchnCaptionerP, self).__init__(RtorchnEncoderP, LSTMDecoder,
+                                                encoder_args=encoder_args,
+                                                decoder_args=decoder_args,
+                                                gpus=gpus)
