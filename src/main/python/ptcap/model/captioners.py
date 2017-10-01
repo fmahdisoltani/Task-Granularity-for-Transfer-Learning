@@ -87,3 +87,5 @@ class RtorchnCaptionerP(EncoderDecoder):
                                                 encoder_args=encoder_args,
                                                 decoder_args=decoder_args,
                                                 gpus=gpus)
+
+

@@ -83,10 +83,11 @@ def train_model(config_obj, relative_path=""):
                                 **config_obj.get("dataloaders", "kwargs"))
 
     # Create model, loss, and optimizer objects
+    print("*" * 100)
     model = getattr(ptcap.model.captioners, model_type)(
         vocab_size=tokenizer.get_vocab_size(),
         go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus)
-
+    print("2" * 100)
     loss_function = getattr(ptcap.losses, loss_type)()
 
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
