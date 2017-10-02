@@ -50,6 +50,9 @@ class LSTMDecoder(Decoder):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.go_token = go_token
+        # self.go_part = Variable(torch.LongTensor([self.go_token]))
+        # if self.use_cuda:
+        #     self.go_part = self.go_part.cuda(self.gpus[0])
 
     def init_hidden(self, features):
         """
@@ -78,18 +81,16 @@ class LSTMDecoder(Decoder):
         """
 
         batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
+        # go_part = self.go_part.expand(batch_size, 1)
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            captions_with_go_token = captions
             probs, _ = self.apply_lstm(features, captions_with_go_token)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            probs = self.predict(features, captions, num_step)
 
         return probs
 
@@ -97,6 +98,13 @@ class LSTMDecoder(Decoder):
 
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
+
+        # if self.embedding.weight.get_device() == captions.get_device():
+        #     print("captions on gpu {}".format(captions.get_device()))
+        # else:
+        #     new_gpu = self.embedding.weight.get_device()
+        #     print("Putting captions on gpu {}".format(new_gpu))
+        #     captions = captions.cuda(new_gpu)
         embedded_captions = self.embedding(captions)
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 

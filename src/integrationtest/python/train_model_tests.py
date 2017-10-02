@@ -20,7 +20,7 @@ from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]
-
+CONFIG_PATH = ["/home/waseem/20bn-gitrepo/pytorch-captioning/src/main/configs/integration_test.yaml"]
 CHECKPOINT_PATH = "model_checkpoints"
 
 
@@ -63,6 +63,10 @@ def simulate_training_script(config_obj, fake_dir):
     # Clean up checkpoint folder before training starts
     fkdata.remove_dir(checkpoint_folder)
 
+    torch.manual_seed(0)
+    if gpus is not None:
+        torch.cuda.manual_seed(0)
+
     preprocesser = Compose([prep.RandomCrop([24, 96, 96]),
                             prep.PadVideo([24, 96, 96]),
                             prep.Float32Converter(),
@@ -93,7 +97,7 @@ def simulate_training_script(config_obj, fake_dir):
 
     # Parallelize model across different GPUs, if specified
     captioner = model if gpus is None else (
-        torch.nn.parallel.DataParallel(model, device_ids=gpus))
+        torch.nn.parallel.DataParallel(model, device_ids=gpus).cuda())
 
     # Loss and Optimizer
     loss_function = SequenceCrossEntropy()

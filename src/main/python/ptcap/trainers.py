@@ -1,3 +1,5 @@
+import time
+
 import torch
 
 import ptcap.loggers as lg
@@ -34,43 +36,49 @@ class Trainer(object):
         self.tokenizer = tokenizer
         self.score = None
 
-
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        for epoch in range(num_epoch):
-            self.num_epochs += 1
-            train_average_scores = self.run_epoch(train_dataloader,
-                                                  epoch, is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
+        start_time = time.time()
 
-            train_avg_loss = train_average_scores["average_loss"]
+        for i in range(20):
 
-            state_dict = self.get_trainer_state()
+            for epoch in range(num_epoch):
+                self.num_epochs += 1
+                train_average_scores = self.run_epoch(train_dataloader,
+                                                      epoch, is_training=True,
+                               use_teacher_forcing=teacher_force_train,
+                               verbose=verbose_train)
 
-            self.checkpointer.save_latest(state_dict)
-            self.checkpointer.save_value_csv([epoch, train_avg_loss],
-                                             filename="train_loss")
-
-            # Validation
-            if (epoch + 1) % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(
-                    valid_dataloader, epoch, is_training=False,
-                    use_teacher_forcing=teacher_force_valid,
-                    verbose=verbose_valid
-                )
-
-                # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_loss"]
+                train_avg_loss = train_average_scores["average_loss"]
 
                 state_dict = self.get_trainer_state()
 
-                self.checkpointer.save_best(state_dict)
-                self.checkpointer.save_value_csv([epoch, self.score],
-                                                 filename="valid_loss")
+                self.checkpointer.save_latest(state_dict)
+                self.checkpointer.save_value_csv([epoch, train_avg_loss],
+                                                 filename="train_loss")
+
+                # Validation
+                if (epoch + 1) % frequency_valid == 0:
+                    valid_average_scores = self.run_epoch(
+                        valid_dataloader, epoch, is_training=False,
+                        use_teacher_forcing=teacher_force_valid,
+                        verbose=verbose_valid
+                    )
+
+                    # remember best loss and save checkpoint
+                    self.score = valid_average_scores["average_loss"]
+
+                    state_dict = self.get_trainer_state()
+
+                    self.checkpointer.save_best(state_dict)
+                    self.checkpointer.save_value_csv([epoch, self.score],
+                                                     filename="valid_loss")
+
+        end_time = time.time()
+        print("Training took {}".format(end_time - start_time))
 
     def get_trainer_state(self):
         return {
@@ -97,11 +105,19 @@ class Trainer(object):
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
 
-            videos, captions = Variable(videos), Variable(captions)
+            batch_size = videos.size(0)
+            input_captions = torch.LongTensor(batch_size, 1).zero_()
+            if is_training:
+                input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
+
+            videos, captions, input_captions = (Variable(videos),
+                                                Variable(captions), Variable(input_captions))
+
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
-            probs = self.model((videos, captions), use_teacher_forcing)
+                input_captions = input_captions.cuda(self.gpus[0])
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             if is_training:
@@ -119,16 +135,16 @@ class Trainer(object):
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
-
-            # Print after each batch
-            prt.print_stuff(scores_dict, self.tokenizer,
-                            is_training, captions, predictions, epoch + 1,
-                            sample_counter + 1, len(dataloader), verbose)
-
-        # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
-                     predictions, epoch + 1, len(dataloader),
-                     verbose, sample_counter)
+        #
+        #     # Print after each batch
+        #     prt.print_stuff(scores_dict, self.tokenizer,
+        #                     is_training, captions, predictions, epoch + 1,
+        #                     sample_counter + 1, len(dataloader), verbose)
+        #
+        # # Log at the end of epoch
+        # self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
+        #              predictions, epoch + 1, len(dataloader),
+        #              verbose, sample_counter)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
