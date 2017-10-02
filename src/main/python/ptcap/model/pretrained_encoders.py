@@ -6,8 +6,8 @@ from .encoders import Encoder
 
 class PretrainedEncoder(Encoder):
     def __init__(self, encoder, pretrained_path=None, checkpoint_key=None,
-
                  freeze=False, encoder_args=()):
+
         super(PretrainedEncoder, self).__init__()
         self.encoder = encoder(*encoder_args)
 
