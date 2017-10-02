@@ -33,7 +33,7 @@ def train_model(config_obj, relative_path=""):
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get('training', 'num_epochs')
     pretrained_folder = config_obj.get('pretrained', 'pretrained_folder')
-    pretrained_file = config_obj.get('pretrained', 'pretrained_folder')
+    pretrained_file = config_obj.get('pretrained', 'pretrained_file')
     pretrained_folder = os.path.join(relative_path, pretrained_folder
                                    ) if pretrained_folder else None
     teacher_force_train = config_obj.get('training', 'teacher_force')
