@@ -72,7 +72,7 @@ class Trainer(object):
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
-                if (self.scheduler.optimizer.param_group['lr'] ==
+                if (self.scheduler.optimizer.param_groups[0]['lr'] ==
                         self.scheduler.min_lrs[0]):
                     break
 
