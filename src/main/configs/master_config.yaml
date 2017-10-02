@@ -53,11 +53,7 @@ validation:
   verbose: If True, the outputs of the model will be printed to stdout along with the true captions
 
 criteria:
-<<<<<<< HEAD
-  score: The criteria used to evaluate the performance of the model
-=======
   score: the criteria used to evaluate the performance of the model
->>>>>>> pretrained_encoders
   higher_is_better: True if optimizing for the highest score
 
 targets:
@@ -70,8 +66,4 @@ tokenizer:
 logging:
   verbose: True if the logger should output to stdout
   tensorboard_frequency: The frequency at which the model parameters will be logged
-<<<<<<< HEAD
                          If `None`, the model parameters will not be logged
-=======
-                         If `None`, the model parameters will not be logged
->>>>>>> pretrained_encoders
