@@ -55,7 +55,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             # Validation
-            if (epoch + 1) % frequency_valid == 0:
+            if epoch % frequency_valid == 0:
                 valid_average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
