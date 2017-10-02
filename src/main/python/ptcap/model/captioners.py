@@ -77,7 +77,6 @@ class RtorchnCaptionerP(EncoderDecoder):
                  vocab_size=33, num_hidden_lstm=512, go_token=0, use_cuda=False,
                  gpus=None,  pretrained_path=None,
                  freeze=False, num_features=256, num_classes=178):
-
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, gpus)
 

@@ -52,7 +52,7 @@ def train_model(config_obj, relative_path=""):
                                    config_obj.get('paths', 'videos_folder')))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(user_maxlen=config_obj.get("targets", "user_maxlen"))
     if pretrained_path:
         tokenizer.load_dictionaries(pretrained_path)
     else:
@@ -83,23 +83,20 @@ def train_model(config_obj, relative_path=""):
                                 **config_obj.get("dataloaders", "kwargs"))
 
     # Create model, loss, and optimizer objects
-    print("*" * 100)
     model = getattr(ptcap.model.captioners, model_type)(
         vocab_size=tokenizer.get_vocab_size(),
         go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus)
-    print("2" * 100)
     loss_function = getattr(ptcap.losses, loss_type)()
 
     optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
                      lr=config_obj.get("training", "learning_rate"))
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
-
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Setup the logger
-    logger = CustomLogger(folder=checkpoint_folder, verbose=False)
+    logger = CustomLogger(folder=checkpoint_folder, verbose=True)
 
     # Trainer
     trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
