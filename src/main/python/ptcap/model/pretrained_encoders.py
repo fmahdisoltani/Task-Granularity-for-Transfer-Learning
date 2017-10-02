@@ -29,27 +29,20 @@ class PretrainedEncoder(Encoder):
 class RtorchnEncoderP(PretrainedEncoder):
 
     def __init__(self, pretrained_path=None,
-                 freeze=False, num_features=256, num_classes=178):
+                 freeze=False, encoder_output_size=256, num_classes=178):
 
-        pretrained_path = ('/home/farzaneh/PycharmProjects/'
-                                'pretrained_nets/'
-                                'fully_conv_net_on_smtsmt_20170627/model.checkpoint')
+        # it thinks it's getting num_features, but it's not. what is happening is
+        # equivalent to FullyConvolutionalNet(..,
+        #                                     num_features=encoder_output_size)
 
-
-        encoder_args = (num_classes, num_features)
+        encoder_args = (num_classes, encoder_output_size)
         super(RtorchnEncoderP, self).__init__(encoder=FullyConvolutionalNet,
                                               encoder_args=encoder_args,
                                               pretrained_path=pretrained_path,
                                               freeze=freeze)
 
-        #self.encoder = FullyConvolutionalNet(num_classes=num_classes,
-        #                                     num_features=num_features)
 
-        # checkpoint = torch.load('/home/farzaneh/PycharmProjects/'
-        #                         'pretrained_nets/'
-        #                         'fully_conv_net_on_smtsmt_20170627/model.checkpoint')
 
-        # self.encoder.load_state_dict(checkpoint)
 
     def forward(self, video_batch):
         features = self.encoder.extract_features(video_batch)

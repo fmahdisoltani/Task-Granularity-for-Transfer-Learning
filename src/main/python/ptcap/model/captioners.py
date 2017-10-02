@@ -29,7 +29,7 @@ class RtorchnCaptioner(Captioner):
 
 
 class EncoderDecoder(Captioner):
-    def __init__(self, encoder, decoder, encoder_args=(), decoder_args=(),
+    def __init__(self, encoder, decoder, encoder_kwargs=None, decoder_kwargs=None,
                 gpus=None):
 
         print("gpus: {}".format(gpus))
@@ -37,8 +37,10 @@ class EncoderDecoder(Captioner):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
 
-        self.encoder = encoder(*encoder_args)
-        self.decoder = decoder(*decoder_args)
+        self.encoder = encoder(**encoder_kwargs)
+        #decoder_kwargs["hidden_size"] = encoder_kwargs["encoder_output_size"]
+        print(decoder_kwargs)
+        self.decoder = decoder(**decoder_kwargs)
 
         self.activations = {}
         self.register_forward_hook(self.merge_activations)
@@ -72,13 +74,12 @@ class CNN3dLSTM(EncoderDecoder):
 
 class RtorchnCaptionerP(EncoderDecoder):
     def __init__(self, encoder_output_size=256, embedding_size=256,
-                 vocab_size=33, num_hidden_lstm=512, go_token=0, use_cuda=False,
-                 gpus=None,  pretrained_path=None,
-                 freeze=False, num_features=256, num_classes=178):
+                 vocab_size=33, num_hidden_lstm=512, go_token=0, gpus=None,
+                 pretrained_path=None, freeze=False, num_classes=178):
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, gpus)
 
-        encoder_args = (pretrained_path, freeze, num_features, num_classes)
+        encoder_args = (pretrained_path, freeze, encoder_output_size, num_classes)
 
         super(RtorchnCaptionerP, self).__init__(RtorchnEncoderP, LSTMDecoder,
                                                 encoder_args=encoder_args,
