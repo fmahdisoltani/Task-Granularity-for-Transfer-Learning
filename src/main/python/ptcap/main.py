@@ -32,9 +32,10 @@ def train_model(config_obj, relative_path=""):
     frequency_valid = config_obj.get('validation', 'frequency')
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get('training', 'num_epochs')
-    pretrained_path = config_obj.get('paths', 'pretrained_path')
-    pretrained_path = os.path.join(relative_path, pretrained_path
-                                   ) if pretrained_path else None
+    pretrained_folder = config_obj.get('pretrained', 'pretrained_folder')
+    pretrained_file = config_obj.get('pretrained', 'pretrained_file')
+    pretrained_folder = os.path.join(relative_path, pretrained_folder
+                                   ) if pretrained_folder else None
     teacher_force_train = config_obj.get('training', 'teacher_force')
     teacher_force_valid = config_obj.get('validation', 'teacher_force')
     verbose_train = config_obj.get('training', 'verbose')
@@ -52,9 +53,9 @@ def train_model(config_obj, relative_path=""):
                                    config_obj.get('paths', 'videos_folder')))
 
     # Build a tokenizer that contains all captions from annotation files
-    tokenizer = Tokenizer()
-    if pretrained_path:
-        tokenizer.load_dictionaries(pretrained_path)
+    tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
+    if pretrained_folder:
+        tokenizer.load_dictionaries(pretrained_folder)
     else:
         tokenizer.build_dictionaries(training_parser.get_captions())
 
@@ -85,12 +86,13 @@ def train_model(config_obj, relative_path=""):
     # Create model, loss, and optimizer objects
     model = getattr(ptcap.model.captioners, model_type)(
         vocab_size=tokenizer.get_vocab_size(),
-        go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus)
+        go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus,
+        **config_obj.get("model", "kwargs"))
 
     loss_function = getattr(ptcap.losses, loss_type)()
 
-    optimizer = getattr(torch.optim, optimizer_type)(params=list(model.parameters()),
-                     lr=config_obj.get("training", "learning_rate"))
+    optimizer = getattr(torch.optim, optimizer_type)(
+        params=list(model.parameters()), **config_obj.get("optimizer", "kwargs"))
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
 
@@ -98,12 +100,13 @@ def train_model(config_obj, relative_path=""):
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Setup the logger
-    logger = CustomLogger(folder=checkpoint_folder, verbose=False)
+    logger = CustomLogger(folder=checkpoint_folder,
+                          verbose=config_obj.get("logging", "verbose"))
 
     # Trainer
     trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
-                      writer, checkpoint_folder, folder=pretrained_path,
-                      filename="model.best", gpus=gpus)
+                      writer, checkpoint_folder, folder=pretrained_folder,
+                      filename=pretrained_file, gpus=gpus)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
