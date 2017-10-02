@@ -73,12 +73,12 @@ class CNN3dLSTM(EncoderDecoder):
 class RtorchnCaptionerP(EncoderDecoder):
     def __init__(self, encoder_output_size=256, embedding_size=256,
                  vocab_size=33, num_hidden_lstm=512, go_token=0, use_cuda=False,
-                 gpus=None):
-
+                 gpus=None,  pretrained_path=None,
+                 freeze=False, num_features=256, num_classes=178):
         decoder_args = (embedding_size, encoder_output_size,
                         vocab_size, num_hidden_lstm, go_token, gpus)
 
-        encoder_args = ()
+        encoder_args = (pretrained_path, freeze, num_features, num_classes)
 
         super(RtorchnCaptionerP, self).__init__(RtorchnEncoderP, LSTMDecoder,
                                                 encoder_args=encoder_args,
