@@ -29,7 +29,7 @@ class Trainer(object):
 
         self.logger = logger
         self.tokenizer = tokenizer
-        self.score = 100
+        self.score = self.scheduler.best
         self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, criteria,
