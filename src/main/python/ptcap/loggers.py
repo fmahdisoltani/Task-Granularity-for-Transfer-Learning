@@ -59,8 +59,9 @@ class CustomLogger(object):
         self.log_dict(scores_dict)
         self.logger.info("\n")
 
-    def log_train_end(self, best_score, min_lr):
-        self.logger.info("Learning rate is equal to the minimum learning rate ("
-                         "{:.4})".format(min_lr))
-        self.logger.info("Best model has a score of {:.4}".format())
-        self.logger.info("Training complete!!!")
+    def log_train_end(self, best_score):
+        self.logger.info("\nTraining complete!!!")
+        self.logger.info("\nBest model has a score of {:.4}".format(best_score))
+
+    def log_message(self, message, args):
+        self.logger.info(message.format(*args))

@@ -1,4 +1,4 @@
-import os
+import numpy as np
 
 import torch
 
@@ -34,12 +34,15 @@ class Trainer(object):
         self.score = 100
         self.writer = writer
 
-    def train(self, train_dataloader, valid_dataloader, num_epoch,
-              frequency_valid, teacher_force_train=True,
+    def train(self, train_dataloader, valid_dataloader, criteria,
+              num_epoch=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        for epoch in range(num_epoch):
+        epoch = 0
+        train_model = True
+
+        while train_model:
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
@@ -63,7 +66,7 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_accuracy"]
+                self.score = valid_average_scores["average_" + criteria]
 
                 self.scheduler.step(self.score)
 
@@ -72,12 +75,11 @@ class Trainer(object):
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
-                if (self.scheduler.optimizer.param_groups[0]['lr'] ==
-                        self.scheduler.min_lrs[0]):
-                    break
 
-        self.logger.log_train_end(self.scheduler.best, self.scheduler.min_lrs[0])
+            epoch += 1
+            train_model = self.update_train_model(epoch, num_epoch)
 
+        self.logger.log_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
@@ -86,6 +88,24 @@ class Trainer(object):
             'optimizer': self.scheduler.optimizer.state_dict(),
             'score': self.score,
         }
+
+    def update_train_model(self, epoch, num_epoch):
+        current_lr = self.scheduler.optimizer.param_groups[0]['lr']
+        # Assuming all parameters have the same minimum learning rate
+        min_lr = self.scheduler.min_lrs[0]
+
+        # Check if the maximum number of epochs has been reached
+        if num_epoch is not None and epoch >= num_epoch:
+            self.logger.log_message("Maximum number of epochs reached {}/{}",
+                                    (epoch, num_epoch))
+            return False
+
+        elif current_lr <= min_lr:
+            self.logger.log_message("Learning rate is equal to the minimum "
+                                    "learning rate ({:.4})", (min_lr,))
+            return False
+
+        return True
 
     def get_function_dict(self):
         function_dict = OrderedDict()
