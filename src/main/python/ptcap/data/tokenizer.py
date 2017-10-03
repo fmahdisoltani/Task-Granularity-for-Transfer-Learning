@@ -1,7 +1,9 @@
-import pickle
-import re
 import numpy as np
 import os
+import pickle
+import re
+
+from collections import Counter
 
 
 class Tokenizer(object):
@@ -10,7 +12,7 @@ class Tokenizer(object):
     END = "<END>"
     UNK = "<UNK>"
 
-    def __init__(self, captions=None, user_maxlen=None):
+    def __init__(self, captions=None, user_maxlen=None, cutoff=None):
         """
             Build captions from all the expanded labels in all annotation files.
         Args:
@@ -19,6 +21,7 @@ class Tokenizer(object):
         """
 
         self.maxlen = None if user_maxlen is None else user_maxlen
+        self.cutoff = 0 if cutoff is None else cutoff
         if captions:
             self.build_dictionaries(captions)
 
@@ -36,6 +39,7 @@ class Tokenizer(object):
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
+        tokens = self.filter_tokens(tokens)
         all_tokens = extra_tokens + sorted(set(tokens))
         print("Number of different tokens: ", len(all_tokens))
         self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
@@ -47,6 +51,10 @@ class Tokenizer(object):
         tokenize_regex = re.compile("[^A-Z\s]")
         return [x for x in tokenize_regex.sub(
             "", caption.upper()).split(" ") if x is not ""]
+
+    def filter_tokens(self, tokens):
+        count = Counter(tokens)
+        return [token for token in count if count[token] > self.cutoff]
 
     def encode_caption(self, caption):
 
