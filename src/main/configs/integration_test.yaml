@@ -37,7 +37,7 @@ scheduler:
            verbose: True}
 
 training:
-  num_epochs: 200
+  num_epochs: 2
   clip_grad: 1
   teacher_force: True
   verbose: True
