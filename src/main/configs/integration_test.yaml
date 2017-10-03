@@ -31,12 +31,13 @@ optimizer:
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
-           min_lr: 1.0e-8,
-           patience: 3,
-           threshold: 1.0e-4}
+           min_lr: 1.0e-4,
+           patience: 1,
+           threshold: 1.0e-4,
+           verbose: True}
 
 training:
-  num_epochs: 2
+  num_epochs: 200
   clip_grad: 1
   teacher_force: True
   verbose: True
@@ -47,7 +48,7 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
+  score: accuracy
   higher_is_better: True
 
 targets:
