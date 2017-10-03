@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.5"
+install:
+  - pip install -U pip
+  - pip install pybuilder
+  - pip install http://download.pytorch.org/whl/cu75/torch-0.2.0.post1-cp35-cp35m-manylinux1_x86_64.whl
+  - pip install torchvision
+  - pyb install_dependencies -X
+
+script:
+  - pyb -X

@@ -1,0 +1,62 @@
+paths:
+  videos_folder: fake_data/videos
+  checkpoint_folder: checkpoint_sample/
+
+  train_annot: &train_annot fake_data/json/fake.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
+
+pretrained:
+  pretrained_folder:
+  pretrained_file:
+
+device:
+  synchronize_gpu: True
+  gpus:
+
+dataloaders:
+  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
+
+model:
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.01}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1e-4}
+
+training:
+  num_epochs: 2
+  clip_grad: 1
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 1
+  teacher_force: False
+  verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
+
+targets:
+  caption_type: template/label
+
+tokenizer:
+  kwargs: {}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1

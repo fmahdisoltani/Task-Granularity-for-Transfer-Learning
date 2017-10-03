@@ -1,0 +1,42 @@
+paths:
+  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
+
+  train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
+
+  pretrained_path:
+
+device:
+  synchronize_gpu: &sync True
+  gpus: [0]
+
+dataloaders:
+  batch_size: &b 2
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
+
+model:
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: Adam
+
+training:
+  num_epochs: 200
+  learning_rate: &lr 0.01
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 10
+  teacher_force: False
+  verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
