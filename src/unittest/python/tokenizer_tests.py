@@ -39,11 +39,10 @@ class TestTokenizer(unittest.TestCase):
 
     def test_filter_tokens(self):
         expected = dict()
-        expected[None] = self.captions_vocab
         expected[0] = self.captions_vocab
         expected[1] = {"<GO>", "<END>", "<UNK>", "THE"}
         expected[2] = {"<GO>", "<END>", "<UNK>"}
-        for value in [None, 0, 1, 2]:
+        for value in [0, 1, 2]:
             with self.subTest(captions=self.captions, cutoff=value):
                 tokenizer = Tokenizer(self.captions, cutoff=value)
                 self.assertEqual(set(tokenizer.caption_dict.keys()),

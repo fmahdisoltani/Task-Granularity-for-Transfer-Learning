@@ -12,7 +12,7 @@ class Tokenizer(object):
     END = "<END>"
     UNK = "<UNK>"
 
-    def __init__(self, captions=None, user_maxlen=None, cutoff=None):
+    def __init__(self, captions=None, user_maxlen=None, cutoff=0):
         """
             Build captions from all the expanded labels in all annotation files.
         Args:
@@ -21,7 +21,7 @@ class Tokenizer(object):
         """
 
         self.maxlen = None if user_maxlen is None else user_maxlen
-        self.cutoff = 0 if cutoff is None else cutoff
+        self.cutoff = cutoff
         if captions:
             self.build_dictionaries(captions)
 
