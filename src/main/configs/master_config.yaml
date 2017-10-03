@@ -67,3 +67,4 @@ logging:
   verbose: True if the logger should output to stdout
   tensorboard_frequency: The frequency at which the model parameters will be logged
                          If `None`, the model parameters will not be logged
+
