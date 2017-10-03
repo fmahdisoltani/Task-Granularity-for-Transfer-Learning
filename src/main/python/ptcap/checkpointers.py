@@ -21,7 +21,6 @@ class Checkpointer(object):
                 self.best_score = score
                 self.best_epoch = epoch
                 return True
-
         return False
 
     def load_model(self, model, optimizer, folder=None, filename=None):
