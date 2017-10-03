@@ -37,8 +37,6 @@ class EncoderDecoder(Captioner):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
-        #decoder_kwargs["hidden_size"] = encoder_kwargs["encoder_output_size"]
-        print(decoder_kwargs)
         self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
         self.activations = {}

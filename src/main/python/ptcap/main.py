@@ -57,9 +57,6 @@ def train_model(config_obj, relative_path=""):
                                    caption_type)
 
     # Build a tokenizer that contains all captions from annotation files
-
-    # tokenizer = Tokenizer(user_maxlen=config_obj.get("targets", "user_maxlen"))
-
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
         tokenizer.load_dictionaries(pretrained_folder)
@@ -91,20 +88,12 @@ def train_model(config_obj, relative_path=""):
                                 **config_obj.get("dataloaders", "kwargs"))
 
     encoder_type = config_obj.get("model", "encoder")
-    print("*"*100)
-    print(encoder_type)
-
     decoder_type = config_obj.get("model", "decoder")
     encoder_kwargs = config_obj.get("model", "encoder_kwargs")
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
     decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
     decoder_kwargs["hidden_size"] = encoder_kwargs["encoder_output_size"]
-
-
-    print(encoder_kwargs)
-
-    print(decoder_kwargs)
 
     # TODO: Remove GPUs?
     gpus = config_obj.get("device", "gpus")
