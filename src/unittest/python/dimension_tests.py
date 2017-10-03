@@ -44,17 +44,17 @@ class TestDimensions(unittest.TestCase):
         encoder_classes = encoders.Encoder.__subclasses__()
         video_batch = Variable(torch.zeros(self.batch_size, 3, 10, 96, 96))
         for encoder_class in encoder_classes:
-                with self.subTest(encoder_class=encoder_class):
-                    self.assertIn(encoder_class.__name__, self.arguments)
+            with self.subTest(encoder_class=encoder_class):
+                self.assertIn(encoder_class.__name__, self.arguments)
 
-                    args, kwargs = self.arguments[encoder_class.__name__]
+                args, kwargs = self.arguments[encoder_class.__name__]
 
-                    encoder = encoder_class(*args, **kwargs)
-                    encoded = encoder(video_batch)
+                encoder = encoder_class(*args, **kwargs)
+                encoded = encoder(video_batch)
 
-                    self.assertEqual(encoded.size()[0], self.batch_size)
-                    self.assertEqual(encoded.size()[1], self.num_features)
-                    self.assertEqual(len(encoded.size()), 2)
+                self.assertEqual(encoded.size()[0], self.batch_size)
+                self.assertEqual(encoded.size()[1], self.num_features)
+                self.assertEqual(len(encoded.size()), 2)
 
     def test_mappers(self):
         mapper_classes = mappers.Mapper.__subclasses__()
