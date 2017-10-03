@@ -5,8 +5,8 @@ from .encoders import Encoder
 
 
 class PretrainedEncoder(Encoder):
-    def __init__(self, encoder, pretrained_path=None, checkpoint_key=None,
-                 freeze=False, encoder_args=()):
+    def __init__(self, encoder, encoder_args, pretrained_path=None,
+                 checkpoint_key=None, freeze=False):
 
         super(PretrainedEncoder, self).__init__()
         self.encoder = encoder(*encoder_args)
@@ -17,6 +17,8 @@ class PretrainedEncoder(Encoder):
 
         if pretrained_path is not None:
             checkpoint = torch.load(pretrained_path)
+            print("&"*100)
+            print( checkpoint_key)
             if checkpoint_key is not None:
                 self.encoder.load_state_dict(checkpoint[checkpoint_key])
             else:
@@ -41,10 +43,6 @@ class RtorchnEncoderP(PretrainedEncoder):
                                               pretrained_path=pretrained_path,
                                               freeze=freeze)
 
-
-
-
     def forward(self, video_batch):
         features = self.encoder.extract_features(video_batch)
         return features.mean(dim=1)
-

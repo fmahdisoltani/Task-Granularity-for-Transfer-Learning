@@ -100,7 +100,7 @@ class CNN3dEncoder(Encoder):
 
 
 class CNN3dLSTMEncoder(Encoder):
-    def __init__(self, num_features=128, gpus=None):
+    def __init__(self, encoder_output_size=128, gpus=None):
         """
         num_features: defines the output size of the encoder
         """
@@ -108,7 +108,7 @@ class CNN3dLSTMEncoder(Encoder):
         super(CNN3dLSTMEncoder, self).__init__()
 
         self.num_layers = 1
-        self.num_features = num_features
+        self.num_features = encoder_output_size
         self.use_cuda = True if gpus else False
         self.gpus = gpus
 

@@ -47,10 +47,11 @@ def train_model(config_obj, relative_path=""):
     model_type = config_obj.get("model", "type")
     loss_type = config_obj.get("loss", "type")
     optimizer_type = config_obj.get("optimizer", "type")
-
+    caption_type = config_obj.get("targets", "caption_type")
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get('paths', 'videos_folder')))
+                                 config_obj.get('paths', 'videos_folder')),
+                                 caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    config_obj.get('paths', 'videos_folder')))
 

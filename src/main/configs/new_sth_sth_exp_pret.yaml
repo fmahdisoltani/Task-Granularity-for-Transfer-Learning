@@ -1,10 +1,10 @@
 paths:
-  videos_folder: &vidpath /data/20bn-objects/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_sth_exp_frozen_pret/
+  videos_folder: &vidpath /data/20bn-somethingsomething/videos_npz
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth/
 
-  train_annot: &train_annot /data/20bn-objects/json/train_20170630.json.gz
-  validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
-  test_annot: /data/20bn-objects/json/test_20170630.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
   pretrained_folder:
