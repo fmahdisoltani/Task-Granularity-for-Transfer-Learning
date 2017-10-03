@@ -33,8 +33,8 @@ class RtorchnEncoderP(PretrainedEncoder):
     def __init__(self, pretrained_path=None,
                  freeze=False, encoder_output_size=256, num_classes=178):
 
-        # it thinks it's getting num_features, but it's not. what is happening is
-        # equivalent to FullyConvolutionalNet(..,
+        # it thinks it's getting num_features, but it's not. what is happening
+        # is equivalent to FullyConvolutionalNet(..,
         #                                     num_features=encoder_output_size)
 
         encoder_args = (num_classes, encoder_output_size)

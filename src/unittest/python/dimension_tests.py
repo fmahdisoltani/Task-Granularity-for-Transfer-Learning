@@ -31,18 +31,19 @@ class TestDimensions(unittest.TestCase):
             'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,), {}),
 
             'RtorchnCaptioner': ((self.vocab_size,), {}),
-            'EncoderDecoder': ((encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder,
-                                (self.num_features,),
-                                (17, self.num_features, self.vocab_size, 23,)),
-                               {}),
+            'EncoderDecoder': (
+                (encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder),
+                {"encoder_kwargs": {"encoder_output_size":  self.num_features},
+                 "decoder_kwargs": {"embedding_size": 17,
+                                    "hidden_size": self.num_features,
+                                    "vocab_size": self.vocab_size,
+                                    "num_lstm_layers": 23}}),
         }
 
     def test_encoders(self):
         encoder_classes = encoders.Encoder.__subclasses__()
         video_batch = Variable(torch.zeros(self.batch_size, 3, 10, 96, 96))
         for encoder_class in encoder_classes:
-            # if "Pretrained" not in encoder_class.__name__:
-
                 with self.subTest(encoder_class=encoder_class):
                     self.assertIn(encoder_class.__name__, self.arguments)
 
@@ -92,21 +93,20 @@ class TestDimensions(unittest.TestCase):
                     self.assertEqual(decoded.size()[2], self.vocab_size)
                     self.assertEqual(len(decoded.size()), 3)
 
-    # def test_captioners(self):
-    #     captioner_classes = captioners.Captioner.__subclasses__()
-    #     video_batch = (Variable(torch.zeros(self.batch_size, 3, 10, 96, 96)),
-    #                    Variable(torch.zeros(self.batch_size,
-    #                                         self.caption_len).long()))
-    #     for use_teacher_forcing in [True, False]:
-    #         for captioner_class in captioner_classes:
-    #             with self.subTest(captioner_class=captioner_class):
-    #                 self.assertIn(captioner_class.__name__, self.arguments)
-    #
-    #                 args, kwargs = self.arguments[captioner_class.__name__]
-    #
-    #                 captioner = captioner_class(*args, **kwargs)
-    #                 captioned = captioner(video_batch, use_teacher_forcing)
-    #
-    #                 self.assertEqual(captioned.size()[0], self.batch_size)
-    #                 self.assertEqual(captioned.size()[2], self.vocab_size)
-    #                 self.assertEqual(len(captioned.size()), 3)
+    def test_captioners(self):
+        captioner_classes = captioners.Captioner.__subclasses__()
+        video_batch = (Variable(torch.zeros(self.batch_size, 3, 10, 96, 96)),
+                       Variable(torch.zeros(self.batch_size,
+                                            self.caption_len).long()))
+        for use_teacher_forcing in [True, False]:
+            for captioner_class in captioner_classes:
+                with self.subTest(captioner_class=captioner_class):
+                    self.assertIn(captioner_class.__name__, self.arguments)
+                    args, kwargs = self.arguments[captioner_class.__name__]
+
+                    captioner = captioner_class(*args, **kwargs)
+                    captioned = captioner(video_batch, use_teacher_forcing)
+
+                    self.assertEqual(captioned.size()[0], self.batch_size)
+                    self.assertEqual(captioned.size()[2], self.vocab_size)
+                    self.assertEqual(len(captioned.size()), 3)

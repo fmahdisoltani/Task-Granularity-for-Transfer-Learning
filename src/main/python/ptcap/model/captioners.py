@@ -29,18 +29,17 @@ class RtorchnCaptioner(Captioner):
 
 
 class EncoderDecoder(Captioner):
-    def __init__(self, encoder, decoder, encoder_kwargs=None, decoder_kwargs=None,
-                gpus=None):
+    def __init__(self, encoder, decoder, encoder_args=(), encoder_kwargs={},
+                 decoder_args=(), decoder_kwargs={}, gpus=None):
 
         print("gpus: {}".format(gpus))
         super(EncoderDecoder, self).__init__()
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-
-        self.encoder = encoder(**encoder_kwargs)
+        self.encoder = encoder(*encoder_args, **encoder_kwargs)
         #decoder_kwargs["hidden_size"] = encoder_kwargs["encoder_output_size"]
         print(decoder_kwargs)
-        self.decoder = decoder(**decoder_kwargs)
+        self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
         self.activations = {}
         self.register_forward_hook(self.merge_activations)
