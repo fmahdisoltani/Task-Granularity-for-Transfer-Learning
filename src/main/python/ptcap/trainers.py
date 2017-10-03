@@ -135,17 +135,6 @@ class Trainer(object):
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
-            # convert probabilities to predictions
-            _, predictions = torch.max(probs, dim=2)
-
-            captions = captions.cpu()
-            predictions = predictions.cpu()
-
-            batch_outputs = ScoreAttr(loss, captions, predictions)
-
-            scores_dict = scores.compute_scores(batch_outputs,
-                                                sample_counter + 1)
-
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
@@ -158,6 +147,17 @@ class Trainer(object):
                 self.scheduler.optimizer.step()
 
                 self.writer.add_gradients(self.model, global_step)
+
+            # convert probabilities to predictions
+            _, predictions = torch.max(probs, dim=2)
+
+            captions = captions.cpu()
+            predictions = predictions.cpu()
+
+            batch_outputs = ScoreAttr(loss, captions, predictions)
+
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                sample_counter + 1)
 
             self.writer.add_scalars(scores.get_average_scores(), global_step,
                                     is_training)
