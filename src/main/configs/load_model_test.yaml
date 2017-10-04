@@ -1,0 +1,43 @@
+paths:
+  videos_folder: &vidpath fake_data/videos
+  checkpoint_folder: checkpoint_sample/
+
+  train_annot: &train_annot fake_data/json/fake.json
+  validation_annot: *train_annot
+  test_annot: *train_annot
+
+  pretrained_path: checkpoint_sample
+  pretrained_model: model.best
+
+device:
+  synchronize_gpu: &sync True
+  gpus:
+
+dataloaders:
+  batch_size: &b 2
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+
+model:
+  type: CNN3dLSTM
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: Adam
+
+training:
+  num_epochs: 2
+  learning_rate: &lr 0.01
+  teacher_force: True
+  verbose: True
+
+validation:
+  frequency: 1
+  teacher_force: False
+  verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
