@@ -51,7 +51,7 @@ class CustomLogger(object):
             self.logger.info("{}: {:.4} ".format(key, value))
 
     def log_epoch_begin(self, is_training, epoch_counter):
-        phase = "lTraining" if is_training else "Validating"
+        phase = "Training" if is_training else "Validating"
         self.logger.info("Epoch {} - {}\n".format(epoch_counter, phase))
         self.epoch = epoch_counter
 

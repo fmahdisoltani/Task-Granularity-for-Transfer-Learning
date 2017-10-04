@@ -32,8 +32,6 @@ class TestPretrainedEncoders(unittest.TestCase):
     def test_load_pretrained_encoder(self, temp_dir):
         torch.save(self.model.state_dict(),
                    os.path.join(temp_dir.path, self.model_name))
-        print("*"*100)
-        print(self.model_name)
         encoder = PretrainedEncoder(
             encoder=FullyConnectedMapper,
             pretrained_path=os.path.join(temp_dir.path, self.model_name),

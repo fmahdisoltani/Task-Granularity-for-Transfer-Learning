@@ -23,5 +23,3 @@ if __name__ == '__main__':
 
     # Run captioning model
     train_model(config_obj)
-
-
