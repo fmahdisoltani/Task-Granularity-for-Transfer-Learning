@@ -52,7 +52,7 @@ criteria:
   higher_is_better: False
 
 targets:
-  caption_type: template/label
+  caption_type: template
 
 tokenizer:
   kwargs: {}

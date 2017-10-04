@@ -6,16 +6,16 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path: checkpoint_sample
-  pretrained_model: model.best
+pretrained:
+  pretrained_folder: checkpoint_sample
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
   gpus:
 
 dataloaders:
-  batch_size: &b 2
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
 
 model:
   type: CNN3dLSTM
@@ -25,13 +25,22 @@ loss:
   type: SequenceCrossEntropy
 
 optimizer:
-  type: Adam
+  type: &optimizer Adam
+  kwargs: {lr: 0.01}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1e-4}
 
 training:
   num_epochs: 2
-  learning_rate: &lr 0.01
+  clip_grad: 1
   teacher_force: True
-  verbose: True
+  verbose: False
 
 validation:
   frequency: 1
@@ -41,3 +50,13 @@ validation:
 criteria:
   score: loss
   higher_is_better: False
+
+targets:
+  caption_type: template
+
+tokenizer:
+  kwargs: {}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1
