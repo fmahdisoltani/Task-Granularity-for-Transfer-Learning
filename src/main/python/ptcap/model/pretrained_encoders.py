@@ -17,8 +17,6 @@ class PretrainedEncoder(Encoder):
 
         if pretrained_path is not None:
             checkpoint = torch.load(pretrained_path)
-            print("&"*100)
-            print( checkpoint_key)
             if checkpoint_key is not None:
                 self.encoder.load_state_dict(checkpoint[checkpoint_key])
             else:

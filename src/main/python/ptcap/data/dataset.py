@@ -40,7 +40,7 @@ class VideoDataset(Dataset):
             return self._get_video(index)
         except:
             print("\nSkipping", self.video_paths[index], "...")
-            return self.__getitem__(index + 1)
+            return self._try_get_video(index + 1)
 
 
 class JpegVideoDataset(VideoDataset):

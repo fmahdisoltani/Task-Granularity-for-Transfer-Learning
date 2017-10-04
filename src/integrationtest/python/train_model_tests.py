@@ -36,7 +36,6 @@ if __name__ == '__main__':
     fkdata.remove_dir(checkpoint_folder)
 
     # Run captioning model
-    print(os.getcwd())
     train_model(config_obj, os.getcwd())
 
     # Check checkpoint folder
