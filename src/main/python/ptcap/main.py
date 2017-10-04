@@ -110,8 +110,11 @@ def train_model(config_obj, relative_path=""):
 
     loss_function = getattr(ptcap.losses, loss_type)()
 
+    params = filter(lambda p: p.requires_grad, model.parameters())
+    print("*"*100)
+    print(params)
     optimizer = getattr(torch.optim, optimizer_type)(
-        params=list(model.parameters()), **config_obj.get("optimizer", "kwargs"))
+        params=params, **config_obj.get("optimizer", "kwargs"))
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
     # Prepare checkpoint directory and save config

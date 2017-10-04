@@ -40,3 +40,14 @@ class TestPretrainedEncoders(unittest.TestCase):
         encoded = encoder(self.input)
         expected_encoding = self.model(self.input)
         self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
+
+    @tempdir()
+    def test_load_pretrained_encoder_with_dict_attr(self, temp_dir):
+        checkpointer = Checkpointer(temp_dir.path)
+        checkpointer.save_latest(self.state_dict, filename=self.model_name)
+        encoder = PretrainedEncoder(FullyConnectedMapper,
+        pretrained_path=os.path.join(temp_dir.path, self.model_name),
+        encoder_args=(2, 3), checkpoint_key='model')
+        encoded = encoder(self.input)
+        expected_encoding = self.model(self.input)
+        self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)

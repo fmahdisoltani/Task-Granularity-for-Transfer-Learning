@@ -21,7 +21,7 @@ model:
   type: EncoderDecoder
   encoder: RtorchnEncoderP
   encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
-                   freeze: False,
+                   freeze: True,
                    encoder_output_size: &enc_out_size 256,
                    num_classes: 178}
   decoder: LSTMDecoder
@@ -51,7 +51,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 5
   teacher_force: False
   verbose: True
 
