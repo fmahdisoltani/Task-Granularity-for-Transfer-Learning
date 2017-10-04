@@ -18,37 +18,47 @@ def check_saved_files(checkpoint_path, files_list):
             raise FileNotFoundError
 
 
-if __name__ == '__main__':
-    # Make sure you have a clean start
-    fkdata.remove_dir(fkdata.TMP_DIR)
+def get_model(config_path):
+    # Read config file for training a model from scratch
+    config_obj = YamlConfig(config_path)
 
-    # Create fake data first
-    fkdata.create_fake_video_data()
-
-    # Training the model and check that it is saved
-    config_obj = YamlConfig(CONFIG_PATH[0])
-
+    # Parse the model's checkpoint
     checkpoint_folder = os.path.join(
         os.getcwd(), config_obj.get('paths', 'checkpoint_folder'))
 
     # Clean up checkpoint folder before training starts
     fkdata.remove_dir(checkpoint_folder)
 
-    # Run captioning model
+    # Train the model
     train_model(config_obj, os.getcwd())
 
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
-                                          "model.latest", "tokenizer_dicts"])
+                                               "model.latest",
+                                               "tokenizer_dicts"])
+    return checkpoint_folder
 
-    train_model(YamlConfig(CONFIG_PATH[1]), os.getcwd())
+def setup_fake_video_data():
+    # Make sure you have a clean start
+    fkdata.remove_dir(fkdata.TMP_DIR)
 
-    # Check checkpoint folder
-    check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
-                                          "model.latest", "tokenizer_dicts"])
+    # Create fake data first
+    fkdata.create_fake_video_data()
 
-    # Clean up checkpoint folder
-    fkdata.remove_dir(checkpoint_folder)
+if __name__ == '__main__':
 
-    # Remove everything
+    setup_fake_video_data()
+
+    checkpoints = []
+
+    # Run models and get their checkpoint folders
+    for config_path in CONFIG_PATH:
+        checkpoint_folder = get_model(config_path)
+        checkpoints.append(checkpoint_folder)
+
+    # Clean up the checkpoint folders
+    for checkpoint_folder in checkpoints:
+        fkdata.remove_dir(checkpoint_folder)
+
+    # Clean up fake data
     fkdata.remove_dir(fkdata.TMP_DIR)
