@@ -22,14 +22,11 @@ VIDEO_SIZE = [20, 40, 40]
 
 
 
-def create_fake_json(path=None):
+def create_fake_json():
     """
         Inspired from https://github.com/TwentyBN/20bn-realtimenet/blob/master/smoke_test.py
         Credits to Ingo F.
     """
-
-    if path is None:
-        path = JSON_FILE
 
     json_content = [{
         "id": i,
@@ -41,7 +38,7 @@ def create_fake_json(path=None):
         "worker_id": "ANY_WORKER",
     } for i in range(NUM_SAMPLES)]
 
-    with open(path, 'w') as f:
+    with open(JSON_FILE, 'w') as f:
         json.dump(json_content, f)
 
 

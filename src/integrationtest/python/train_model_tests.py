@@ -3,20 +3,19 @@
 import os
 
 import fake_data as fkdata
-import ptcap.data.preprocessing as prep
-
+from rtorchn.data.preprocessing import CenterCropper
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
+import ptcap.data.preprocessing as prep
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.data.config_parser import YamlConfig
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.dataset import (NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.losses import SequenceCrossEntropy
 from ptcap.model.captioners import *
 from ptcap.trainers import Trainer
-from rtorchn.data.preprocessing import CenterCropper
 
 CONFIG_PATH = [os.path.join(os.getcwd(),
                             "src/main/configs/integration_test.yaml")]

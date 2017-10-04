@@ -20,5 +20,10 @@ class ConfigParserTest(unittest.TestCase):
         self.assertEqual(config_dict["nested"]["kwargs"]["kwarg_1"], 1)
         self.assertEqual(config_dict["nested"]["kwargs"]["kwarg_2"], "kwarg2")
 
-    @tempdir()
-    def test_get_key_from_config_dict(self, temp_dir):
+    def test_get_values_from_config_parser(self):
+        self.assertEqual(self.config_parser.get("path"), "some_path")
+        self.assertEqual(self.config_parser.get("nested", "type"), "some_type")
+        self.assertEqual(
+            self.config_parser.get("nested", "kwargs", "kwarg_1"), 1)
+        self.assertEqual(
+            self.config_parser.get("nested", "kwargs", "kwarg_2"), "kwarg2")
