@@ -17,10 +17,15 @@ class Checkpointer(object):
 
     def set_best_score(self, score=None, epoch=-1):
         if score:
-            if not ((score >= self.best_score) ^ self.higher_is_better):
+            better_higher_score = (score > self.best_score and
+                                   self.higher_is_better)
+            better_lower_score = (score < self.best_score and not
+                                   self.higher_is_better)
+            if better_higher_score or better_lower_score:
                 self.best_score = score
                 self.best_epoch = epoch
                 return True
+
         return False
 
     def load_model(self, model, optimizer, folder=None, filename=None):
