@@ -1,5 +1,3 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 
@@ -140,6 +138,7 @@ class CNN3dLSTMEncoder(Encoder):
                             num_layers=self.num_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
+
 
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
