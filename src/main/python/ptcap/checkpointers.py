@@ -16,7 +16,7 @@ class Checkpointer(object):
             self.best_score *= -1
 
     def set_best_score(self, score=None, epoch=-1):
-        if score:
+        if score is not None:
             if not ((score >= self.best_score) ^ self.higher_is_better):
                 self.best_score = score
                 self.best_epoch = epoch
