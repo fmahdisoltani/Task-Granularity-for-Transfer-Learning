@@ -11,22 +11,13 @@ class Checkpointer(object):
         self.checkpoint_folder = checkpoint_folder
         self.higher_is_better = higher_is_better
         self.best_score = np.Inf
-        self.best_epoch = -1
         if self.higher_is_better:
             self.best_score *= -1
 
-    def set_best_score(self, score=None, epoch=-1):
-        if score is not None:
-            better_higher_score = (score > self.best_score and
-                                   self.higher_is_better)
-            better_lower_score = (score < self.best_score and not
-                                   self.higher_is_better)
-            if better_higher_score or better_lower_score:
+    def set_best_score(self, score=None):
+        if score:
+            if not ((score > self.best_score) ^ self.higher_is_better):
                 self.best_score = score
-                self.best_epoch = epoch
-                return True
-
-        return False
 
     def load_model(self, model, optimizer, folder=None, filename=None):
         pretrained_path = None if not folder or not filename else (
@@ -49,14 +40,11 @@ class Checkpointer(object):
     def save_best(self, state, folder=None, filename="model.best"):
         if not folder:
             folder = self.checkpoint_folder
-        new_best = self.set_best_score(state["score"], state["epoch"])
-        if new_best:
-            print("Saving best model, score: {:.4} @ epoch {}".
-                  format(self.best_score, self.best_epoch))
-            torch.save(state, os.path.join(folder, filename))
-        else:
-            print("Best model has a score of {:.4} @ epoch {}".
-                  format(self.best_score, self.best_epoch))
+        score = state["score"]
+        self.set_best_score(score)
+        print("Saving best model, score: {:.4} @ epoch {}".
+              format(score, state["epoch"]))
+        torch.save(state, os.path.join(folder, filename))
 
     def save_latest(self, state, folder=None, filename="model.latest"):
         if not folder:
