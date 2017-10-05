@@ -33,6 +33,7 @@ class Trainer(object):
         self.tokenizer = tokenizer
         self.score = None
         self.writer = writer
+        self.tensorboard_frequency = 1000
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -112,15 +113,18 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                self.writer.add_activations(self.model, global_step)
-                self.writer.add_state_dict(self.model, global_step)
 
                 self.model.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
-                self.optimizer.step()
 
-                self.writer.add_gradients(self.model, global_step)
+                if (self.tensorboard_frequency is not None and
+                        global_step % self.tensorboard_frequency == 0):
+                    self.writer.add_activations(self.model, global_step)
+                    self.writer.add_state_dict(self.model, global_step)
+                    self.writer.add_gradients(self.model, global_step)
+
+                self.optimizer.step()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -133,9 +137,6 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            self.writer.add_scalars(scores.get_average_scores(), global_step,
-                                    is_training)
-
             # Log at the end of batch
             self.logger.log_batch_end(
                 scores_dict, self.tokenizer, captions, predictions, is_training,
@@ -146,5 +147,8 @@ class Trainer(object):
 
         # Log at the end of epoch
         self.logger.log_epoch_end(average_scores_dict)
+
+        # Display average scores on tensorboard
+        self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
