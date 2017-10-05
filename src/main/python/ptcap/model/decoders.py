@@ -45,7 +45,7 @@ class LSTMDecoder(Decoder):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
@@ -100,7 +100,12 @@ class LSTMDecoder(Decoder):
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
-        lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
+        batch_size, seq_len, _ = embedded_captions.size()
+        altered_lstm_hidden = lstm_hidden[0][0].unsqueeze(1)
+        expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
+        expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
+        lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
+        lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
         lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
