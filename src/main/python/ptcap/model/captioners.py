@@ -29,20 +29,13 @@ class RtorchnCaptioner(Captioner):
 
 
 class EncoderDecoder(Captioner):
-    def __init__(self, encoder, decoder, encoder_args=(), encoder_kwargs={},
-                 decoder_args=(), decoder_kwargs={}, gpus=None):
+    def __init__(self, encoder, decoder, encoder_args=None, encoder_kwargs={},
+                 decoder_args=None, decoder_kwargs={}, gpus=None):
 
         print("gpus: {}".format(gpus))
         super(EncoderDecoder, self).__init__()
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        print("^"*100)
-        print(encoder_args)
-        print(encoder_kwargs)
-        print(decoder_args)
-
-        print(decoder_kwargs)
-        print("&"*100)
         encoder_args = encoder_args or ()
         decoder_args = decoder_args or ()
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
