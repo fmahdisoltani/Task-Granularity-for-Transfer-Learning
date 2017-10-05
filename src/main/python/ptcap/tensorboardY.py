@@ -25,7 +25,7 @@ class TensorboardAdapter(object):
         the pytorch model.
     """
 
-    def __init__(self, log_dir=None, frequency=1):
+    def __init__(self, log_dir=None, frequency=None):
         self.summary_writer = SummaryWriter(log_dir=log_dir)
         self.frequency = frequency
 
@@ -34,7 +34,7 @@ class TensorboardAdapter(object):
             Adds a visualization of the model's gradients.
         """
 
-        if global_step % self.frequency == 0:
+        if self.frequency and global_step % self.frequency == 0:
             for param_name, param_value in model.named_parameters():
                 if param_value.grad is not None:
                     self.summary_writer.add_histogram(
@@ -69,7 +69,7 @@ class TensorboardAdapter(object):
             Visualizes the contents of model.state_dict().
         """
 
-        if global_step % self.frequency == 0:
+        if self.frequency and global_step % self.frequency == 0:
             model_state_dict = model.state_dict()
             for key, value in model_state_dict.items():
                 self.summary_writer.add_histogram(key, value.cpu().numpy(),
@@ -80,7 +80,7 @@ class TensorboardAdapter(object):
             Visualizes the variables in vars_dict_list.
         """
 
-        if global_step % self.frequency == 0:
+        if self.frequency and global_step % self.frequency == 0:
             vars_dict = model.activations
             for key, value in vars_dict.items():
                 self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
