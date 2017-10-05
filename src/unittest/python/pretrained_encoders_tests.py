@@ -13,7 +13,6 @@ from ptcap.model.mappers import FullyConnectedMapper
 
 
 class TestPretrainedEncoders(unittest.TestCase):
-    @tempdir()
     def setUp(self, temp_dir):
         input_size = 2
         self.model = FullyConnectedMapper(input_size, 3)
