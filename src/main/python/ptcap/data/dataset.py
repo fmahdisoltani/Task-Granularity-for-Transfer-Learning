@@ -20,7 +20,7 @@ class VideoDataset(Dataset):
     def __getitem__(self, index):
         """
         Return a Tuple like
-        ('video_tensor_of_size_CxTxWxH', 'encoded_caption_of_size_K')
+        ("video_tensor_of_size_CxTxWxH", "encoded_caption_of_size_K")
         """
 
         video = self._get_video(index)
@@ -50,7 +50,7 @@ class JpegVideoDataset(VideoDataset):
 
     def _get_video(self, index):
         dirname = self.video_paths[index]
-        frames = [np.array(Image.open(path).convert('RGB').
+        frames = [np.array(Image.open(path).convert("RGB").
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
         return np.array(frames)

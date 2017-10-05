@@ -1,4 +1,4 @@
-# Code largely inspired by 20bn-rtorchn's repo
+# Code largely inspired by 20bn-rtorchn repo
 
 import os
 
@@ -19,7 +19,7 @@ def check_saved_files(checkpoint_path, files_list):
             raise FileNotFoundError
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Make sure you have a clean start
     fkdata.remove_dir(fkdata.TMP_DIR)
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     config_obj = YamlConfig(CONFIG_PATH[0])
 
     checkpoint_folder = os.path.join(
-        os.getcwd(), config_obj.get('paths', 'checkpoint_folder'))
+        os.getcwd(), config_obj.get("paths", "checkpoint_folder"))
 
     # Clean up checkpoint folder before training starts
     fkdata.remove_dir(checkpoint_folder)

@@ -74,10 +74,10 @@ class Trainer(object):
 
     def get_trainer_state(self):
         return {
-            'epoch': self.num_epochs,
-            'model': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'score': self.score,
+            "epoch": self.num_epochs,
+            "model": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "score": self.score,
         }
 
     def get_function_dict(self):

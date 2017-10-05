@@ -22,24 +22,24 @@ from rtorchn.data.preprocessing import CenterCropper
 def train_model(config_obj, relative_path=""):
     # Find paths to training, validation and test sets
     training_path = os.path.join(relative_path,
-                                 config_obj.get('paths', 'train_annot'))
+                                 config_obj.get("paths", "train_annot"))
     validation_path = os.path.join(relative_path,
-                                   config_obj.get('paths', 'validation_annot'))
+                                   config_obj.get("paths", "validation_annot"))
 
     # Load attributes of config file
     checkpoint_folder = os.path.join(
-        relative_path, config_obj.get('paths', 'checkpoint_folder'))
-    frequency_valid = config_obj.get('validation', 'frequency')
+        relative_path, config_obj.get("paths", "checkpoint_folder"))
+    frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
-    num_epoch = config_obj.get('training', 'num_epochs')
-    pretrained_folder = config_obj.get('pretrained', 'pretrained_folder')
-    pretrained_file = config_obj.get('pretrained', 'pretrained_file')
+    num_epoch = config_obj.get("training", "num_epochs")
+    pretrained_folder = config_obj.get("pretrained", "pretrained_folder")
+    pretrained_file = config_obj.get("pretrained", "pretrained_file")
     pretrained_folder = os.path.join(relative_path, pretrained_folder
                                    ) if pretrained_folder else None
-    teacher_force_train = config_obj.get('training', 'teacher_force')
-    teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    verbose_train = config_obj.get('training', 'verbose')
-    verbose_valid = config_obj.get('validation', 'verbose')
+    teacher_force_train = config_obj.get("training", "teacher_force")
+    teacher_force_valid = config_obj.get("validation", "teacher_force")
+    verbose_train = config_obj.get("training", "verbose")
+    verbose_valid = config_obj.get("validation", "verbose")
 
     # Get model, loss, and optimizer types from config_file
     model_type = config_obj.get("model", "type")
@@ -48,9 +48,9 @@ def train_model(config_obj, relative_path=""):
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get('paths', 'videos_folder')))
+                                 config_obj.get("paths", "videos_folder")))
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   config_obj.get('paths', 'videos_folder')))
+                                   config_obj.get("paths", "videos_folder")))
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
