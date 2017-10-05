@@ -8,9 +8,6 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.loggers import CustomLogger
-from ptcap.tensorboardY import Seq2seqAdapter
-
 from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
@@ -35,7 +32,6 @@ class Trainer(object):
         self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
-        #self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -58,7 +54,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             # Validation
-            if epoch % frequency_valid == 0:
+            if (epoch + 1) % frequency_valid == 0:
                 valid_average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
@@ -116,15 +112,11 @@ class Trainer(object):
             global_step = len(dataloader) * epoch + sample_counter
 
             if is_training:
-                # self.writer.add_activations(self.model, global_step)
-                # self.writer.add_state_dict(self.model, global_step)
 
                 self.model.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
                 self.optimizer.step()
-
-                # self.writer.add_gradients(self.model, global_step)
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -136,9 +128,6 @@ class Trainer(object):
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
-
-            #self.writer.add_scalars(scores.get_average_scores(), global_step,
-            #                        is_training)
 
             # Log at the end of batch
             self.logger.log_batch_end(
