@@ -1,7 +1,6 @@
-import torch
+import os
 
-import ptcap.loggers as lg
-import ptcap.printers as prt
+import torch
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -9,9 +8,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (first_token_accuracy, loss_to_numpy,
-                          MultiScorerOperator, token_accuracy)
-from ptcap.loggers import CustomLogger
+from ptcap.scores import (MultiScorerOperator, caption_accuracy,
+                          first_token_accuracy, loss_to_numpy, token_accuracy)
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
@@ -19,8 +17,9 @@ from pycocoevalcap.rouge.rouge import Rouge
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer,
-                 checkpoint_path, folder=None, filename=None, gpus=None):
+    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
+                 writer, checkpoint_path, folder=None, filename=None,
+                 gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -34,12 +33,13 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.logger = CustomLogger(folder=checkpoint_path)
         self.multiscorer = MultiScorer(BLEU=Bleu(4), METEOR=Meteor(),
                                        ROUGE_L=Rouge())
+        self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
-
+        self.writer = writer
+        self.tensorboard_frequency = 1000
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -95,10 +95,15 @@ class Trainer(object):
 
         function_dict["first_accuracy"] = first_token_accuracy
 
+        function_dict["caption_accuracy"] = caption_accuracy
+
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+
+        # Log at the beginning of epoch
+        self.logger.log_epoch_begin(is_training, epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
@@ -109,16 +114,28 @@ class Trainer(object):
         for sample_counter, (videos, string_captions,
                              captions) in enumerate(dataloader):
 
-            videos, captions = Variable(videos), Variable(captions)
+            videos, captions = (Variable(videos),
+                                Variable(captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
+            global_step = len(dataloader) * epoch + sample_counter
+
             if is_training:
+
                 self.model.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
+
+                if (self.tensorboard_frequency is not None and
+                        global_step % self.tensorboard_frequency == 0):
+                    self.writer.add_activations(self.model, global_step)
+                    self.writer.add_state_dict(self.model, global_step)
+                    self.writer.add_gradients(self.model, global_step)
+
                 self.optimizer.step()
 
             # convert probabilities to predictions
@@ -133,16 +150,18 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            # Print after each batch
-            prt.print_stuff(scores_dict, self.tokenizer,
-                            is_training, captions, predictions, epoch + 1,
-                            sample_counter + 1, len(dataloader), verbose)
-
-        # Log at the end of epoch
-        self.logger.log_stuff(scores_dict, self.tokenizer, is_training, captions,
-                     predictions, epoch + 1, len(dataloader),
-                     verbose, sample_counter)
+            # Log at the end of batch
+            self.logger.log_batch_end(
+                scores_dict, self.tokenizer, captions, predictions, is_training,
+                sample_counter + 1, len(dataloader), verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
+
+        # Log at the end of epoch
+        self.logger.log_epoch_end(average_scores_dict)
+
+        # Display average scores on tensorboard
+        self.writer.add_scalars(average_scores_dict, epoch, is_training)
+
         return average_scores_dict

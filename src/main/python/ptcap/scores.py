@@ -3,6 +3,9 @@ import torch
 from collections import OrderedDict
 
 
+def caption_accuracy(outputs):
+    return caption_level_accuracy(outputs.captions, outputs.predictions)
+
 def caption_level_accuracy(captions, predictions):
     _, caption_len = captions.size()
     equal_values = torch.sum(captions.eq(predictions), dim=1)
