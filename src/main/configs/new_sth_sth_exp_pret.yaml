@@ -20,11 +20,13 @@ dataloaders:
 model:
   type: EncoderDecoder
   encoder: RtorchnEncoderP
+  encoder_args:
   encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
                    freeze: True,
                    encoder_output_size: &enc_out_size 256,
                    num_classes: 178}
   decoder: LSTMDecoder
+  decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: *enc_out_size,
                    num_lstm_layers: 1}
