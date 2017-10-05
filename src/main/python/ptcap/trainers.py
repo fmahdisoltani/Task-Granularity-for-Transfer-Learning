@@ -32,6 +32,8 @@ class Trainer(object):
         self.logger = logger
         self.tokenizer = tokenizer
         self.score = None
+        self.writer = writer
+        self.tensorboard_frequency = 1000
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -116,6 +118,13 @@ class Trainer(object):
                 self.model.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
+
+                if (self.tensorboard_frequency is not None and
+                        global_step % self.tensorboard_frequency == 0):
+                    self.writer.add_activations(self.model, global_step)
+                    self.writer.add_state_dict(self.model, global_step)
+                    self.writer.add_gradients(self.model, global_step)
+
                 self.optimizer.step()
 
             # convert probabilities to predictions
@@ -139,5 +148,8 @@ class Trainer(object):
 
         # Log at the end of epoch
         self.logger.log_epoch_end(average_scores_dict)
+
+        # Display average scores on tensorboard
+        self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict

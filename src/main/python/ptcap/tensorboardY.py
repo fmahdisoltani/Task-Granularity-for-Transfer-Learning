@@ -35,9 +35,9 @@ class TensorboardAdapter(object):
 
         for param_name, param_value in model.named_parameters():
             if param_value.grad is not None:
-                self.summary_writer.add_histogram(param_name + "_grad",
-                                    param_value.grad.cpu().data.numpy(),
-                                    global_step)
+                self.summary_writer.add_histogram(
+                    param_name + "_grad", param_value.grad.cpu().data.numpy(),
+                    global_step)
 
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
