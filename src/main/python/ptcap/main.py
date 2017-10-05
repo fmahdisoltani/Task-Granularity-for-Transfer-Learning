@@ -94,7 +94,8 @@ def train_model(config_obj, relative_path=""):
     optimizer = getattr(torch.optim, optimizer_type)(
         params=list(model.parameters()), **config_obj.get("optimizer", "kwargs"))
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
+                            config_obj.get("logging", "tensorboard_frequency"))
 
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)

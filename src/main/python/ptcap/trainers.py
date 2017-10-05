@@ -33,7 +33,6 @@ class Trainer(object):
         self.tokenizer = tokenizer
         self.score = None
         self.writer = writer
-        self.tensorboard_frequency = 1000
 
     def train(self, train_dataloader, valid_dataloader, num_epoch,
               frequency_valid, teacher_force_train=True,
@@ -118,11 +117,9 @@ class Trainer(object):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
 
-                if (self.tensorboard_frequency is not None and
-                        global_step % self.tensorboard_frequency == 0):
-                    self.writer.add_activations(self.model, global_step)
-                    self.writer.add_state_dict(self.model, global_step)
-                    self.writer.add_gradients(self.model, global_step)
+                self.writer.add_activations(self.model, global_step)
+                self.writer.add_state_dict(self.model, global_step)
+                self.writer.add_gradients(self.model, global_step)
 
                 self.optimizer.step()
 
