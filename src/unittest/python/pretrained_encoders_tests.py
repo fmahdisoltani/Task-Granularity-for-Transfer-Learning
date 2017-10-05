@@ -13,7 +13,7 @@ from ptcap.model.mappers import FullyConnectedMapper
 
 
 class TestPretrainedEncoders(unittest.TestCase):
-    def setUp(self, temp_dir):
+    def setUp(self):
         input_size = 2
         self.model = FullyConnectedMapper(input_size, 3)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
