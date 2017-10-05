@@ -49,3 +49,4 @@ class TestPretrainedEncoders(unittest.TestCase):
         encoded = encoder(self.input)
         expected_encoding = self.model(self.input)
         self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
+
