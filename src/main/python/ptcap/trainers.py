@@ -33,14 +33,14 @@ class Trainer(object):
         self.writer = writer
 
     def train(self, train_dataloader, valid_dataloader, criteria,
-              num_epoch=None, frequency_valid=1, teacher_force_train=True,
+              max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
         epoch = 0
-        train_model = True
+        stop_training = False
 
-        while train_model:
+        while not stop_training:
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
@@ -75,7 +75,7 @@ class Trainer(object):
                                                  filename="valid_loss")
 
             epoch += 1
-            train_model = self.update_train_model(epoch, num_epoch)
+            stop_training = self.update_stop_training(epoch, max_num_epochs)
 
         self.logger.log_train_end(self.scheduler.best)
 
@@ -87,23 +87,24 @@ class Trainer(object):
             'score': self.score,
         }
 
-    def update_train_model(self, epoch, num_epoch):
-        current_lr = self.scheduler.optimizer.param_groups[0]['lr']
+    def update_stop_training(self, epoch, num_epoch):
+        current_lr = max([param_group['lr'] for param_group in
+                         self.scheduler.optimizer.param_groups])
         # Assuming all parameters have the same minimum learning rate
-        min_lr = self.scheduler.min_lrs[0]
+        min_lr = max([lr for lr in self.scheduler.min_lrs])
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
             self.logger.log_message("Maximum number of epochs reached {}/{}",
                                     (epoch, num_epoch))
-            return False
+            return True
 
         elif current_lr <= min_lr:
             self.logger.log_message("Learning rate is equal to the minimum "
                                     "learning rate ({:.4})", (min_lr,))
-            return False
+            return True
 
-        return True
+        return False
 
     def get_function_dict(self):
         function_dict = OrderedDict()
