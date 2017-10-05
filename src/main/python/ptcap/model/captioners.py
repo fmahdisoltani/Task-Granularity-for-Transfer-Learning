@@ -4,7 +4,6 @@ from torch import nn
 from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import (CNN3dEncoder, CNN3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
-from ptcap.model.pretrained_encoders import RtorchnEncoderP
 
 
 class Captioner(nn.Module):

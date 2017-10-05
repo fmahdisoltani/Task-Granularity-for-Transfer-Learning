@@ -8,7 +8,6 @@ from testfixtures import tempdir
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.model.encoders import CNN3dEncoder
 from ptcap.model.pretrained_encoders import PretrainedEncoder
 from ptcap.model.mappers import FullyConnectedMapper
 

@@ -81,16 +81,13 @@ class Trainer(object):
         }
 
     def get_function_dict(self):
+
         function_dict = OrderedDict()
         function_dict["loss"] = loss_to_numpy
-
         function_dict["accuracy"] = token_accuracy
-
         function_dict["first_accuracy"] = first_token_accuracy
-
-        #function_dict["caption_accuracy"] = caption_level_accuracy
-
         function_dict["caption_accuracy"] = caption_accuracy
+
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
