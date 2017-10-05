@@ -6,6 +6,8 @@ import torch.optim
 import ptcap.data.preprocessing as prep
 import ptcap.losses
 import ptcap.model.captioners
+import ptcap.model.decoders as dec
+import ptcap.model as all_models
 
 from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
@@ -29,6 +31,7 @@ def train_model(config_obj, relative_path=""):
                                    config_obj.get('paths', 'validation_annot'))
 
     # Load attributes of config file
+    caption_type = config_obj.get("targets", "caption_type")
     checkpoint_folder = os.path.join(
         relative_path, config_obj.get('paths', 'checkpoint_folder'))
     frequency_valid = config_obj.get('validation', 'frequency')
@@ -52,9 +55,11 @@ def train_model(config_obj, relative_path=""):
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get('paths', 'videos_folder')))
+                                 config_obj.get('paths', 'videos_folder')),
+                                 caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   config_obj.get('paths', 'videos_folder')))
+                                   config_obj.get('paths', 'videos_folder')),
+                                   caption_type=caption_type)
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
@@ -87,16 +92,35 @@ def train_model(config_obj, relative_path=""):
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
 
+    encoder_type = config_obj.get("model", "encoder")
+    decoder_type = config_obj.get("model", "decoder")
+    encoder_args = config_obj.get("model", "encoder_args")
+    encoder_kwargs = config_obj.get("model", "encoder_kwargs")
+    decoder_args = config_obj.get("model", "decoder_args")
+    decoder_kwargs = config_obj.get("model", "decoder_kwargs")
+    decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
+    decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
+
+    # TODO: Remove GPUs?
+    gpus = config_obj.get("device", "gpus")
+
+    decoder_kwargs["gpus"] = gpus
+
     # Create model, loss, and optimizer objects
     model = getattr(ptcap.model.captioners, model_type)(
-        vocab_size=tokenizer.get_vocab_size(),
-        go_token=tokenizer.encode_token(tokenizer.GO), gpus=gpus,
-        **config_obj.get("model", "kwargs"))
+        encoder=getattr(all_models, encoder_type),
+        decoder=getattr(all_models, decoder_type),
+        encoder_args=encoder_args,
+        encoder_kwargs=encoder_kwargs,
+        decoder_args=decoder_args,
+        decoder_kwargs=decoder_kwargs,
+        gpus=gpus)
 
     loss_function = getattr(ptcap.losses, loss_type)()
 
+    params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = getattr(torch.optim, optimizer_type)(
-        params=list(model.parameters()), **config_obj.get("optimizer", "kwargs"))
+        params=params, **config_obj.get("optimizer", "kwargs"))
 
     scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
     scheduler_kwargs["optimizer"] = optimizer
@@ -107,7 +131,6 @@ def train_model(config_obj, relative_path=""):
         **scheduler_kwargs)
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
-
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 

@@ -1,10 +1,11 @@
 paths:
-  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
+  videos_folder: &vidpath /data/20bn-objects/videos_npz
+  annot_folder: /data/20bn-objects/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_sth_exp_frozen_pret/
 
-  train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
-  validation_annot: *train_annot
-  test_annot: *train_annot
+  train_annot:  /data/20bn-objects/json/train_20170630.json.gz
+  validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
+  test_annot: /data/20bn-objects/json/test_20170630.json.gz
 
   pretrained_path:
 
@@ -27,7 +28,7 @@ optimizer:
   type: Adam
 training:
   num_epochs: 200
-  learning_rate: &lr 0.01
+  learning_rate: &lr 0.001
   teacher_force: True
   verbose: False
 
@@ -41,5 +42,7 @@ criteria:
   higher_is_better: False
 
 targets:
-  caption_type: template
+  caption_type: label
   user_maxlen: 10
+
+

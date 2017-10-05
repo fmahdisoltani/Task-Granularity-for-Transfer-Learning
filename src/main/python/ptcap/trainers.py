@@ -6,7 +6,7 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (ScoresOperator, caption_accuracy, 
+from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
@@ -108,14 +108,13 @@ class Trainer(object):
         return False
 
     def get_function_dict(self):
+
         function_dict = OrderedDict()
         function_dict["loss"] = loss_to_numpy
-
         function_dict["accuracy"] = token_accuracy
-
         function_dict["first_accuracy"] = first_token_accuracy
-
         function_dict["caption_accuracy"] = caption_accuracy
+
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
@@ -128,7 +127,6 @@ class Trainer(object):
         scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
-
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
