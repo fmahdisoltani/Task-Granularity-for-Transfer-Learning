@@ -89,7 +89,9 @@ def train_model(config_obj, relative_path=""):
 
     encoder_type = config_obj.get("model", "encoder")
     decoder_type = config_obj.get("model", "decoder")
+    encoder_args = config_obj.get("model", "encoder_args")
     encoder_kwargs = config_obj.get("model", "encoder_kwargs")
+    decoder_args = config_obj.get("model", "decoder_args")
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
     decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
@@ -104,7 +106,9 @@ def train_model(config_obj, relative_path=""):
     model = getattr(ptcap.model.captioners, model_type)(
         encoder=getattr(all_models, encoder_type),
         decoder=getattr(all_models, decoder_type),
+        encoder_args=encoder_args,
         encoder_kwargs=encoder_kwargs,
+        decoder_args=decoder_args,
         decoder_kwargs=decoder_kwargs,
         gpus=gpus)
 
