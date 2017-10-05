@@ -95,7 +95,6 @@ def train_model(config_obj, relative_path=""):
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
     decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
-    decoder_kwargs["hidden_size"] = encoder_kwargs["encoder_output_size"]
 
     # TODO: Remove GPUs?
     gpus = config_obj.get("device", "gpus")
