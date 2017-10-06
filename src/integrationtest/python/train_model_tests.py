@@ -18,7 +18,7 @@ def check_saved_files(checkpoint_path, files_list):
             raise FileNotFoundError
 
 
-def get_model(config_path):
+def simulate_training(config_path):
     # Read config file for training a model from scratch
     config_obj = YamlConfig(config_path)
 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     # Run models and get their checkpoint folders
     for config_path in CONFIG_PATH:
-        checkpoint_folder = get_model(config_path)
+        checkpoint_folder = simulate_training(config_path)
         checkpoints.append(checkpoint_folder)
 
     # Clean up the checkpoint folders
