@@ -18,8 +18,16 @@ dataloaders:
   kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
 
 model:
-  type: CNN3dLSTM
-  kwargs: {}
+  type: EncoderDecoder
+  encoder: CNN3dLSTMEncoder
+  encoder_args:
+  encoder_kwargs: {encoder_output_size: &enc_out_size 25}
+  decoder: LSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 25,
+                   hidden_size: *enc_out_size,
+                   num_lstm_layers: 1}
+
 
 loss:
   type: SequenceCrossEntropy
@@ -55,7 +63,7 @@ targets:
   caption_type: template
 
 tokenizer:
-  kwargs: {}
+  kwargs: {user_maxlen: ~, cutoff: 0}
 
 logging:
   verbose: True
