@@ -3,7 +3,7 @@ import os
 
 
 class CustomLogger(object):
-    def __init__(self, folder, verbose=False):
+    def __init__(self, folder, verbose=True):
         self.logging_path = os.path.join(folder, "log.txt")
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)

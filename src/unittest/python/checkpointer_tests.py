@@ -113,50 +113,56 @@ class CheckpointerTests(unittest.TestCase):
     @tempdir()
     def test_save_best_higher_is_better(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path, higher_is_better=True)
-        scores = [3.0, 7.0, 2.0, 11.0]
+        scores = [3.0, 7.0, 2.0, 7.0, 11.0]
+        best_epoch = [1, 2, 2, 2, 5]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
-            best_score = checkpointer.best_score
             self.state_dict["score"] = score
             with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
-                              score=score, best_score=best_score):
+                              score=score, best_score=checkpointer.best_score):
                 checkpointer.save_best(self.state_dict, temp_dir.path)
                 self.state_dict = torch.load(os.path.join(temp_dir.path,
                                                           "model.best"))
-                if score > best_score:
-                    self.assertEqual(self.state_dict["score"], score)
+                self.assertEqual(self.state_dict["score"],
+                                 checkpointer.best_score)
+                self.assertEqual(self.state_dict["epoch"],
+                                 best_epoch[epoch_num])
 
     @tempdir()
     def test_save_best_higher_is_not_better(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path, higher_is_better=False)
-        scores = [3.0, 7.0, 2.0, 11.0]
+        scores = [3.0, 7.0, 3.0, 2.0, 11.0]
+        best_epoch = [1, 1, 1, 4, 4]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
-            best_score = checkpointer.best_score
             self.state_dict["score"] = score
             with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
-                              score=score, best_score=best_score):
+                              score=score, best_score=checkpointer.best_score):
                 checkpointer.save_best(self.state_dict, temp_dir.path)
                 self.state_dict = torch.load(os.path.join(temp_dir.path,
                                                           "model.best"))
-                if score < best_score:
-                    self.assertEqual(self.state_dict["score"], score)
+                self.assertEqual(self.state_dict["score"],
+                                 checkpointer.best_score)
+                self.assertEqual(self.state_dict["epoch"],
+                                 best_epoch[epoch_num])
 
     @tempdir()
     def test_save_best_folder_None(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
         scores = [3.0, 7.0, 2.0, 11.0]
+        best_epoch = [1, 1, 3, 3]
         for epoch_num, score in enumerate(scores):
             self.state_dict["epoch"] = epoch_num + 1
-            best_score = checkpointer.best_score
             self.state_dict["score"] = score
             with self.subTest(state_dict=self.state_dict, epoch_num=epoch_num,
-                              score=score, best_score=best_score):
+                              score=score, best_score=checkpointer.best_score):
                 checkpointer.save_best(self.state_dict)
                 self.state_dict = torch.load(os.path.join(temp_dir.path,
                                                           "model.best"))
-                if score < best_score:
-                    self.assertEqual(self.state_dict["score"], score)
+                self.assertEqual(self.state_dict["score"],
+                                 checkpointer.best_score)
+                self.assertEqual(self.state_dict["epoch"],
+                                 best_epoch[epoch_num])
 
     @tempdir()
     def test_save_latest(self, temp_dir):
@@ -234,5 +240,7 @@ class CheckpointerTests(unittest.TestCase):
         checkpointer.load_model(self.model, self.optimizer, temp_dir.path,
                                 "model.latest")
         self.state_dict["score"] = 3.0
+        self.state_dict["epoch"] = 1
         checkpointer.save_best(self.state_dict)
-        self.assertEqual(checkpointer.best_score, self.state_dict["score"])
+        self.assertEqual(self.state_dict["score"], checkpointer.best_score)
+        self.assertEqual(self.state_dict["epoch"], 1)
