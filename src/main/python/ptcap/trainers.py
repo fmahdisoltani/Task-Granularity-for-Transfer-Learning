@@ -164,8 +164,9 @@ class Trainer(object):
 
             # Log at the end of batch
             self.logger.log_batch_end(
-                scores_dict, self.tokenizer, captions, predictions, is_training,
-                sample_counter + 1, len(dataloader), verbose)
+                scores.get_average_scores(), self.tokenizer, captions,
+                predictions, is_training, sample_counter + 1, len(dataloader),
+                verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
