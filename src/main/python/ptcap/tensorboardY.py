@@ -34,9 +34,10 @@ class TensorboardAdapter(object):
         """
 
         for param_name, param_value in model.named_parameters():
-            self.summary_writer.add_histogram(param_name + "_grad",
-                                              param_value.grad.cpu().data.numpy(),
-                                              global_step)
+            if param_value.grad is not None:
+                self.summary_writer.add_histogram(
+                    param_name + "_grad", param_value.grad.cpu().data.numpy(),
+                    global_step)
 
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
@@ -68,7 +69,8 @@ class TensorboardAdapter(object):
 
         model_state_dict = model.state_dict()
         for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.cpu().numpy(), global_step)
+            self.summary_writer.add_histogram(key, value.cpu().numpy(),
+                                              global_step)
 
     def add_activations(self, model, global_step):
         """

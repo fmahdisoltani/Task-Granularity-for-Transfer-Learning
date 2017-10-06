@@ -36,10 +36,10 @@ class FullyConnectedDecoder(Decoder):
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_lstm_layers, go_token=0, gpus=None):
 
         super(LSTMDecoder, self).__init__()
-        self.num_hidden_lstm = num_hidden_lstm
+        self.num_lstm_layers = num_lstm_layers
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
