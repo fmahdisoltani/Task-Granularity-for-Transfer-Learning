@@ -53,8 +53,7 @@ class Checkpointer(object):
             print("Saving latest model, score: {:.4} @ epoch {}".
                   format(state["score"], state["epoch"]))
         else:
-            print("Saving latest model, score: None @ epoch {}".
-                  format(state["epoch"]))
+            print("Saving latest model @ epoch {}".format(state["epoch"]))
         torch.save(state, os.path.join(folder, filename))
 
     @classmethod
