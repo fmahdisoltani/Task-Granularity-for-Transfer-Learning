@@ -63,7 +63,7 @@ targets:
   caption_type: template
 
 tokenizer:
-  kwargs: {}
+  kwargs: {user_maxlen: ~, cutoff: 0}
 
 logging:
   verbose: True
