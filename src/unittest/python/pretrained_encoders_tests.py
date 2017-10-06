@@ -11,6 +11,7 @@ from ptcap.checkpointers import Checkpointer
 from ptcap.model.pretrained_encoders import PretrainedEncoder
 from ptcap.model.mappers import FullyConnectedMapper
 
+
 class TestPretrainedEncoders(unittest.TestCase):
     def setUp(self):
         input_size = 2
@@ -30,7 +31,10 @@ class TestPretrainedEncoders(unittest.TestCase):
         torch.save(self.model.state_dict(),
                    os.path.join(temp_dir.path, self.model_name))
         encoder = PretrainedEncoder(
-            self.model, os.path.join(temp_dir.path, self.model_name))
+            encoder=FullyConnectedMapper,
+            pretrained_path=os.path.join(temp_dir.path, self.model_name),
+            encoder_args=(2, 3))
+
         encoded = encoder(self.input)
         expected_encoding = self.model(self.input)
         self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
@@ -39,8 +43,10 @@ class TestPretrainedEncoders(unittest.TestCase):
     def test_load_pretrained_encoder_with_dict_attr(self, temp_dir):
         checkpointer = Checkpointer(temp_dir.path)
         checkpointer.save_latest(self.state_dict, filename=self.model_name)
-        encoder = PretrainedEncoder(self.model, os.path.join(
-            temp_dir.path, self.model_name), "model")
+        encoder = PretrainedEncoder(FullyConnectedMapper,
+        pretrained_path=os.path.join(temp_dir.path, self.model_name),
+        encoder_args=(2, 3), checkpoint_key='model')
         encoded = encoder(self.input)
         expected_encoding = self.model(self.input)
         self.assertEqual((encoded - expected_encoding).sum().data.numpy(), 0)
+
