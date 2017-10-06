@@ -1,6 +1,5 @@
 paths:
   videos_folder: directory containing all the videos
-  annot_folder: directory containing all the json files
   checkpoint_folder: directory in which the model should be saved
 
   train_annot:  path to the train json file
@@ -68,3 +67,4 @@ logging:
   verbose: True if the logger should output to stdout
   tensorboard_frequency: The frequency at which the model parameters will be logged
                          If `None`, the model parameters will not be logged
+
