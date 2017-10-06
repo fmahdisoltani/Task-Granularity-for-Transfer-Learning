@@ -1,5 +1,0 @@
-path: some_path
-
-nested:
-  type: some_type
-  kwargs: {kwarg_1: 1, kwarg_2: kwarg2}
