@@ -82,10 +82,10 @@ class Trainer(object):
 
     def get_trainer_state(self):
         return {
-            'epoch': self.num_epochs,
-            'model': self.model.state_dict(),
-            'optimizer': self.scheduler.optimizer.state_dict(),
-            'score': self.score,
+            "epoch": self.num_epochs,
+            "model": self.model.state_dict(),
+            "optimizer": self.scheduler.optimizer.state_dict(),
+            "score": self.score,
         }
 
     def update_stop_training(self, epoch, num_epoch):

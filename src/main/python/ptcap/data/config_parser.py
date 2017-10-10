@@ -10,7 +10,7 @@ class YamlConfig(object):
             self.parse(path)
 
     def parse(self, path):
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             self.config_dict.update(yaml.load(f.read()))
 
     def get(self, *keys):
@@ -25,5 +25,5 @@ class YamlConfig(object):
 
     @classmethod
     def dump(cls, path, config_dict):
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             yaml.dump(config_dict, f)
