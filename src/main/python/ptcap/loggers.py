@@ -56,5 +56,13 @@ class CustomLogger(object):
         self.epoch = epoch_counter
 
     def log_epoch_end(self, scores_dict):
+        self.logger.info("\n")
         self.log_dict(scores_dict)
         self.logger.info("\n")
+
+    def log_train_end(self, best_score):
+        self.logger.info("\nTraining complete!!!")
+        self.logger.info("\nBest model has a score of {:.4}".format(best_score))
+
+    def log_message(self, message, args):
+        self.logger.info(message.format(*args))
