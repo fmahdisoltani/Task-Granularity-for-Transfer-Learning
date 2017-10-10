@@ -5,12 +5,17 @@ import os
 class CustomLogger(object):
     def __init__(self, folder, verbose=True):
         self.logging_path = os.path.join(folder, "log.txt")
+        self.outputs_path = os.path.join(folder, "outputs.txt")
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
         fh = logging.FileHandler(self.logging_path)
         fh.setLevel(logging.INFO)
         self.logger.addHandler(fh)
+
+        oh = logging.FileHandler(self.outputs_path)
+        oh.setLevel(logging.INFO)
+        self.logger.addHandler(oh)
 
         sh = logging.StreamHandler()
         sh.terminator = ""
