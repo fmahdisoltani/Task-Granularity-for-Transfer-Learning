@@ -25,8 +25,8 @@ class Checkpointer(object):
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
-            self.best_score = checkpoint["best_score"]
-            optimizer.load_state_dict(checkpoint["optimizer"])
+            self.set_best_score(checkpoint["score"])
+            # optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
