@@ -101,7 +101,7 @@ class Seq2seqAdapter(TensorboardAdapter):
         compared to conventional feedforward classifiers.
     """
 
-    def __init__(self, log_dir=None, frequency=1):
+    def __init__(self, log_dir=None, frequency=None):
         super(Seq2seqAdapter, self).__init__(log_dir=log_dir,
                                              frequency=frequency)
 
