@@ -76,7 +76,7 @@ class ScoresOperator(object):
 
     def update_moving_average(self, scores_dict, count):
         assert count > 0
-        scores_dict = dict(scores_dict)
+        scores_dict = OrderedDict(scores_dict)
         scores_list = list(scores_dict.keys())
         for score in scores_list:
             average_score = "average_" + score
