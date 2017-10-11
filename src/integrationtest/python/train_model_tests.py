@@ -1,4 +1,4 @@
-# Code largely inspired by 20bn-rtorchn's repo
+# Code largely inspired by 20bn-rtorchn repo
 
 import os
 
@@ -17,14 +17,14 @@ def check_saved_files(checkpoint_path, files_list):
         if not os.path.exists(os.path.join(checkpoint_path, file_name)):
             raise FileNotFoundError
 
-
+            
 def simulate_training(config_path):
     # Read config file for training a model from scratch
     config_obj = YamlConfig(config_path)
 
     # Parse the model's checkpoint
     checkpoint_folder = os.path.join(
-        os.getcwd(), config_obj.get('paths', 'checkpoint_folder'))
+        os.getcwd(), config_obj.get("paths", "checkpoint_folder"))
 
     # Clean up checkpoint folder before training starts
     fkdata.remove_dir(checkpoint_folder)
