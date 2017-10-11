@@ -8,10 +8,10 @@ class CustomLogger(object):
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
-        fh = logging.FileHandler(self.logging_path)
-        fh.terminator = ""
-        fh.setLevel(logging.INFO)
-        self.logger.addHandler(fh)
+        # fh = logging.FileHandler(self.logging_path)
+        # fh.terminator = ""
+        # fh.setLevel(logging.DEBUG)
+        # self.logger.addHandler(fh)
 
         sh = logging.StreamHandler()
         sh.terminator = ""
