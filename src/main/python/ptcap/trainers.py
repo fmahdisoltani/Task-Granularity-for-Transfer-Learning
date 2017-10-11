@@ -49,7 +49,7 @@ class Trainer(object):
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            train_avg_loss = train_average_scores["average_loss"]
+            train_avg_loss = train_average_scores["avg_loss"]
 
             state_dict = self.get_trainer_state()
 
@@ -66,7 +66,7 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_" + criteria]
+                self.score = valid_average_scores["avg_" + criteria]
 
                 self.scheduler.step(self.score)
 
@@ -122,7 +122,7 @@ class Trainer(object):
                   use_teacher_forcing=False, verbose=True):
 
         # Log at the beginning of epoch
-        self.logger.log_epoch_begin(is_training, epoch + 1)
+        # self.logger.log_epoch_begin(is_training, epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
@@ -163,7 +163,7 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            # Log at the end of batch
+            # Uncomment if you want to log at the end of batch
             self.logger.log_batch_end(
                 scores.get_average_scores(), self.tokenizer, captions,
                 predictions, is_training, sample_counter + 1, len(dataloader),
@@ -173,7 +173,9 @@ class Trainer(object):
         average_scores_dict = scores.get_average_scores()
 
         # Log at the end of epoch
-        self.logger.log_epoch_end(average_scores_dict)
+        # self.logger.log_epoch_end(average_scores_dict)
+        # self.logger.log_compact_epoch(is_training, epoch+1, average_scores_dict)
+
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)

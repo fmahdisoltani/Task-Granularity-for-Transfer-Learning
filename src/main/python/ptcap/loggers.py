@@ -9,6 +9,7 @@ class CustomLogger(object):
         self.logger.setLevel(logging.INFO)
 
         fh = logging.FileHandler(self.logging_path)
+        fh.terminator = ""
         fh.setLevel(logging.INFO)
         self.logger.addHandler(fh)
 
@@ -47,18 +48,30 @@ class CustomLogger(object):
             self.log_captions_and_predictions(tokenizer, captions, predictions)
 
     def log_dict(self, scores_dict):
+        scores_string = ""
         for key, value in scores_dict.items():
-            self.logger.info("{}: {:.4} ".format(key, value))
+            scores_string += "{}: {:.4} ".format(key, value)
+        self.logger.info(scores_string)
 
     def log_epoch_begin(self, is_training, epoch_counter):
         phase = "Training" if is_training else "Validating"
-        self.logger.info("Epoch {} - {}\n".format(epoch_counter, phase))
+        self.logger.info("Epoch {} - {}".format(epoch_counter, phase))
         self.epoch = epoch_counter
 
     def log_epoch_end(self, scores_dict):
         self.logger.info("\n")
         self.log_dict(scores_dict)
         self.logger.info("\n")
+
+    def log_compact_epoch(self, is_training, epoch_counter, scores_dict):
+        f_string = ""
+        phase = "Training" if is_training else "Validating"
+        f_string += ("Epoch {} - {} ".format(epoch_counter, phase))
+        self.epoch = epoch_counter
+
+        for key, value in scores_dict.items():
+            f_string += "{}: {:.4} ".format(key, value)
+        self.logger.info(f_string)
 
     def log_train_end(self, best_score):
         self.logger.info("\nTraining complete!!!")
