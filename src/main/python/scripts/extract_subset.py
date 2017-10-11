@@ -12,7 +12,7 @@ TARGET_LABELS = [
 
 def create_subset_json(path, target_classes, num_samples=None):
     """
-        This method extracts 'num_samples' samples using a json annotation file
+        This method extracts "num_samples" samples using a json annotation file
         where each sample belong to one of the classes in target_classes.
         If num_samples is None, it extracts all the samples in target_classes.
     """
@@ -25,7 +25,7 @@ def create_subset_json(path, target_classes, num_samples=None):
     new_json = []
     all_samples = open_json(path)
     for sample in all_samples:
-        if sample['template'] in target_classes:
+        if sample["template"] in target_classes:
             if num_samples is None or counter < num_samples:
                 new_json.append(sample)
                 counter += 1
@@ -51,13 +51,13 @@ if __name__ == "__main__":
                     "subset_validation_20170429.json.gz",
                     "subset_test_20170429.json.gz"]
 
-    print('Number of labels in subset dataset : {}'.format(len(TARGET_LABELS)))
+    print("Number of labels in subset dataset : {}".format(len(TARGET_LABELS)))
 
     for in_json, out_json in zip(input_jsons, output_jsons):
-        print('Creating subset from {} to {}'.format(in_json, out_json))
+        print("Creating subset from {} to {}".format(in_json, out_json))
         new_json = create_subset_json(in_json, TARGET_LABELS, num_samples=10000)
 
-        with gzip.open(out_json, 'wt') as f:
+        with gzip.open(out_json, "wt") as f:
             json.dump(new_json, f)
-        with gzip.open("subset_classes.json.gz", 'wt') as f:
+        with gzip.open("subset_classes.json.gz", "wt") as f:
             json.dump(TARGET_LABELS, f)

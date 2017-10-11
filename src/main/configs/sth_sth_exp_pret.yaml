@@ -1,0 +1,48 @@
+paths:
+  videos_folder: &vidpath /data/20bn-objects/videos_npz
+  annot_folder: /data/20bn-objects/json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_sth_exp_frozen_pret/
+
+  train_annot:  /data/20bn-objects/json/train_20170630.json.gz
+  validation_annot: /data/20bn-objects/json/validation_20170630.json.gz
+  test_annot: /data/20bn-objects/json/test_20170630.json.gz
+
+  pretrained_path:
+
+device:
+  synchronize_gpu: &sync True
+  gpus: [0]
+
+dataloaders:
+  batch_size: &b 16
+  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
+
+model:
+  type: RtorchnCaptionerP
+  kwargs: {}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: Adam
+training:
+  num_epochs: 200
+  learning_rate: &lr 0.001
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 5
+  teacher_force: False
+  verbose: True
+
+criteria:
+  score: loss
+  higher_is_better: False
+
+targets:
+  caption_type: label
+  user_maxlen: 10
+
+

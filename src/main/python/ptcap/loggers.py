@@ -3,7 +3,7 @@ import os
 
 
 class CustomLogger(object):
-    def __init__(self, folder, verbose=False):
+    def __init__(self, folder, verbose=True):
         self.logging_path = os.path.join(folder, "log.txt")
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -29,7 +29,7 @@ class CustomLogger(object):
             decoded_pred = tokenizer.decode_caption(pred.data.numpy())
 
             self.logger.info("\n__TARGET__: {}".format(decoded_cap))
-            self.logger.info("PREDICTION: {}\n".format(decoded_pred))
+            self.logger.info("\nPREDICTION: {}\n".format(decoded_pred))
 
         self.logger.info("*" * 30)
 
@@ -56,5 +56,13 @@ class CustomLogger(object):
         self.epoch = epoch_counter
 
     def log_epoch_end(self, scores_dict):
+        self.logger.info("\n")
         self.log_dict(scores_dict)
         self.logger.info("\n")
+
+    def log_train_end(self, best_score):
+        self.logger.info("\nTraining complete!!!")
+        self.logger.info("\nBest model has a score of {:.4}".format(best_score))
+
+    def log_message(self, message, args):
+        self.logger.info(message.format(*args))

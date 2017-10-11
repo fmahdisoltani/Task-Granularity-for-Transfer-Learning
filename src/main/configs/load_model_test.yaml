@@ -1,14 +1,14 @@
 paths:
-  videos_folder: fake_data/videos
-  checkpoint_folder: checkpoint_sample/
+  videos_folder: &vidpath fake_data/videos
+  checkpoint_folder: load_model_sample/
 
   train_annot: &train_annot fake_data/json/fake.json
   validation_annot: *train_annot
   test_annot: *train_annot
 
 pretrained:
-  pretrained_folder:
-  pretrained_file:
+  pretrained_folder: checkpoint_sample
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: True
@@ -33,22 +33,22 @@ loss:
   type: SequenceCrossEntropy
 
 optimizer:
-  type: Adam
+  type: &optimizer Adam
   kwargs: {lr: 0.01}
 
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
-           min_lr: 1.0e-4,
-           patience: 1,
-           threshold: 1.0e-4,
-           verbose: True}
+           min_lr: 1.0e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1.0e-4}
 
 training:
   num_epochs: 2
   clip_grad: 1
   teacher_force: True
-  verbose: True
+  verbose: False
 
 validation:
   frequency: 1
@@ -56,15 +56,14 @@ validation:
   verbose: True
 
 criteria:
-  score: accuracy
-  higher_is_better: True
+  score: loss
+  higher_is_better: False
 
 targets:
   caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: ~, cutoff: 0}
-
 
 logging:
   verbose: True

@@ -6,7 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-class VideoDataset(Dataset): 
+class VideoDataset(Dataset):
 
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
@@ -20,10 +20,10 @@ class VideoDataset(Dataset):
     def __getitem__(self, index):
         """
         Return a Tuple like
-        ('video_tensor_of_size_CxTxWxH', 'encoded_caption_of_size_K')
+        ("video_tensor_of_size_CxTxWxH", "encoded_caption_of_size_K")
         """
 
-        video = self._get_video(index)
+        video = self._try_get_video(index)
         if self.preprocess is not None:
             video = self.preprocess(video)
         tokenized_caption = self._get_tokenized_caption(index)
@@ -34,6 +34,13 @@ class VideoDataset(Dataset):
 
     def _get_tokenized_caption(self, index):
         return self.tokenizer.encode_caption(self.captions[index])
+
+    def _try_get_video(self, index):
+        try:
+            return self._get_video(index)
+        except:
+            print("\nSkipping", self.video_paths[index], "...")
+            return self._try_get_video(index + 1)
 
 
 class JpegVideoDataset(VideoDataset):
@@ -50,7 +57,7 @@ class JpegVideoDataset(VideoDataset):
 
     def _get_video(self, index):
         dirname = self.video_paths[index]
-        frames = [np.array(Image.open(path).convert('RGB').
+        frames = [np.array(Image.open(path).convert("RGB").
                            resize(self.size, resample=self.resample))
                   for path in glob.glob(dirname + "/*.jpg")]
         return np.array(frames)

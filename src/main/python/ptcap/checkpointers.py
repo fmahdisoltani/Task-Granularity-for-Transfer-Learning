@@ -61,8 +61,11 @@ class Checkpointer(object):
     def save_latest(self, state, folder=None, filename="model.latest"):
         if not folder:
             folder = self.checkpoint_folder
-        print("Saving latest model, score: {} @ epoch {}".
-              format(state["score"], state["epoch"]))
+        if state["score"] is not None:
+            print("Saving latest model, score: {:.4} @ epoch {}".
+                  format(state["score"], state["epoch"]))
+        else:
+            print("Saving latest model @ epoch {}".format(state["epoch"]))
         torch.save(state, os.path.join(folder, filename))
 
     @classmethod

@@ -14,7 +14,7 @@ CSV_FILE = os.path.join(JSON_DIR, "fake.csv")
 JSON_FILE = os.path.join(JSON_DIR, "fake.json")
 
 CROP_SIZE = [8, 24, 24]
-MP4_FILENAME = 'ANY_FILE.mp4'
+MP4_FILENAME = "ANY_FILE.mp4"
 NUM_CLASSES = 2
 NUM_SAMPLES = 3
 VIDEO_LABELS = [i % NUM_CLASSES for i in range(NUM_SAMPLES)]
@@ -38,7 +38,7 @@ def create_fake_json():
         "worker_id": "ANY_WORKER",
     } for i in range(NUM_SAMPLES)]
 
-    with open(JSON_FILE, 'w') as f:
+    with open(JSON_FILE, "w") as f:
         json.dump(json_content, f)
 
 
