@@ -6,28 +6,41 @@ paths:
   validation_annot: *train_annot
   test_annot: *train_annot
 
-  pretrained_path:
+pretrained:
+  pretrained_folder:
+  pretrained_file:
 
 device:
   synchronize_gpu: &sync True
   gpus: [0]
 
 dataloaders:
-  batch_size: &b 16
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: True}
+  kwargs: {batch_size: &b 16, num_workers: 16, pin_memory: True}
 
 model:
-  type: RtorchnCaptionerP
-  kwargs: {}
+  type: EncoderDecoder
+  encoder: RtorchnEncoderP
+  encoder_args:
+  encoder_kwargs: {pretrained_path:,
+                   freeze: False,
+                   encoder_output_size: &enc_out_size 256,
+                   num_classes: 178}
+  decoder: LSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 256,
+                   num_lstm_layers: 1}
 
 loss:
   type: SequenceCrossEntropy
 
 optimizer:
-  type: Adam
+  type: &optimizer Adam
+  kwargs: {lr: &lr 0.01 }
+
 training:
   num_epochs: 200
-  learning_rate: &lr 0.01
+  clip_grad:
   teacher_force: True
   verbose: False
 
@@ -42,4 +55,18 @@ criteria:
 
 targets:
   caption_type: template
-  user_maxlen: 10
+
+tokenizer:
+  kwargs: {user_maxlen: 10}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 0.00000001,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 0.0001}
+
+logging:
+  verbose: True
+  tensorboard_frequency:
