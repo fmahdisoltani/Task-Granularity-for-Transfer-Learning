@@ -14,13 +14,12 @@ from ptcap.data.config_parser import YamlConfig
 from ptcap.main import train_model
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Get argument
     args = docopt(__doc__)
 
     # Build a dictionary that contains fields of config file
-    config_obj = YamlConfig(args['<config_path>'])
+    config_obj = YamlConfig(args["<config_path>"])
 
     # Run captioning model
     train_model(config_obj)
-

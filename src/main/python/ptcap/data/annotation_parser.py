@@ -7,7 +7,7 @@ import pandas as pd
 class AnnotationParser(object):
 
     def __init__(self, annot_path, video_root,
-                 file_path="file", caption_type="label"):
+                 file_path="file", caption_type="template"):
         self.video_root = video_root
         self.file_path = file_path
         self.caption_type = caption_type
