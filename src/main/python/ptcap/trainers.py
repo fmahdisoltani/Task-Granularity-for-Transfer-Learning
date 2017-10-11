@@ -19,10 +19,10 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
 
-        init_state = self.checkpointer.load_model(model, scheduler,
+        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
 
-        self.num_epochs, self.model, self.scheduler = init_state
+        self.num_epochs, self.model, scheduler.optimizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
@@ -30,6 +30,7 @@ class Trainer(object):
         self.clip_grad = clip_grad
         self.logger = logger
         self.tokenizer = tokenizer
+        self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
         self.tensorboard_frequency = 1000
