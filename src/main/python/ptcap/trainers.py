@@ -120,9 +120,6 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-
-        # Log at the beginning of epoch
-        # self.logger.log_epoch_begin(is_training, epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
@@ -167,15 +164,10 @@ class Trainer(object):
             self.logger.log_batch_end(
                 scores.get_average_scores(), self.tokenizer, captions,
                 predictions, is_training, sample_counter + 1, len(dataloader),
-                verbose)
+                epoch_counter=epoch,verbose=verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
-
-        # Log at the end of epoch
-        # self.logger.log_epoch_end(average_scores_dict)
-        # self.logger.log_compact_epoch(is_training, epoch+1, average_scores_dict)
-
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)

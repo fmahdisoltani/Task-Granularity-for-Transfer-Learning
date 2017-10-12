@@ -5,77 +5,66 @@ import os
 class CustomLogger(object):
     def __init__(self, folder, verbose=True):
         self.logging_path = os.path.join(folder, "log.txt")
+        self.pred_path = os.path.join(folder, "out.txt")
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
-        # fh = logging.FileHandler(self.logging_path)
-        # fh.terminator = ""
-        # fh.setLevel(logging.DEBUG)
-        # self.logger.addHandler(fh)
+        fh = logging.FileHandler(self.logging_path)
+        fh.setLevel(logging.CRITICAL)
+        self.logger.addHandler(fh)
 
         sh = logging.StreamHandler()
         sh.terminator = ""
-        sh.setLevel(logging.WARNING)
-
-        if verbose:
-            sh.setLevel(logging.INFO)
+        sh.setLevel(logging.INFO)
 
         self.logger.addHandler(sh)
 
-        self.epoch = 0
-
     def log_captions_and_predictions(self, tokenizer, captions, predictions):
+
+        ofile = open(self.pred_path, "a")
         for cap, pred in zip(captions, predictions):
             decoded_cap = tokenizer.decode_caption(cap.data.numpy())
             decoded_pred = tokenizer.decode_caption(pred.data.numpy())
 
-            self.logger.info("\n__TARGET__: {}".format(decoded_cap))
-            self.logger.info("\nPREDICTION: {}\n".format(decoded_pred))
+            decoded_cap_str = "\n__TARGET__: {}".format(decoded_cap)
+            decoded_pred_str = "\nPREDICTION: {}\n".format(decoded_pred)
+
+            self.logger.info(decoded_cap_str)
+            self.logger.info(decoded_pred_str)
+
+            ofile.write(decoded_cap_str)
+            ofile.write(decoded_pred_str)
 
         self.logger.info("*" * 30)
 
-    def log_batch_begin(self):
-        raise NotImplementedError
+        ofile.write("*" * 30)
+        ofile.close()
 
     def log_batch_end(self, scores_dict, tokenizer, captions, predictions,
-                      is_training, sample_counter, total_samples, verbose):
-        phase = "Training" if is_training else "Validating"
-        self.logger.info("\rEpoch {} - {} - batch {}/{} - ".
-                         format(self.epoch, phase, sample_counter,
+                      is_training, sample_counter, total_samples, epoch_counter,
+                      verbose):
+        phase = "_Train_" if is_training else "_Valid_"
+        to_be_logged = ("\rEpoch {} - {} - batch {}/{} - ".
+                         format(epoch_counter, phase, sample_counter,
                                 total_samples))
-        self.log_dict(scores_dict)
+        for key, value in scores_dict.items():
+            to_be_logged += "{}: {:.4} ".format(key, value)
+
+        if sample_counter == total_samples:
+            # if it is the last batch, also write info to log file
+            self.logger.critical(to_be_logged)
+            if not is_training:
+                ofile = open(self.pred_path, "a")
+                ofile.write(to_be_logged)
+        else:
+            self.logger.info(to_be_logged)
+
         if verbose:
             self.log_captions_and_predictions(tokenizer, captions, predictions)
 
-    def log_dict(self, scores_dict):
-        scores_string = ""
-        for key, value in scores_dict.items():
-            scores_string += "{}: {:.4} ".format(key, value)
-        self.logger.info(scores_string)
-
-    def log_epoch_begin(self, is_training, epoch_counter):
-        phase = "Training" if is_training else "Validating"
-        self.logger.info("Epoch {} - {}".format(epoch_counter, phase))
-        self.epoch = epoch_counter
-
-    def log_epoch_end(self, scores_dict):
-        self.logger.info("\n")
-        self.log_dict(scores_dict)
-        self.logger.info("\n")
-
-    def log_compact_epoch(self, is_training, epoch_counter, scores_dict):
-        f_string = ""
-        phase = "Training" if is_training else "Validating"
-        f_string += ("Epoch {} - {} ".format(epoch_counter, phase))
-        self.epoch = epoch_counter
-
-        for key, value in scores_dict.items():
-            f_string += "{}: {:.4} ".format(key, value)
-        self.logger.info(f_string)
-
     def log_train_end(self, best_score):
-        self.logger.info("\nTraining complete!!!")
+        self.logger.info("\nTrain complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
 
     def log_message(self, message, args):
-        self.logger.info(message.format(*args))
+        self.logger.critical(message.format(*args))

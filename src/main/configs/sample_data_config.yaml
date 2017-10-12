@@ -1,6 +1,6 @@
 paths:
   videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/checkpoint_sample/
 
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
@@ -16,6 +16,7 @@ device:
 
 dataloaders:
   kwargs: {batch_size: &b 1, num_workers: 16, pin_memory: True}
+
 
 model:
   type: EncoderDecoder
