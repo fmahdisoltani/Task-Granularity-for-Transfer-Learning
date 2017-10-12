@@ -19,12 +19,10 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: RtorchnEncoderP
+  encoder: FCEncoder
   encoder_args:
   encoder_kwargs: {pretrained_path:,
-                   freeze: False,
-                   encoder_output_size: &enc_out_size 256,
-                   num_classes: 178}
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
