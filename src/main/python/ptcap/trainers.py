@@ -81,7 +81,7 @@ class Trainer(object):
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
 
-        self.logger.log_train_end(self.scheduler.best)
+        self.logger.on_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
