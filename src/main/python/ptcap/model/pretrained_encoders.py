@@ -52,7 +52,10 @@ class FCEncoder(PretrainedEncoder):
 
 class JesterEncoder(PretrainedEncoder):
 
-    # Hardcoded encoder for using JesterNet from 20bn_rtorchn
+    """
+    Hardcoded encoder for using JesterNet from 20bn_rtorchn
+    num_classes = 329 means this class expects the "supermodel" version.
+    """
 
     def __init__(self, pretrained_path=None,
                  freeze=False, ):
@@ -60,10 +63,10 @@ class JesterEncoder(PretrainedEncoder):
         encoder_output_size = 256
         num_classes = 329
         encoder_args = (num_classes, encoder_output_size)
-        super(FCEncoder, self).__init__(encoder=JesterNet,
-                                              encoder_args=encoder_args,
-                                              pretrained_path=pretrained_path,
-                                              freeze=freeze)
+        super(JesterEncoder, self).__init__(encoder=JesterNet,
+                                            encoder_args=encoder_args,
+                                            pretrained_path=pretrained_path,
+                                            freeze=freeze)
 
     def forward(self, video_batch):
         features = self.encoder.extract_features(video_batch)
