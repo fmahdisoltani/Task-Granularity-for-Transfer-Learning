@@ -120,11 +120,14 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-      
+        self.logger.on_epoch_begin(is_training)
+
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
+            self.logger.on_batch_begin()
+
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
@@ -160,11 +163,13 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            # Uncomment if you want to log at the end of batch
-            self.logger.log_batch_end(
-                scores.get_average_scores(), self.tokenizer, captions,
-                predictions, is_training, sample_counter + 1, len(dataloader),
-                epoch_counter=epoch,verbose=verbose)
+            self.logger.on_batch_end(
+                scores.get_average_scores(), captions,
+                predictions, is_training, len(dataloader),
+                verbose=verbose)
+
+        self.logger.on_epoch_end(scores.get_average_scores(), is_training,
+                                 total_samples=len(dataloader))
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()
