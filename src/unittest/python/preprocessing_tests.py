@@ -77,7 +77,7 @@ class TestFloat32Converter(PrepTestCase):
 
     def test_dtype(self):
         float_converter = prep.Float32Converter()
-        self.assertEqual(float_converter(self.video).dtype, 'float32')
+        self.assertEqual(float_converter(self.video).dtype, "float32")
 
 
 class TestPytorchPermuter(PrepTestCase):

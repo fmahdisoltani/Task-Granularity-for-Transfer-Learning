@@ -1,5 +1,3 @@
-import os
-
 import torch
 
 from collections import namedtuple
@@ -13,7 +11,7 @@ from ptcap.scores import (ScoresOperator, caption_accuracy,
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, optimizer, tokenizer, logger,
+    def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpoint_path, folder=None, filename=None,
                  gpus=None):
 
@@ -21,26 +19,30 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = Checkpointer(checkpoint_path)
 
-        init_state = self.checkpointer.load_model(model, optimizer,
+        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
 
-        self.num_epochs, self.model, self.optimizer = init_state
+        self.num_epochs, self.model, scheduler.optimizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
         self.logger = logger
         self.tokenizer = tokenizer
-        self.score = None
+        self.scheduler = scheduler
+        self.score = self.scheduler.best
         self.writer = writer
         self.tensorboard_frequency = 1000
 
-    def train(self, train_dataloader, valid_dataloader, num_epoch,
-              frequency_valid, teacher_force_train=True,
+    def train(self, train_dataloader, valid_dataloader, criteria,
+              max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        for epoch in range(num_epoch):
+        epoch = 0
+        stop_training = False
+
+        while not stop_training:
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
@@ -64,7 +66,9 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_loss"]
+                self.score = valid_average_scores["average_" + criteria]
+
+                self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
 
@@ -72,13 +76,37 @@ class Trainer(object):
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
 
+            epoch += 1
+            stop_training = self.update_stop_training(epoch, max_num_epochs)
+
+        self.logger.log_train_end(self.scheduler.best)
+
     def get_trainer_state(self):
         return {
-            'epoch': self.num_epochs,
-            'model': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'score': self.score,
+            "epoch": self.num_epochs,
+            "model": self.model.state_dict(),
+            "optimizer": self.scheduler.optimizer.state_dict(),
+            "score": self.score,
         }
+
+    def update_stop_training(self, epoch, num_epoch):
+        current_lr = max([param_group['lr'] for param_group in
+                         self.scheduler.optimizer.param_groups])
+        # Assuming all parameters have the same minimum learning rate
+        min_lr = max([lr for lr in self.scheduler.min_lrs])
+
+        # Check if the maximum number of epochs has been reached
+        if num_epoch is not None and epoch >= num_epoch:
+            self.logger.log_message("Maximum number of epochs reached {}/{}",
+                                    (epoch, num_epoch))
+            return True
+
+        elif current_lr <= min_lr:
+            self.logger.log_message("Learning rate is equal to the minimum "
+                                    "learning rate ({:.4})", (min_lr,))
+            return True
+
+        return False
 
     def get_function_dict(self):
 
@@ -122,7 +150,7 @@ class Trainer(object):
                     self.writer.add_state_dict(self.model, global_step)
                     self.writer.add_gradients(self.model, global_step)
 
-                self.optimizer.step()
+                self.scheduler.optimizer.step()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
@@ -137,8 +165,9 @@ class Trainer(object):
 
             # Log at the end of batch
             self.logger.log_batch_end(
-                scores_dict, self.tokenizer, captions, predictions, is_training,
-                sample_counter + 1, len(dataloader), verbose)
+                scores.get_average_scores(), self.tokenizer, captions,
+                predictions, is_training, sample_counter + 1, len(dataloader),
+                verbose)
 
         # Take only the average of the scores in scores_dict
         average_scores_dict = scores.get_average_scores()

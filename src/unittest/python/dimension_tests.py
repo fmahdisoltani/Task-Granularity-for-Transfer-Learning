@@ -18,28 +18,28 @@ class TestDimensions(unittest.TestCase):
         self.caption_len = 4
         self.num_features = 7
         self.arguments = {
-            'FullyConnectedEncoder': (((3, 10, 96, 96), self.num_features), {}),
-            'CNN3dEncoder': ((self.num_features,), {}),
-            'CNN3dLSTMEncoder': ((self.num_features,), {}),
-            'PretrainedEncoder': ((encoders.CNN3dLSTMEncoder, (self.num_features,),
+            "FullyConnectedEncoder": (((3, 10, 96, 96), self.num_features), {}),
+            "CNN3dEncoder": ((self.num_features,), {}),
+            "CNN3dLSTMEncoder": ((self.num_features,), {}),
+            "PretrainedEncoder": ((encoders.CNN3dLSTMEncoder, (self.num_features,),
                                    ), {}),
 
-            'FullyConnectedMapper': ((4, 10), {}),
+            "FullyConnectedMapper": ((4, 10), {}),
 
-            'FullyConnectedDecoder': ((self.num_features, self.caption_len,
+            "FullyConnectedDecoder": ((self.num_features, self.caption_len,
                                        self.vocab_size), {}),
             'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,), {}),
             "CoupledLSTMDecoder": ((17, self.num_features, self.vocab_size, 23),
                                    {}),
-
-            'RtorchnCaptioner': ((self.vocab_size,), {}),
-            'EncoderDecoder': (
+            "RtorchnCaptioner": ((self.vocab_size,), {}),
+            "EncoderDecoder": (
                 (encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder),
                 {"encoder_kwargs": {"encoder_output_size":  self.num_features},
                  "decoder_kwargs": {"embedding_size": 17,
                                     "hidden_size": self.num_features,
                                     "vocab_size": self.vocab_size,
                                     "num_lstm_layers": 23}}),
+
         }
 
     def test_encoders(self):

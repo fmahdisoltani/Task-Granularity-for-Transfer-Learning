@@ -27,7 +27,7 @@ class PadVideo(object):
 
 class Float32Converter(object):
     def __call__(self, x):
-        return np.array(x, 'float32')
+        return np.array(x, "float32")
 
 
 class PytorchTransposer(object):

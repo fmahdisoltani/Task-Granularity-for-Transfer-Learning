@@ -1,3 +1,4 @@
+import copy
 import os
 
 import torch.optim
@@ -8,6 +9,7 @@ import ptcap.model.captioners
 import ptcap.model.decoders as dec
 import ptcap.model as all_models
 
+from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
@@ -24,36 +26,39 @@ from rtorchn.data.preprocessing import CenterCropper
 def train_model(config_obj, relative_path=""):
     # Find paths to training, validation and test sets
     training_path = os.path.join(relative_path,
-                                 config_obj.get('paths', 'train_annot'))
+                                 config_obj.get("paths", "train_annot"))
     validation_path = os.path.join(relative_path,
-                                   config_obj.get('paths', 'validation_annot'))
+                                   config_obj.get("paths", "validation_annot"))
 
     # Load attributes of config file
+    caption_type = config_obj.get("targets", "caption_type")
     checkpoint_folder = os.path.join(
-        relative_path, config_obj.get('paths', 'checkpoint_folder'))
-    frequency_valid = config_obj.get('validation', 'frequency')
+        relative_path, config_obj.get("paths", "checkpoint_folder"))
+    frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
-    num_epoch = config_obj.get('training', 'num_epochs')
-    pretrained_folder = config_obj.get('pretrained', 'pretrained_folder')
-    pretrained_file = config_obj.get('pretrained', 'pretrained_file')
+    num_epoch = config_obj.get("training", "num_epochs")
+    pretrained_folder = config_obj.get("pretrained", "pretrained_folder")
+    pretrained_file = config_obj.get("pretrained", "pretrained_file")
     pretrained_folder = os.path.join(relative_path, pretrained_folder
                                    ) if pretrained_folder else None
-    teacher_force_train = config_obj.get('training', 'teacher_force')
-    teacher_force_valid = config_obj.get('validation', 'teacher_force')
-    verbose_train = config_obj.get('training', 'verbose')
-    verbose_valid = config_obj.get('validation', 'verbose')
+    teacher_force_train = config_obj.get("training", "teacher_force")
+    teacher_force_valid = config_obj.get("validation", "teacher_force")
+    verbose_train = config_obj.get("training", "verbose")
+    verbose_valid = config_obj.get("validation", "verbose")
 
-    # Get model, loss, and optimizer types from config_file
+    # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
     loss_type = config_obj.get("loss", "type")
     optimizer_type = config_obj.get("optimizer", "type")
-    caption_type = config_obj.get("targets", "caption_type")
+    scheduler_type = config_obj.get("scheduler", "type")
+    criteria = config_obj.get("criteria", "score")
+
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get('paths', 'videos_folder')),
+                                 config_obj.get("paths", "videos_folder")),
                                  caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   config_obj.get('paths', 'videos_folder')),
+                                   config_obj.get("paths", "videos_folder")),
                                    caption_type=caption_type)
 
     # Build a tokenizer that contains all captions from annotation files
@@ -117,6 +122,14 @@ def train_model(config_obj, relative_path=""):
     optimizer = getattr(torch.optim, optimizer_type)(
         params=params, **config_obj.get("optimizer", "kwargs"))
 
+    scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
+    scheduler_kwargs["optimizer"] = optimizer
+    scheduler_kwargs["mode"] = "max" if (
+        config_obj.get("criteria", "higher_is_better")) else "min"
+
+    scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
+        **scheduler_kwargs)
+
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
@@ -126,11 +139,11 @@ def train_model(config_obj, relative_path=""):
                           verbose=config_obj.get("logging", "verbose"))
 
     # Trainer
-    trainer = Trainer(model, loss_function, optimizer, tokenizer, logger,
+    trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
                       writer, checkpoint_folder, folder=pretrained_folder,
                       filename=pretrained_file, gpus=gpus)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, num_epoch, frequency_valid,
-                  teacher_force_train, teacher_force_valid, verbose_train,
-                  verbose_valid)
+    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
+                  frequency_valid, teacher_force_train, teacher_force_valid,
+                  verbose_train, verbose_valid)
