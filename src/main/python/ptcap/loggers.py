@@ -5,8 +5,7 @@ import os
 class CustomLogger(object):
     def __init__(self, folder, tokenizer):
         self.logging_path = os.path.join(folder, "log.txt")
-        self.pred_path = os.path.join(folder, "out.txt")
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("logger")
         self.logger.setLevel(logging.INFO)
 
         fh = logging.FileHandler(self.logging_path)
@@ -23,6 +22,14 @@ class CustomLogger(object):
         self.sample_counter = 0
         self.tokenizer = tokenizer
 
+        self.outputs_path = os.path.join(folder, "out.txt")
+        self.outputs_logger = logging.getLogger("outputs_logger")
+        self.outputs_logger.setLevel(logging.CRITICAL)
+
+        fh = logging.FileHandler(self.outputs_path)
+        fh.setLevel(logging.CRITICAL)
+        self.outputs_logger.addHandler(fh)
+
     def on_epoch_begin(self, is_training):
         self.epoch_counter += int(is_training)
 
@@ -31,9 +38,7 @@ class CustomLogger(object):
         batch_msg = self.get_batch_msg(scores_dict, is_training, total_samples)
         self.logger.critical(batch_msg)
         if not is_training:
-            ofile = open(self.pred_path, "a")
-            ofile.write(batch_msg)
-
+            self.outputs_logger.critical(batch_msg)
         self.sample_counter = 0
 
     def on_batch_begin(self):
@@ -65,7 +70,6 @@ class CustomLogger(object):
 
     def log_captions_and_predictions(self, captions, predictions):
 
-        ofile = open(self.pred_path, "a")
         for cap, pred in zip(captions, predictions):
             decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
             decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
@@ -76,13 +80,10 @@ class CustomLogger(object):
             self.logger.info(decoded_cap_str)
             self.logger.info(decoded_pred_str)
 
-            ofile.write(decoded_cap_str)
-            ofile.write(decoded_pred_str)
+            self.outputs_logger.critical(decoded_cap_str)
+            self.outputs_logger.critical(decoded_pred_str)
 
-        self.logger.info("*" * 30)
-
-        ofile.write("*" * 30)
-        ofile.close()
+        self.outputs_logger.critical("*" * 30)
 
     def log_message(self, message, args):
         self.logger.critical(message.format(*args))
