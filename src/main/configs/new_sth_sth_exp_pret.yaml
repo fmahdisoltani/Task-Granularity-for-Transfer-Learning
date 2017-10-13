@@ -19,16 +19,14 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: RtorchnEncoderP
+  encoder: FCEncoder
   encoder_args:
   encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
-                   freeze: True,
-                   encoder_output_size: &enc_out_size 256,
-                   num_classes: 178}
+                   freeze: True}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
-                   hidden_size: *enc_out_size,
+                   hidden_size: 256,
                    num_lstm_layers: 1}
 
 loss:
@@ -36,15 +34,15 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.01}
+  kwargs: {lr: 0.001}
 
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
-           min_lr: 1e-8,
+           min_lr: 1.0e-8,
            optimizer: *optimizer,
            patience: 3,
-           threshold: 1e-4}
+           threshold: 1.0e-4}
 
 training:
   num_epochs: 200
@@ -53,7 +51,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 5
+  frequency: 1
   teacher_force: False
   verbose: True
 
@@ -62,11 +60,11 @@ criteria:
   higher_is_better: False
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 10}
 
 logging:
   verbose: True
-  tensorboard_frequency: 1
+  tensorboard_frequency:

@@ -43,6 +43,21 @@ class Trainer(object):
         stop_training = False
 
         while not stop_training:
+
+            # we need a first round of evaluation without any training
+            if epoch == 0:
+                valid_average_scores = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
+                    use_teacher_forcing=teacher_force_valid,
+                    verbose=verbose_valid
+                )
+
+                # remember best loss and save checkpoint
+                self.score = valid_average_scores["average_" + criteria]
+
+                self.checkpointer.save_value_csv([epoch, self.score],
+                                                 filename="valid_loss")
+
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,

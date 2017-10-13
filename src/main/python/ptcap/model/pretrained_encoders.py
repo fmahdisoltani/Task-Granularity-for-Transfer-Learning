@@ -31,6 +31,8 @@ class FCEncoder(PretrainedEncoder):
     def __init__(self, pretrained_path=None,
                  freeze=False):
 
+        # Hardcoded encoder for using FullyConvolutionalNet from 20bn_rtorchn
+
         # it thinks it's getting num_features, but it's not. what is happening
         # is equivalent to FullyConvolutionalNet(..,
         #                                     num_features=encoder_output_size)
@@ -50,11 +52,13 @@ class FCEncoder(PretrainedEncoder):
 
 class JesterEncoder(PretrainedEncoder):
 
-    # Hardcoded encoder for using JesterNet
+    # Hardcoded encoder for using JesterNet from 20bn_rtorchn
 
     def __init__(self, pretrained_path=None,
-                 freeze=False, encoder_output_size=256, num_classes=329):
+                 freeze=False, ):
 
+        encoder_output_size = 256
+        num_classes = 329
         encoder_args = (num_classes, encoder_output_size)
         super(FCEncoder, self).__init__(encoder=JesterNet,
                                               encoder_args=encoder_args,
