@@ -151,7 +151,7 @@ class Trainer(object):
                     self.writer.add_state_dict(self.model, global_step)
                     self.writer.add_gradients(self.model, global_step)
 
-                self.scheduler.optimizer.step()
+                # self.scheduler.optimizer.step()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
