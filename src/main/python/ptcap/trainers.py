@@ -13,7 +13,7 @@ from ptcap.scores import (ScoresOperator, caption_accuracy,
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpoint_path, folder=None, filename=None,
-                 gpus=None):
+                 gpus=None, clip_grad=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -27,14 +27,16 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-
+        self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
+
         self.tensorboard_frequency = 1000
         self.logger = logger
         self.logger.on_train_init(folder, filename)
+
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
@@ -144,13 +146,13 @@ class Trainer(object):
 
                 self.model.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), 1)
+                if self.clip_grad is not None:
+                    torch.nn.utils.clip_grad_norm(self.model.parameters(),
+                                                  self.clip_grad)
 
-                if (self.tensorboard_frequency is not None and
-                        global_step % self.tensorboard_frequency == 0):
-                    self.writer.add_activations(self.model, global_step)
-                    self.writer.add_state_dict(self.model, global_step)
-                    self.writer.add_gradients(self.model, global_step)
+                self.writer.add_activations(self.model, global_step)
+                self.writer.add_state_dict(self.model, global_step)
+                self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
 
