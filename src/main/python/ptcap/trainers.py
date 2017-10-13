@@ -27,12 +27,14 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.logger = logger
+
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
         self.tensorboard_frequency = 1000
+        self.logger = logger
+        self.logger.on_train_init(folder, filename)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,

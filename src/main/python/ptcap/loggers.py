@@ -49,6 +49,16 @@ class CustomLogger(object):
         if verbose:
             self.log_captions_and_predictions(captions, predictions)
 
+    def on_train_init(self, folder, filename):
+        if folder is None or filename is None:
+            self.logger.critical("Running the model from scratch")
+        else:
+            self.logger.critical("Loaded checkpoint {}/{}".
+                                 format(folder, filename))
+
+    def on_train_begin(self):
+        pass
+
     def on_train_end(self, best_score):
         self.logger.info("\nTrain complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
