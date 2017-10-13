@@ -45,35 +45,7 @@ class Trainer(object):
         while not stop_training:
 
             # we need a first round of evaluation without any training
-            if epoch == 0:
-                valid_average_scores = self.run_epoch(
-                    valid_dataloader, epoch, is_training=False,
-                    use_teacher_forcing=teacher_force_valid,
-                    verbose=verbose_valid
-                )
-
-                # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_" + criteria]
-
-                self.checkpointer.save_value_csv([epoch, self.score],
-                                                 filename="valid_loss")
-
-            self.num_epochs += 1
-            train_average_scores = self.run_epoch(train_dataloader,
-                                                  epoch, is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
-
-            train_avg_loss = train_average_scores["average_loss"]
-
-            state_dict = self.get_trainer_state()
-
-            self.checkpointer.save_latest(state_dict)
-            self.checkpointer.save_value_csv([epoch, train_avg_loss],
-                                             filename="train_loss")
-
-            # Validation
-            if (epoch + 1) % frequency_valid == 0:
+            if epoch % frequency_valid == 0:
                 valid_average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
@@ -90,6 +62,20 @@ class Trainer(object):
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
+
+            self.num_epochs += 1
+            train_average_scores = self.run_epoch(train_dataloader,
+                                                  epoch, is_training=True,
+                           use_teacher_forcing=teacher_force_train,
+                           verbose=verbose_train)
+
+            train_avg_loss = train_average_scores["average_loss"]
+
+            state_dict = self.get_trainer_state()
+
+            self.checkpointer.save_latest(state_dict)
+            self.checkpointer.save_value_csv([epoch, train_avg_loss],
+                                             filename="train_loss")
 
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
