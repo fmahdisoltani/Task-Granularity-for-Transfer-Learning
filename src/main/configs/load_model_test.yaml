@@ -56,8 +56,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: accuracy
+  higher_is_better: True
 
 targets:
   caption_type: template

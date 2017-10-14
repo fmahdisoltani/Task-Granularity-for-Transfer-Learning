@@ -5,19 +5,17 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
-                 writer, checkpoint_path, folder=None, filename=None,
-                 gpus=None):
+                 writer, checkpointer, folder=None, filename=None, gpus=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        self.checkpointer = Checkpointer(checkpoint_path)
+        self.checkpointer = checkpointer
 
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
@@ -58,7 +56,6 @@ class Trainer(object):
                 self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
-
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
@@ -151,7 +148,7 @@ class Trainer(object):
                     self.writer.add_state_dict(self.model, global_step)
                     self.writer.add_gradients(self.model, global_step)
 
-                # self.scheduler.optimizer.step()
+                self.scheduler.optimizer.step()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
