@@ -165,16 +165,16 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
+            # Take only the average of the scores in scores_dict
+            average_scores_dict = scores.get_average_scores()
+
             self.logger.on_batch_end(
-                scores.get_average_scores(), captions,
+                average_scores_dict, captions,
                 predictions, is_training, len(dataloader),
                 verbose=verbose)
 
-        self.logger.on_epoch_end(scores.get_average_scores(), is_training,
+        self.logger.on_epoch_end(average_scores_dict, is_training,
                                  total_samples=len(dataloader))
-
-        # Take only the average of the scores in scores_dict
-        average_scores_dict = scores.get_average_scores()
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
