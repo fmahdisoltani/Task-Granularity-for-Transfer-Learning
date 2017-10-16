@@ -34,6 +34,8 @@ def train_model(config_obj, relative_path=""):
     caption_type = config_obj.get("targets", "caption_type")
     checkpoint_folder = os.path.join(
         relative_path, config_obj.get("paths", "checkpoint_folder"))
+    higher_is_better = config_obj.get("criteria", "higher_is_better")
+    clip_grad = config_obj.get("training", "clip_grad")
     frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get("training", "num_epochs")
@@ -130,7 +132,9 @@ def train_model(config_obj, relative_path=""):
     scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
         **scheduler_kwargs)
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
+                            config_obj.get("logging", "tensorboard_frequency"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
