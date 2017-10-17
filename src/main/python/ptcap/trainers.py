@@ -28,11 +28,15 @@ class Trainer(object):
                               if self.use_cuda else loss_function)
 
         self.clip_grad = clip_grad
-        self.logger = logger
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
+
+        self.tensorboard_frequency = 1000
+        self.logger = logger
+        self.logger.on_train_init(folder, filename)
+
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
@@ -49,7 +53,7 @@ class Trainer(object):
                            use_teacher_forcing=teacher_force_train,
                            verbose=verbose_train)
 
-            train_avg_loss = train_average_scores["average_loss"]
+            train_avg_loss = train_average_scores["avg_loss"]
 
             state_dict = self.get_trainer_state()
 
@@ -66,7 +70,7 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_" + criteria]
+                self.score = valid_average_scores["avg_" + criteria]
 
                 self.scheduler.step(self.score)
 
@@ -79,7 +83,7 @@ class Trainer(object):
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
 
-        self.logger.log_train_end(self.scheduler.best)
+        self.logger.on_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
@@ -120,14 +124,14 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+        self.logger.on_epoch_begin(is_training)
 
-        # Log at the beginning of epoch
-        self.logger.log_epoch_begin(is_training, epoch + 1)
-      
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
+            self.logger.on_batch_begin()
+
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
@@ -163,17 +167,16 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            # Log at the end of batch
-            self.logger.log_batch_end(
-                scores.get_average_scores(), self.tokenizer, captions,
-                predictions, is_training, sample_counter + 1, len(dataloader),
-                verbose)
+            # Take only the average of the scores in scores_dict
+            average_scores_dict = scores.get_average_scores()
 
-        # Take only the average of the scores in scores_dict
-        average_scores_dict = scores.get_average_scores()
+            self.logger.on_batch_end(
+                average_scores_dict, captions,
+                predictions, is_training, len(dataloader),
+                verbose=verbose)
 
-        # Log at the end of epoch
-        self.logger.log_epoch_end(average_scores_dict)
+        self.logger.on_epoch_end(average_scores_dict, is_training,
+                                 total_samples=len(dataloader))
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
