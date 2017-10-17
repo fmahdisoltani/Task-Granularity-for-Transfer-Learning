@@ -25,19 +25,21 @@ class TensorboardAdapter(object):
         the pytorch model.
     """
 
-    def __init__(self, log_dir=None):
+    def __init__(self, log_dir=None, frequency=None):
         self.summary_writer = SummaryWriter(log_dir=log_dir)
+        self.frequency = frequency
 
     def add_gradients(self, model, global_step):
         """
             Adds a visualization of the model's gradients.
         """
 
-        for param_name, param_value in model.named_parameters():
-            if param_value.grad is not None:
-                self.summary_writer.add_histogram(
-                    param_name + "_grad", param_value.grad.cpu().data.numpy(),
-                    global_step)
+        if self.frequency and global_step % self.frequency == 0:
+            for param_name, param_value in model.named_parameters():
+                if param_value.requires_grad:
+                    self.summary_writer.add_histogram(
+                        param_name + "_grad", param_value.grad.cpu().data.numpy(),
+                        global_step)
 
     def add_graph(self, model, input_dims=None, model_output=None, **kwargs):
         """
@@ -67,20 +69,22 @@ class TensorboardAdapter(object):
             Visualizes the contents of model.state_dict().
         """
 
-        model_state_dict = model.state_dict()
-        for key, value in model_state_dict.items():
-            self.summary_writer.add_histogram(key, value.cpu().numpy(),
-                                              global_step)
+        if self.frequency and global_step % self.frequency == 0:
+            model_state_dict = model.state_dict()
+            for key, value in model_state_dict.items():
+                self.summary_writer.add_histogram(key, value.cpu().numpy(),
+                                                  global_step)
 
     def add_activations(self, model, global_step):
         """
             Visualizes the variables in vars_dict_list.
         """
 
-        vars_dict = model.activations
-        for key, value in vars_dict.items():
-            self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
-                                              global_step)
+        if self.frequency and global_step % self.frequency == 0:
+            vars_dict = model.activations
+            for key, value in vars_dict.items():
+                self.summary_writer.add_histogram(key, value.cpu().data.numpy(),
+                                                  global_step)
 
     def close(self):
         """
@@ -97,8 +101,9 @@ class Seq2seqAdapter(TensorboardAdapter):
         compared to conventional feedforward classifiers.
     """
 
-    def __init__(self, log_dir=None):
-        super(Seq2seqAdapter, self).__init__(log_dir=log_dir)
+    def __init__(self, log_dir=None, frequency=None):
+        super(Seq2seqAdapter, self).__init__(log_dir=log_dir,
+                                             frequency=frequency)
 
     def add_graph(self, model, pair_dims=None, model_output=None, **kwargs):
         assert len(pair_dims) == 2
