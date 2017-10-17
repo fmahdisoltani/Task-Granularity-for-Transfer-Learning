@@ -1,17 +1,17 @@
+import torch
+
 from collections import OrderedDict
 from collections import namedtuple
 
-import torch
-
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (MultiScorerOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
-from pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.meteor.meteor import Meteor
-from pycocoevalcap.metrics import MultiScorer
-from pycocoevalcap.rouge.rouge import Rouge
 
 
 class Trainer(object):
