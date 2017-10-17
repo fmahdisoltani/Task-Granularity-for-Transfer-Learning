@@ -28,8 +28,7 @@ class PretrainedEncoder(Encoder):
 
 class FCEncoder(PretrainedEncoder):
 
-    def __init__(self, pretrained_path=None,
-                 freeze=False):
+    def __init__(self, pretrained_path=None, freeze=False):
 
         # Hardcoded encoder for using FullyConvolutionalNet from 20bn_rtorchn
 
@@ -41,9 +40,9 @@ class FCEncoder(PretrainedEncoder):
         num_classes = 178
         encoder_args = (num_classes, encoder_output_size)
         super(FCEncoder, self).__init__(encoder=FullyConvolutionalNet,
-                                              encoder_args=encoder_args,
-                                              pretrained_path=pretrained_path,
-                                              freeze=freeze)
+                                        encoder_args=encoder_args,
+                                        pretrained_path=pretrained_path,
+                                        freeze=freeze)
 
     def forward(self, video_batch):
         features = self.encoder.extract_features(video_batch)
@@ -53,12 +52,11 @@ class FCEncoder(PretrainedEncoder):
 class JesterEncoder(PretrainedEncoder):
 
     """
-    Hardcoded encoder for using JesterNet from 20bn_rtorchn
-    num_classes = 329 means this class expects the "supermodel" version.
+        Hardcoded encoder for using JesterNet from 20bn_rtorchn
+        num_classes = 329 means this class expects the "supermodel" version.
     """
 
-    def __init__(self, pretrained_path=None,
-                 freeze=False, ):
+    def __init__(self, pretrained_path=None, freeze=False):
 
         encoder_output_size = 256
         num_classes = 329
