@@ -1,17 +1,17 @@
-import torch
-
-from collections import namedtuple
 from collections import OrderedDict
+from collections import namedtuple
+
+import torch
 
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (ScoresOperator, caption_accuracy,
+from ptcap.scores import (MultiScorerOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
-from pycocoevalcap.pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.pycocoevalcap.meteor.meteor import Meteor
-from pycocoevalcap.pycocoevalcap.metrics import MultiScorer
-from pycocoevalcap.pycocoevalcap.rouge.rouge import Rouge
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 
 
 class Trainer(object):
@@ -31,8 +31,8 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.multiscorer = MultiScorer(BLEU=Bleu(4), METEOR=Meteor(),
-                                       ROUGE_L=Rouge())
+        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor())
+
         self.logger = logger
         self.tokenizer = tokenizer
         self.scheduler = scheduler
@@ -133,7 +133,6 @@ class Trainer(object):
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
-
         scores = MultiScorerOperator(self.get_function_dict(), self.multiscorer,
                                      self.tokenizer)
 
