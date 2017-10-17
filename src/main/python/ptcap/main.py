@@ -35,6 +35,7 @@ def train_model(config_obj, relative_path=""):
     checkpoint_folder = os.path.join(
         relative_path, config_obj.get("paths", "checkpoint_folder"))
     higher_is_better = config_obj.get("criteria", "higher_is_better")
+    clip_grad = config_obj.get("training", "clip_grad")
     frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get("training", "num_epochs")
@@ -143,7 +144,7 @@ def train_model(config_obj, relative_path=""):
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
                       writer, checkpointer, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus)
+                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, criteria, num_epoch,
