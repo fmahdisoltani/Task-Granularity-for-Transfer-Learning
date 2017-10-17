@@ -3,66 +3,97 @@ import os
 
 
 class CustomLogger(object):
-    def __init__(self, folder, verbose=True):
+    def __init__(self, folder, tokenizer):
         self.logging_path = os.path.join(folder, "log.txt")
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("logger")
         self.logger.setLevel(logging.INFO)
 
         fh = logging.FileHandler(self.logging_path)
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.CRITICAL)
         self.logger.addHandler(fh)
 
         sh = logging.StreamHandler()
         sh.terminator = ""
-        sh.setLevel(logging.WARNING)
-
-        if verbose:
-            sh.setLevel(logging.INFO)
+        sh.setLevel(logging.INFO)
 
         self.logger.addHandler(sh)
 
-        self.epoch = 0
+        self.epoch_counter = 0
+        self.sample_counter = 0
+        self.tokenizer = tokenizer
 
-    def log_captions_and_predictions(self, tokenizer, captions, predictions):
-        for cap, pred in zip(captions, predictions):
-            decoded_cap = tokenizer.decode_caption(cap.data.numpy())
-            decoded_pred = tokenizer.decode_caption(pred.data.numpy())
+        self.outputs_path = os.path.join(folder, "out.txt")
+        self.outputs_logger = logging.getLogger("outputs_logger")
+        self.outputs_logger.setLevel(logging.CRITICAL)
 
-            self.logger.info("\n__TARGET__: {}".format(decoded_cap))
-            self.logger.info("\nPREDICTION: {}\n".format(decoded_pred))
+        fh = logging.FileHandler(self.outputs_path)
+        fh.setLevel(logging.CRITICAL)
+        self.outputs_logger.addHandler(fh)
 
-        self.logger.info("*" * 30)
+    def on_epoch_begin(self, epoch_counter):
+        self.epoch_counter = epoch_counter
 
-    def log_batch_begin(self):
-        raise NotImplementedError
+    def on_epoch_end(self, scores_dict, is_training, total_samples):
 
-    def log_batch_end(self, scores_dict, tokenizer, captions, predictions,
-                      is_training, sample_counter, total_samples, verbose):
-        phase = "Training" if is_training else "Validating"
-        self.logger.info("\rEpoch {} - {} - batch {}/{} - ".
-                         format(self.epoch, phase, sample_counter,
-                                total_samples))
-        self.log_dict(scores_dict)
+        batch_msg = self.get_batch_msg(scores_dict, is_training, total_samples)
+        self.logger.critical(batch_msg)
+        if not is_training:
+            self.outputs_logger.critical(batch_msg)
+        self.sample_counter = 0
+
+    def on_batch_begin(self):
+        self.sample_counter += 1
+
+    def on_batch_end(self, scores_dict, captions, predictions, is_training,
+                     total_samples, verbose):
+
+        batch_msg = self.get_batch_msg(scores_dict, is_training, total_samples)
+
+        self.logger.info(batch_msg)
+
         if verbose:
-            self.log_captions_and_predictions(tokenizer, captions, predictions)
+            self.log_captions_and_predictions(captions, predictions)
 
-    def log_dict(self, scores_dict):
-        for key, value in scores_dict.items():
-            self.logger.info("{}: {:.4} ".format(key, value))
+    def on_train_init(self, folder, filename):
+        if folder is None or filename is None:
+            self.logger.critical("Running the model from scratch")
+        else:
+            self.logger.critical("Loaded checkpoint {}/{}".
+                                 format(folder, filename))
 
-    def log_epoch_begin(self, is_training, epoch_counter):
-        phase = "Training" if is_training else "Validating"
-        self.logger.info("Epoch {} - {}\n".format(epoch_counter, phase))
-        self.epoch = epoch_counter
+    def on_train_begin(self):
+        pass
 
-    def log_epoch_end(self, scores_dict):
-        self.logger.info("\n")
-        self.log_dict(scores_dict)
-        self.logger.info("\n")
-
-    def log_train_end(self, best_score):
+    def on_train_end(self, best_score):
         self.logger.info("\nTraining complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
 
+    def log_captions_and_predictions(self, captions, predictions):
+
+        for cap, pred in zip(captions, predictions):
+            decoded_cap = self.tokenizer.decode_caption(cap.data.numpy())
+            decoded_pred = self.tokenizer.decode_caption(pred.data.numpy())
+
+            decoded_cap_str = "\n__TARGET__: {}".format(decoded_cap)
+            decoded_pred_str = "\nPREDICTION: {}\n".format(decoded_pred)
+
+            self.logger.info(decoded_cap_str)
+            self.logger.info(decoded_pred_str)
+
+            self.outputs_logger.critical(decoded_cap_str)
+            self.outputs_logger.critical(decoded_pred_str)
+
+        self.outputs_logger.critical("*" * 30)
+
     def log_message(self, message, args):
-        self.logger.info(message.format(*args))
+        self.logger.critical(message.format(*args))
+
+    def get_batch_msg(self, scores_dict, is_training, total_samples):
+        phase = "Train" if is_training else "Valid"
+        msg = ("\rEpoch {} - {} - batch {}/{} - ".
+                         format(self.epoch_counter, phase, self.sample_counter,
+                                total_samples))
+        for key, value in scores_dict.items():
+            msg += "{}: {:.4} ".format(key, value)
+
+        return msg
