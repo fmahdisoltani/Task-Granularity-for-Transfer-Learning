@@ -30,8 +30,8 @@ class CustomLogger(object):
         fh.setLevel(logging.CRITICAL)
         self.outputs_logger.addHandler(fh)
 
-    def on_epoch_begin(self, is_training):
-        self.epoch_counter += int(is_training)
+    def on_epoch_begin(self, epoch_counter):
+        self.epoch_counter = epoch_counter
 
     def on_epoch_end(self, scores_dict, is_training, total_samples):
 
@@ -65,7 +65,7 @@ class CustomLogger(object):
         pass
 
     def on_train_end(self, best_score):
-        self.logger.info("\nTrain complete!!!")
+        self.logger.info("\nTraining complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
 
     def log_captions_and_predictions(self, captions, predictions):
