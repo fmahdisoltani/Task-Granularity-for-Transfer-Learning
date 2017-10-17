@@ -15,7 +15,7 @@ from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
@@ -79,11 +79,11 @@ def train_model(config_obj, relative_path=""):
                                 prep.Float32Converter(),
                                 prep.PytorchTransposer()])
 
-    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+    training_set = GulpVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
                                      preprocess=preprocessor)
 
-    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+    validation_set = GulpVideoDataset(annotation_parser=validation_parser,
                                        tokenizer=tokenizer,
                                        preprocess=val_preprocessor)
 
@@ -144,7 +144,7 @@ def train_model(config_obj, relative_path=""):
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
                       writer, checkpoint_folder, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad)
+                      filename=pretrained_file, gpus=gpus)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, criteria, num_epoch,

@@ -4,6 +4,7 @@ import glob
 from PIL import Image
 
 from torch.utils.data import Dataset
+from gulpio import GulpDirectory
 
 
 class VideoDataset(Dataset):
@@ -76,3 +77,17 @@ class NumpyVideoDataset(VideoDataset):
         path = glob.glob(dirname + "/*.npz")[0]
         video = np.load(path)["arr_0"]
         return video
+    
+
+class GulpVideoDataset(VideoDataset):
+    def __init__(self):
+        super().__init__()
+
+    def _get_video(self, index):
+
+        # instantiate the GulpDirectory
+        gulp_directory = GulpDirectory("/tmp/something_something_gulps")
+
+        frames, meta = gulp_directory[index]
+
+        return np.array(frames)

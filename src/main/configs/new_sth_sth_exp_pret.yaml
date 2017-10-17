@@ -1,14 +1,14 @@
 paths:
   videos_folder: &vidpath /data/20bn-somethingsomething/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder:
-  pretrained_file:
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_tmp_unfrozen/
+  pretrained_file: model.latest
 
 device:
   synchronize_gpu: &sync True
@@ -48,12 +48,12 @@ scheduler:
 
 training:
   num_epochs: 200
-  clip_grad: 1
+  clip_grad:
   teacher_force: True
   verbose: False
 
 validation:
-  frequency: 5
+  frequency: 1
   teacher_force: False
   verbose: True
 
@@ -69,4 +69,4 @@ tokenizer:
 
 logging:
   verbose: True
-  tensorboard_frequency: 1
+  tensorboard_frequency: 1000
