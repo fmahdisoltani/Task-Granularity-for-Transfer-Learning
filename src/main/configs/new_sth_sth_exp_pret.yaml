@@ -1,6 +1,6 @@
 paths:
   videos_folder: &vidpath /data/20bn-somethingsomething/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth2/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz

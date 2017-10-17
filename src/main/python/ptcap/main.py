@@ -125,17 +125,16 @@ def train_model(config_obj, relative_path=""):
 
     scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
     scheduler_kwargs["optimizer"] = optimizer
-    scheduler_kwargs["mode"] = "max" if (
-        config_obj.get("criteria", "higher_is_better")) else "min"
+    scheduler_kwargs["mode"] = "max" if higher_is_better else "min"
 
     scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
         **scheduler_kwargs)
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
-                            config_obj.get("logging", "tensorboard_frequency"))
-
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
+
+    checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
     # Setup the logger
     logger = CustomLogger(folder=checkpoint_folder,
@@ -143,7 +142,7 @@ def train_model(config_obj, relative_path=""):
 
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
-                      writer, checkpoint_folder, folder=pretrained_folder,
+                      writer, checkpointer, folder=pretrained_folder,
                       filename=pretrained_file, gpus=gpus)
 
     # Train the Model

@@ -5,19 +5,18 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
-                 writer, checkpoint_path, folder=None, filename=None,
-                 gpus=None):
+                 writer, checkpointer, folder=None, filename=None,
+                 gpus=None, clip_grad=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        self.checkpointer = Checkpointer(checkpoint_path)
+        self.checkpointer = checkpointer
 
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
@@ -27,7 +26,7 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        # self.clip_grad = clip_grad
+        self.clip_grad = clip_grad
         self.logger = logger
         self.tokenizer = tokenizer
         self.scheduler = scheduler
@@ -58,7 +57,6 @@ class Trainer(object):
                 self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
-
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
@@ -66,8 +64,8 @@ class Trainer(object):
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
+                                                  use_teacher_forcing=teacher_force_train,
+                                                  verbose=verbose_train)
 
             train_avg_loss = train_average_scores["average_loss"]
 
@@ -92,7 +90,7 @@ class Trainer(object):
 
     def update_stop_training(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
-                         self.scheduler.optimizer.param_groups])
+                          self.scheduler.optimizer.param_groups])
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
 
@@ -124,7 +122,7 @@ class Trainer(object):
 
         # Log at the beginning of epoch
         self.logger.log_epoch_begin(is_training, epoch + 1)
-      
+
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
@@ -143,15 +141,15 @@ class Trainer(object):
 
                 self.model.zero_grad()
                 loss.backward()
-                #if self.clip_grad is not None:
-                #    torch.nn.utils.clip_grad_norm(self.model.parameters(),
-                #                                  self.clip_grad)
+                if self.clip_grad is not None:
+                    torch.nn.utils.clip_grad_norm(self.model.parameters(),
+                                                  self.clip_grad)
 
                 self.writer.add_activations(self.model, global_step)
                 self.writer.add_state_dict(self.model, global_step)
                 self.writer.add_gradients(self.model, global_step)
 
-                # self.scheduler.optimizer.step()
+                self.scheduler.optimizer.step()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
