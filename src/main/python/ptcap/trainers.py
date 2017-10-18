@@ -10,7 +10,7 @@ from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (MultiScorerOperator, caption_accuracy,
+from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
@@ -31,7 +31,8 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor())
+        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(),
+                                       METEOR=Meteor())
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
@@ -117,14 +118,16 @@ class Trainer(object):
 
         return False
 
-    def get_function_dict(self):
+    def get_functions(self):
 
-        function_dict = OrderedDict()
+        function_dict = []
 
-        function_dict["loss"] = loss_to_numpy
-        function_dict["accuracy"] = token_accuracy
-        function_dict["first_accuracy"] = first_token_accuracy
-        function_dict["caption_accuracy"] = caption_accuracy
+        function_dict.append(loss_to_numpy)
+        function_dict.append(token_accuracy)
+        function_dict.append(first_token_accuracy)
+        function_dict.append(caption_accuracy)
+        function_dict.append(MultiScoreAdapter(self.multiscorer,
+                                               self.tokenizer))
 
         return function_dict
 
@@ -136,8 +139,8 @@ class Trainer(object):
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
-        scores = MultiScorerOperator(self.get_function_dict(), self.multiscorer,
-                                     self.tokenizer)
+
+        scores = ScoresOperator(self.get_functions())
 
         for sample_counter, (videos, string_captions,
                              captions) in enumerate(dataloader):

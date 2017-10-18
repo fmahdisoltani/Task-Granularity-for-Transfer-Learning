@@ -20,8 +20,8 @@ class ScoreTests(unittest.TestCase):
         """
             Test when the moving average is getting random input.
         """
-        scores_operator = ScoresOperator(
-            OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
+        scores_operator = ScoresOperator([lambda x: {"loss": x},
+                                          lambda x: {"add1": x + 1}])
         input_list = []
 
         for count in range(self.num_epochs):
@@ -29,7 +29,7 @@ class ScoreTests(unittest.TestCase):
             input_list.append(random_num)
             scores_dict = scores_operator.run_scores(random_num)
             scores_dict = scores_operator.update_moving_average(scores_dict,
-                                                           count + 1)
+                                                                count + 1)
             expected = np.mean(input_list)
 
             self.assertAlmostEqual(scores_dict["avg_loss"], expected, 14)
@@ -39,33 +39,30 @@ class ScoreTests(unittest.TestCase):
             Test when the moving average is getting the same input (0 and 1
             here).
         """
-        scores_operator = ScoresOperator(
-            OrderedDict([("loss", lambda x: x), ("Add1", lambda x: x + 1)]))
+        scores_operator = ScoresOperator([lambda x: {"loss": x},
+                                          lambda x: {"add1": x + 1}])
 
         for value in range(2):
             for count in range(self.num_epochs):
                 scores_dict = scores_operator.run_scores(value)
                 scores_dict = scores_operator.update_moving_average(scores_dict,
-                                                               count + 1)
+                                                                    count + 1)
                 self.assertEqual(scores_dict["avg_loss"], value)
 
     def test_run_scores(self):
-        scores_operator = ScoresOperator(OrderedDict([("add1",
-                                                         lambda x: x + 1)]))
+        scores_operator = ScoresOperator([lambda x: {"add1": x + 1}])
         scores_dict = scores_operator.run_scores(1)
         self.assertEqual(scores_dict["add1"], 2)
 
     def test_compute_scores(self):
-        scores_operator = ScoresOperator(OrderedDict([("add1",
-                                                         lambda x: x + 1)]))
+        scores_operator = ScoresOperator([lambda x: {"add1": x + 1}])
         for count in range(self.num_epochs):
             scores_dict = scores_operator.compute_scores(1, count + 1)
             self.assertEqual(scores_dict["add1"], 2)
             self.assertEqual(scores_dict["avg_add1"], 2)
 
     def test_get_average_scores(self):
-        scores_operator = ScoresOperator(OrderedDict([("add1",
-                                                         lambda x: x + 1)]))
+        scores_operator = ScoresOperator([lambda x: {"add1": x + 1}])
         for count in range(self.num_epochs):
             scores_operator.compute_scores(1, count + 1)
         average_scores = scores_operator.get_average_scores()
