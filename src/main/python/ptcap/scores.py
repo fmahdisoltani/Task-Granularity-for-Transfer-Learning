@@ -88,7 +88,7 @@ class ScoresOperator(object):
 
 class MultiScorerOperator(ScoresOperator):
     def __init__(self, functions_dict, multiscorer, tokenizer):
-        super(MultiScorerOperator, self).__init__(functions_dict)
+        super().__init__(functions_dict)
         self.multiscorer = multiscorer
         self.scores_dict.update({self.average + "_" + scorer: 0 for scorer in
                                  self.multiscorer.scorers})
@@ -106,9 +106,7 @@ class MultiScorerOperator(ScoresOperator):
                                                 )})
 
     def run_scores(self, score_attr):
-        scores_dict = OrderedDict()
-        for score, score_function in self.functions_dict.items():
-            scores_dict[score] = score_function(score_attr)
+        scores_dict = ScoresOperator.run_scores(self, score_attr)
         multiscore_dict = self.multiscore(score_attr)
         return OrderedDict(multiscore_dict, **scores_dict)
 
