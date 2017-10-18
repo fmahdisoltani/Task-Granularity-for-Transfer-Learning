@@ -38,6 +38,7 @@ def simulate_training(config_path):
                                                "tokenizer_dicts"])
     return checkpoint_folder
 
+
 def setup_fake_video_data():
     # Make sure you have a clean start
     fkdata.remove_dir(fkdata.TMP_DIR)
