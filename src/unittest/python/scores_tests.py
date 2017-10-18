@@ -32,7 +32,7 @@ class ScoreTests(unittest.TestCase):
                                                            count + 1)
             expected = np.mean(input_list)
 
-            self.assertAlmostEqual(scores_dict["average_loss"], expected, 14)
+            self.assertAlmostEqual(scores_dict["avg_loss"], expected, 14)
 
     def test_input_same(self):
         """
@@ -47,7 +47,7 @@ class ScoreTests(unittest.TestCase):
                 scores_dict = scores_operator.run_scores(value)
                 scores_dict = scores_operator.update_moving_average(scores_dict,
                                                                count + 1)
-                self.assertEqual(scores_dict["average_loss"], value)
+                self.assertEqual(scores_dict["avg_loss"], value)
 
     def test_run_scores(self):
         scores_operator = ScoresOperator(OrderedDict([("add1",
@@ -61,7 +61,7 @@ class ScoreTests(unittest.TestCase):
         for count in range(self.num_epochs):
             scores_dict = scores_operator.compute_scores(1, count + 1)
             self.assertEqual(scores_dict["add1"], 2)
-            self.assertEqual(scores_dict["average_add1"], 2)
+            self.assertEqual(scores_dict["avg_add1"], 2)
 
     def test_get_average_scores(self):
         scores_operator = ScoresOperator(OrderedDict([("add1",
@@ -69,7 +69,7 @@ class ScoreTests(unittest.TestCase):
         for count in range(self.num_epochs):
             scores_operator.compute_scores(1, count + 1)
         average_scores = scores_operator.get_average_scores()
-        self.assertEqual(list(average_scores.keys()), ["average_add1"])
+        self.assertEqual(list(average_scores.keys()), ["avg_add1"])
 
 
 class TestTokenLevelAccuracy(unittest.TestCase):

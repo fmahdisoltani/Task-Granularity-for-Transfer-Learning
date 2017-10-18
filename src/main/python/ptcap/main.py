@@ -139,8 +139,7 @@ def train_model(config_obj, relative_path=""):
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # Setup the logger
-    logger = CustomLogger(folder=checkpoint_folder,
-                          verbose=config_obj.get("logging", "verbose"))
+    logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
