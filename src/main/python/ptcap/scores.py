@@ -39,16 +39,15 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
 
 
 class ScoresOperator(object):
-    def __init__(self, functions_dict):
+    def __init__(self, functions_list):
         """
             Initializes scores_dict and functions_dict.
         Args:
-            functions_dict: An OrderedDict whose keys are strings and values are
-                the functions that will be applied.
+            functions_list: A list of the functions that will be applied.
         """
 
         self.average = "avg"
-        self.functions_dict = functions_dict
+        self.functions_list = functions_list
         self.scores_dict = OrderedDict()
 
     def compute_scores(self, score_attr, count):
@@ -70,7 +69,7 @@ class ScoresOperator(object):
 
     def run_scores(self, score_attr):
         scores_dict = OrderedDict()
-        for score_function in self.functions_dict:
+        for score_function in self.functions_list:
             scores_dict.update(score_function(score_attr))
         return scores_dict
 
