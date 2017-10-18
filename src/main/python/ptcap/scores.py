@@ -46,20 +46,40 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
 
 
 class LCS(object):
+    def __init__(self, functions_list, tokenizer):
+        self.functions_list = functions_list
+        self.tokenizer = tokenizer
+
+    def __call__(self, outputs):
+        string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
+                              for str_pred in outputs.predictions]
+        return self.score(string_predictions, outputs.string_captions)
+
     def score(self, predictions, captions):
-        num_predictions = len(predictions)
-        assert num_predictions == len(captions)
-        average_precision = 0
-        average_recall = 0
-        for i in range(num_predictions):
-            _, lcs_score = self.compute_lcs(predictions[i], captions[i])
-            precision = lcs_score/len(predictions[i])
-            recall = lcs_score/len(captions[i])
-            average_precision += (precision - average_precision)/(i + 1)
-            average_recall += (recall - average_recall)/(i + 1)
-        f1_score = fscore(average_precision, average_recall)
-        g_measure = gmeasure(average_precision, average_recall)
-        return average_precision, average_recall, f1_score, g_measure
+        assert len(predictions) == len(captions)
+        batch_precision = 0
+        batch_recall = 0
+        batch_f1_score = 0
+        batch_g_measure = 0
+        for count, (prediction,caption) in enumerate(zip(predictions,
+                                                         captions)):
+            _, lcs_score = self.compute_lcs(prediction, caption)
+            precision = lcs_score/len(prediction)
+            recall = lcs_score/len(caption)
+            f1_score = fscore(precision, recall)
+            g_measure = gmeasure(precision, recall)
+
+            batch_precision += (precision - batch_precision) / (count + 1)
+            batch_recall += (recall - batch_recall) / (count + 1)
+            batch_f1_score += (f1_score - batch_f1_score) / (count + 1)
+            batch_g_measure += (g_measure - batch_g_measure) / (count + 1)
+
+        metrics_dict = {"precision": batch_precision,
+                        "recall": batch_recall,
+                        "f1_score": batch_f1_score,
+                        "g_measure": batch_g_measure
+                        }
+        return metrics_dict
 
     def compute_lcs(self, prediction, caption):
         num_rows = len(prediction)
