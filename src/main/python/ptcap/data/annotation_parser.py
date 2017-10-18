@@ -22,6 +22,9 @@ class AnnotationParser(object):
         return [os.path.join(self.video_root, name.split("/")[0])
                 for name in files]
 
+    def get_video_ids(self):
+        return [id for id in self.annotations["id"]]
+
     def get_captions(self):
         return [p for p in self.annotations[self.caption_type]]
 

@@ -53,14 +53,13 @@ def train_model(config_obj, relative_path=""):
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
+    videos_folder = config_obj.get("paths", "videos_folder")
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get("paths", "videos_folder")),
-                                 caption_type=caption_type)
+                                 videos_folder), caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   config_obj.get("paths", "videos_folder")),
-                                   caption_type=caption_type)
+                                   videos_folder), caption_type=caption_type)
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
@@ -80,12 +79,14 @@ def train_model(config_obj, relative_path=""):
                                 prep.PytorchTransposer()])
 
     training_set = GulpVideoDataset(annotation_parser=training_parser,
-                                     tokenizer=tokenizer,
-                                     preprocess=preprocessor)
+                                    tokenizer=tokenizer,
+                                    preprocess=preprocessor,
+                                    gulp_dir=videos_folder)
 
     validation_set = GulpVideoDataset(annotation_parser=validation_parser,
-                                       tokenizer=tokenizer,
-                                       preprocess=val_preprocessor)
+                                      tokenizer=tokenizer,
+                                      preprocess=val_preprocessor,
+                                      gulp_dir=videos_folder)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
