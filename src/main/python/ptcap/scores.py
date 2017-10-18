@@ -42,7 +42,7 @@ class ScoresOperator(object):
                 the functions that will be applied.
         """
 
-        self.average = "average"
+        self.average = "avg"
         self.functions_dict = functions_dict
         self.scores_dict = OrderedDict({self.average + "_" + score: 0 for score
                                         in self.functions_dict})
