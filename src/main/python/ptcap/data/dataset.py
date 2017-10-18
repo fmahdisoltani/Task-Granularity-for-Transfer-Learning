@@ -80,14 +80,32 @@ class NumpyVideoDataset(VideoDataset):
     
 
 class GulpVideoDataset(VideoDataset):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.video_paths = "/data/20bn-somethingsomething/videos_gulp"
+        self.gulp_dir = GulpDirectory(self.video_paths)
+        # gulp_dir.all_meta_dicts
+
+        # id_ = self.video_paths[index]
+        # frames, meta = self.path[id_]
+        # return frames, meta
+
+        # return np.array(frames)
+
+        # self.xuft = [gfile[vid_id]['meta_data'][0]['id'] for gfile in
+        #         self.gulp_dir.all_meta_dicts for vid_id in gfile]
+
+        self.xuft = [vid_id for gfile in
+                     self.gulp_dir.all_meta_dicts for vid_id in gfile]
+
+    def __len__(self):
+        return len(self.xuft)
 
     def _get_video(self, index):
 
         # instantiate the GulpDirectory
-        gulp_directory = GulpDirectory("/tmp/something_something_gulps")
 
-        frames, meta = gulp_directory[index]
-
-        return np.array(frames)
+        frames, _ = self.gulp_dir[self.xuft[index]]
+        print("*" * 100)
+        print(self.xuft[index])
+        return np.array([np.array(f) for f in frames])
