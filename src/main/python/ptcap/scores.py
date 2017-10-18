@@ -4,7 +4,10 @@ from collections import OrderedDict
 
 
 def caption_accuracy(outputs):
-    return caption_level_accuracy(outputs.captions, outputs.predictions)
+    caption_level_accuracy_ = caption_level_accuracy(outputs.captions,
+                                                     outputs.predictions)
+    return {"caption_accuracy": caption_level_accuracy_}
+
 
 def caption_level_accuracy(captions, predictions):
     _, caption_len = captions.size()
@@ -14,21 +17,23 @@ def caption_level_accuracy(captions, predictions):
 
 
 def first_token_accuracy(outputs):
-    return token_accuracy(outputs, 1)
+    first_token_accuracy_ = token_level_accuracy(outputs.captions,
+                                                 outputs.predictions, 1)
+    return {"first_accuracy": first_token_accuracy_}
 
 
 def loss_to_numpy(score_attr):
-    return score_attr.loss.data.cpu().numpy()[0]
+    return {"loss": score_attr.loss.data.cpu().numpy()[0]}
 
 
 def token_accuracy(outputs, num_tokens=None):
-    return token_level_accuracy(outputs.captions, outputs.predictions,
-                                num_tokens)
+    token_accuracy_ = token_level_accuracy(outputs.captions,
+                                           outputs.predictions, num_tokens)
+    return {"accuracy": token_accuracy_}
 
 
 def token_level_accuracy(captions, predictions, num_tokens=None):
-    equal_values = captions[:, 0:num_tokens].eq(
-        predictions[:, 0:num_tokens])
+    equal_values = captions[:, 0:num_tokens].eq(predictions[:, 0:num_tokens])
     accuracy = equal_values.float().mean().data.numpy()[0] * 100.0
     return accuracy
 
@@ -44,14 +49,13 @@ class ScoresOperator(object):
 
         self.average = "avg"
         self.functions_dict = functions_dict
-        self.scores_dict = OrderedDict({self.average + "_" + score: 0 for score
-                                        in self.functions_dict})
+        self.scores_dict = OrderedDict()
 
     def compute_scores(self, score_attr, count):
         """
             Computes all the scores provided by the functions_dict in __init__.
         Args:
-            parameters_list: A list of arguments to be passed to be computed by
+            score_attr: The input passed as a NamedTuple to be computed by
                 functions_dict and stored in scores_dict.
             count: An int indicating the number of iterations.
         Returns:
@@ -66,8 +70,8 @@ class ScoresOperator(object):
 
     def run_scores(self, score_attr):
         scores_dict = OrderedDict()
-        for score, score_function in self.functions_dict.items():
-            scores_dict[score] = score_function(score_attr)
+        for score_function in self.functions_dict:
+            scores_dict.update(score_function(score_attr))
         return scores_dict
 
     def get_average_scores(self):
@@ -80,35 +84,20 @@ class ScoresOperator(object):
         scores_list = list(scores_dict.keys())
         for score in scores_list:
             average_score = self.average + "_" + score
-            self.scores_dict[average_score] += (
-                (scores_dict[score] - self.scores_dict[average_score]) / count)
+            total_score = self.scores_dict.get(average_score, 0) * (count - 1)
+            self.scores_dict[average_score] = (
+                (scores_dict[score] + total_score) / count)
             scores_dict[average_score] = self.scores_dict[average_score]
         return scores_dict
 
 
-class MultiScorerOperator(ScoresOperator):
-    def __init__(self, functions_dict, multiscorer, tokenizer):
-        super().__init__(functions_dict)
+class MultiScoreAdapter(object):
+    def __init__(self, multiscorer, tokenizer):
         self.multiscorer = multiscorer
-        self.scores_dict.update({self.average + "_" + scorer: 0 for scorer in
-                                 self.multiscorer.scorers})
-        self.expand_key("BLEU")
         self.tokenizer = tokenizer
 
-    def expand_key(self, key):
-        """
-            Expand BLEU to BLEU@1, BLEU@2, BLEU@3, and BLEU@4.
-        """
-
-        self.scores_dict.pop(self.average + "_" + key)
-        self.scores_dict.update({self.average + "_" + key + "@" + str(i + 1): 0
-                                 for i in range(self.multiscorer.scorers[key]._n
-                                                )})
-
-    def run_scores(self, score_attr):
-        scores_dict = ScoresOperator.run_scores(self, score_attr)
-        multiscore_dict = self.multiscore(score_attr)
-        return OrderedDict(multiscore_dict, **scores_dict)
+    def __call__(self, score_attr):
+        return self.multiscore(score_attr)
 
     def multiscore(self, outputs):
         string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
