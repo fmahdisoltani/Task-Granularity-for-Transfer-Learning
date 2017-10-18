@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from collections import OrderedDict
@@ -5,6 +6,7 @@ from collections import OrderedDict
 
 def caption_accuracy(outputs):
     return caption_level_accuracy(outputs.captions, outputs.predictions)
+
 
 def caption_level_accuracy(captions, predictions):
     _, caption_len = captions.size()
@@ -15,6 +17,16 @@ def caption_level_accuracy(captions, predictions):
 
 def first_token_accuracy(outputs):
     return token_accuracy(outputs, 1)
+
+
+def fscore(precision, recall, beta=1):
+    numerator = (1.0 + beta**2) * precision * recall
+    denominator = (beta**2 * precision) + recall
+    return numerator/denominator
+
+
+def gmeasure(precision, recall):
+    return np.sqrt(precision * recall)
 
 
 def loss_to_numpy(score_attr):
@@ -31,6 +43,36 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
         predictions[:, 0:num_tokens])
     accuracy = equal_values.float().mean().data.numpy()[0] * 100.0
     return accuracy
+
+
+class LCS(object):
+    def score(self, predictions, captions):
+        num_predictions = len(predictions)
+        assert num_predictions == len(captions)
+        average_precision = 0
+        average_recall = 0
+        for i in range(num_predictions):
+            _, lcs_score = self.compute_lcs(predictions[i], captions[i])
+            precision = lcs_score/len(predictions[i])
+            recall = lcs_score/len(captions[i])
+            average_precision += (precision - average_precision)/(i + 1)
+            average_recall += (recall - average_recall)/(i + 1)
+        f1_score = fscore(average_precision, average_recall)
+        g_measure = gmeasure(average_precision, average_recall)
+        return average_precision, average_recall, f1_score, g_measure
+
+    def compute_lcs(self, prediction, caption):
+        num_rows = len(prediction)
+        num_cols = len(caption)
+
+        C = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
+        for i in range(1, num_rows+1):
+            for j in range(1, num_cols+1):
+                if prediction[i-1] == caption[j-1]:
+                    C[i][j] = C[i-1][j-1] + 1
+                else:
+                    C[i][j] = max(C[i][j-1], C[i-1][j])
+        return C, C[num_cols][num_rows]
 
 
 class ScoresOperator(object):
