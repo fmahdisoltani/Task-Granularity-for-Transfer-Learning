@@ -71,7 +71,7 @@ class Trainer(object):
                                                   use_teacher_forcing=teacher_force_train,
                                                   verbose=verbose_train)
 
-            train_avg_loss = train_average_scores["average_loss"]
+            train_avg_loss = train_average_scores["avg_loss"]
 
             state_dict = self.get_trainer_state()
 
