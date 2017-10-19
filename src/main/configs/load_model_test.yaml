@@ -11,7 +11,6 @@ pretrained:
   pretrained_file: model.best
 
 device:
-  synchronize_gpu: True
   gpus:
 
 dataloaders:

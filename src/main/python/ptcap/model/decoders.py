@@ -1,7 +1,6 @@
 import torch
 
 from torch import nn
-from torch.autograd import Variable
 
 from ptcap.tensorboardY import forward_hook_closure
 
@@ -36,7 +35,7 @@ class FullyConnectedDecoder(Decoder):
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+                 num_lstm_layers, num_step):
 
         super(LSTMDecoder, self).__init__()
         self.num_lstm_layers = num_lstm_layers
@@ -49,9 +48,7 @@ class LSTMDecoder(Decoder):
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
-        self.go_token = go_token
+        self.num_step = num_step
 
         self.activations = self.register_forward_hooks()
 
@@ -79,19 +76,12 @@ class LSTMDecoder(Decoder):
             sequence.
         """
 
-        batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
-
         if use_teacher_forcing:
-            # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+            probs, _ = self.apply_lstm(features, captions)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            probs = self.predict(features, captions, self.num_step)
 
         return probs
 
@@ -143,7 +133,7 @@ class LSTMDecoder(Decoder):
 class CoupledLSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_hidden_lstm, num_step):
 
         super(Decoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
@@ -152,13 +142,12 @@ class CoupledLSTMDecoder(Decoder):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1, batch_first=True)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
+                            batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
-        self.go_token = go_token
+        self.num_step = num_step
 
         self.activations = self.register_forward_hooks()
 
@@ -187,18 +176,13 @@ class CoupledLSTMDecoder(Decoder):
         """
 
         batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
 
         if use_teacher_forcing:
-            # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+            probs, _ = self.apply_lstm(features, captions)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            probs = self.predict(features, captions, self.num_step)
 
         return probs
 

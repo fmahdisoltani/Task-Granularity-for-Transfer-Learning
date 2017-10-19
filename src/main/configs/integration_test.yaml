@@ -11,7 +11,6 @@ pretrained:
   pretrained_file:
 
 device:
-  synchronize_gpu: True
   gpus:
 
 dataloaders:
@@ -27,7 +26,6 @@ model:
   decoder_kwargs: {embedding_size: 25,
                    hidden_size: *enc_out_size,
                    num_lstm_layers: 1}
-
 
 loss:
   type: SequenceCrossEntropy
