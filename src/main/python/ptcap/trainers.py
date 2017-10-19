@@ -5,19 +5,18 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.checkpointers import Checkpointer
 from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
-                 writer, checkpoint_path, folder=None, filename=None,
+                 writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        self.checkpointer = Checkpointer(checkpoint_path)
+        self.checkpointer = checkpointer
 
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
@@ -28,11 +27,15 @@ class Trainer(object):
                               if self.use_cuda else loss_function)
 
         self.clip_grad = clip_grad
-        self.logger = logger
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
+
+        self.tensorboard_frequency = 1000
+        self.logger = logger
+        self.logger.on_train_init(folder, filename)
+
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
@@ -53,24 +56,22 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_" + criteria]
+                self.score = valid_average_scores["avg_" + criteria]
 
                 self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
-
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
 
-
             self.num_epochs += 1
             train_average_scores = self.run_epoch(train_dataloader,
                                                   epoch, is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
+                                                  use_teacher_forcing=teacher_force_train,
+                                                  verbose=verbose_train)
 
-            train_avg_loss = train_average_scores["average_loss"]
+            train_avg_loss = train_average_scores["avg_loss"]
 
             state_dict = self.get_trainer_state()
 
@@ -78,29 +79,10 @@ class Trainer(object):
             self.checkpointer.save_value_csv([epoch, train_avg_loss],
                                              filename="train_loss")
 
-            # Validation
-            if (epoch + 1) % frequency_valid == 0:
-                valid_average_scores = self.run_epoch(
-                    valid_dataloader, epoch, is_training=False,
-                    use_teacher_forcing=teacher_force_valid,
-                    verbose=verbose_valid
-                )
-
-                # remember best loss and save checkpoint
-                self.score = valid_average_scores["average_" + criteria]
-
-                self.scheduler.step(self.score)
-
-                state_dict = self.get_trainer_state()
-
-                self.checkpointer.save_best(state_dict)
-                self.checkpointer.save_value_csv([epoch, self.score],
-                                                 filename="valid_loss")
-
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
 
-        self.logger.log_train_end(self.scheduler.best)
+        self.logger.on_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
@@ -112,7 +94,7 @@ class Trainer(object):
 
     def update_stop_training(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
-                         self.scheduler.optimizer.param_groups])
+                          self.scheduler.optimizer.param_groups])
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
 
@@ -141,14 +123,14 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-
-        # Log at the beginning of epoch
-        self.logger.log_epoch_begin(is_training, epoch + 1)
-      
+        self.logger.on_epoch_begin(is_training)
+        
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
+            self.logger.on_batch_begin()
+
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
@@ -184,17 +166,16 @@ class Trainer(object):
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
 
-            # Log at the end of batch
-            self.logger.log_batch_end(
-                scores.get_average_scores(), self.tokenizer, captions,
-                predictions, is_training, sample_counter + 1, len(dataloader),
-                verbose)
+            # Take only the average of the scores in scores_dict
+            average_scores_dict = scores.get_average_scores()
 
-        # Take only the average of the scores in scores_dict
-        average_scores_dict = scores.get_average_scores()
+            self.logger.on_batch_end(
+                average_scores_dict, captions,
+                predictions, is_training, len(dataloader),
+                verbose=verbose)
 
-        # Log at the end of epoch
-        self.logger.log_epoch_end(average_scores_dict)
+        self.logger.on_epoch_end(average_scores_dict, is_training,
+                                 total_samples=len(dataloader))
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)

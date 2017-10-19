@@ -34,6 +34,7 @@ def train_model(config_obj, relative_path=""):
     caption_type = config_obj.get("targets", "caption_type")
     checkpoint_folder = os.path.join(
         relative_path, config_obj.get("paths", "checkpoint_folder"))
+    higher_is_better = config_obj.get("criteria", "higher_is_better")
     clip_grad = config_obj.get("training", "clip_grad")
     frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
@@ -126,26 +127,24 @@ def train_model(config_obj, relative_path=""):
 
     scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
     scheduler_kwargs["optimizer"] = optimizer
-    scheduler_kwargs["mode"] = "max" if (
-        config_obj.get("criteria", "higher_is_better")) else "min"
+    scheduler_kwargs["mode"] = "max" if higher_is_better else "min"
 
     scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
         **scheduler_kwargs)
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
-                            config_obj.get("logging", "tensorboard_frequency"))
-
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
+    checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
+
     # Setup the logger
-    logger = CustomLogger(folder=checkpoint_folder,
-                          verbose=config_obj.get("logging", "verbose"))
+    logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
-                      writer, checkpoint_folder, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus)
+                      writer, checkpointer, folder=pretrained_folder,
+                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, criteria, num_epoch,
