@@ -30,8 +30,6 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(),
-                                       METEOR=Meteor())
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
@@ -40,7 +38,13 @@ class Trainer(object):
 
         self.tensorboard_frequency = 1000
         self.logger = logger
+
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+            self.tokenizer)
+
         self.logger.on_train_init(folder, filename)
+
 
 
     def train(self, train_dataloader, valid_dataloader, criteria,
@@ -125,8 +129,7 @@ class Trainer(object):
         function_dict.append(token_accuracy)
         function_dict.append(first_token_accuracy)
         function_dict.append(caption_accuracy)
-        function_dict.append(MultiScoreAdapter(self.multiscorer,
-                                               self.tokenizer))
+        function_dict.append(self.multiscore_adapter)
 
         return function_dict
 
