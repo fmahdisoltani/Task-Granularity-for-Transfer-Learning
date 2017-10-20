@@ -1,5 +1,3 @@
-import time
-
 import torch
 
 from collections import namedtuple
@@ -24,7 +22,8 @@ class Trainer(object):
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
         self.model = self.model if self.gpus is None else (
-            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda())
+            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(
+                self.gpus[0]))
         self.loss_function = loss_function if self.gpus is None else (
             loss_function.cuda(self.gpus[0]))
 
@@ -43,7 +42,7 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        start_time = time.time()
+        self.logger.on_train_begin()
 
         epoch = 0
         stop_training = False
@@ -85,11 +84,7 @@ class Trainer(object):
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
 
-        end_time = time.time()
-
         self.logger.on_train_end(self.scheduler.best)
-
-        print("program took {}".format(end_time - start_time))
 
     def get_trainer_state(self):
         return {

@@ -65,8 +65,8 @@ class LSTMDecoder(Decoder):
     def forward(self, features, captions, use_teacher_forcing=False):
         """
         This method computes the forward pass of the decoder with or without
-        teacher forcing. It should be noted that the <GO> token is
-        automatically appended to the input captions.
+        teacher forcing. It should be noted that the <GO> token is assumed to be
+        present in the input captions.
         Args:
             features: Video features extracted by the encoder.
             captions: Video captions (required if use_teacher_forcing=True).
@@ -166,8 +166,8 @@ class CoupledLSTMDecoder(Decoder):
     def forward(self, features, captions, use_teacher_forcing=False):
         """
         This method computes the forward pass of the decoder with or without
-        teacher forcing. It should be noted that the <GO> token is
-        automatically appended to the input captions.
+        teacher forcing. It should be noted that the <GO> token is assumed to be
+        present in the input captions.
         Args:
             features: Video features extracted by the encoder.
             captions: Video captions (required if use_teacher_forcing=True).
@@ -176,8 +176,6 @@ class CoupledLSTMDecoder(Decoder):
             The probability distribution over the vocabulary across the entire
             sequence.
         """
-
-        batch_size, num_step = captions.size()
 
         if use_teacher_forcing:
             probs, _ = self.apply_lstm(features, captions)
@@ -198,6 +196,8 @@ class CoupledLSTMDecoder(Decoder):
         expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
         expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
+
+        self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
