@@ -121,7 +121,7 @@ class Trainer(object):
 
         return False
 
-    def get_functions(self):
+    def get_scoring_functions(self):
 
         function_dict = []
 
@@ -142,7 +142,7 @@ class Trainer(object):
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
 
-        scores = ScoresOperator(self.get_functions())
+        scores = ScoresOperator(self.get_scoring_functions())
 
         for sample_counter, (videos, string_captions,
                              captions) in enumerate(dataloader):
