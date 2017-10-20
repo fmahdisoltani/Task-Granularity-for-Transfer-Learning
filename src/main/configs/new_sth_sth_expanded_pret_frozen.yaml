@@ -1,28 +1,29 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_tmp_unfrozen_gulp_2/
+
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_frozen_gulp_cutoff/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_tmp_frozen_gulp_2/
-  pretrained_file: model.latest
+  pretrained_folder:
+  pretrained_file:
 
 device:
   synchronize_gpu: &sync True
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 32, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
   encoder: FCEncoder
   encoder_args:
   encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
-                   freeze: False}
+                   freeze: True}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -60,10 +61,10 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: template
+  caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13}
+  kwargs: {user_maxlen: 13, cutoff: 1}
 
 logging:
   verbose: True

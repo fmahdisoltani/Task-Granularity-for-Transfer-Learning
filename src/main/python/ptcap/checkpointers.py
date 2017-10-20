@@ -39,7 +39,7 @@ class Checkpointer(object):
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
             self.set_best_score(checkpoint["score"])
-            optimizer.load_state_dict(checkpoint["optimizer"])
+            #optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
