@@ -1,11 +1,15 @@
 import torch
 
-from collections import namedtuple
 from collections import OrderedDict
+from collections import namedtuple
 
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, caption_accuracy,
+from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
@@ -34,7 +38,13 @@ class Trainer(object):
 
         self.tensorboard_frequency = 1000
         self.logger = logger
+
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+            self.tokenizer)
+
         self.logger.on_train_init(folder, filename)
+
 
 
     def train(self, train_dataloader, valid_dataloader, criteria,
@@ -111,26 +121,33 @@ class Trainer(object):
 
         return False
 
-    def get_function_dict(self):
+    def get_scoring_functions(self):
 
-        function_dict = OrderedDict()
-        function_dict["loss"] = loss_to_numpy
-        function_dict["accuracy"] = token_accuracy
-        function_dict["first_accuracy"] = first_token_accuracy
-        function_dict["caption_accuracy"] = caption_accuracy
+        function_dict = []
+
+        function_dict.append(loss_to_numpy)
+        function_dict.append(token_accuracy)
+        function_dict.append(first_token_accuracy)
+        function_dict.append(caption_accuracy)
+        function_dict.append(self.multiscore_adapter)
 
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-        self.logger.on_epoch_begin(is_training)
-        
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
-        scores = ScoresOperator(self.get_function_dict())
+  
+        # Log at the beginning of epoch
+        self.logger.on_epoch_begin(epoch + 1)
+      
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
+                                             "predictions")
 
-        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+        scores = ScoresOperator(self.get_scoring_functions())
+
+        for sample_counter, (videos, string_captions,
+                             captions) in enumerate(dataloader):
+
             self.logger.on_batch_begin()
-
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
@@ -161,7 +178,8 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions)
+            batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
