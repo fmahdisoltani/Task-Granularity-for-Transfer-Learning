@@ -46,7 +46,7 @@ class ScoresOperator(object):
             functions_list: A list of the functions that will be applied.
         """
 
-        self.average = "avg"
+        self.avg_keyword = "avg"
         self.functions_list = functions_list
         self.scores_dict = OrderedDict()
 
@@ -75,14 +75,14 @@ class ScoresOperator(object):
 
     def get_average_scores(self):
         return {key: self.scores_dict[key] for key in self.scores_dict
-                if self.average in key}
+                if self.avg_keyword in key}
 
     def update_moving_average(self, scores_dict, count):
         assert count > 0
         scores_dict = OrderedDict(scores_dict)
         scores_list = list(scores_dict.keys())
         for score in scores_list:
-            average_score = self.average + "_" + score
+            average_score = self.avg_keyword + "_" + score
             total_score = self.scores_dict.get(average_score, 0) * (count - 1)
             self.scores_dict[average_score] = (
                 (scores_dict[score] + total_score) / count)
