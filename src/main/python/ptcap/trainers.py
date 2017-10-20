@@ -9,19 +9,18 @@ from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.checkpointers import Checkpointer
-from ptcap.scores import (MultiScorerOperator, caption_accuracy,
+from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
-                 writer, checkpoint_path, folder=None, filename=None,
+                 writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        self.checkpointer = Checkpointer(checkpoint_path)
+        self.checkpointer = checkpointer
 
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
@@ -31,16 +30,20 @@ class Trainer(object):
         self.loss_function = (loss_function.cuda(gpus[0])
                               if self.use_cuda else loss_function)
 
-        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor())
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1000
         self.logger = logger
+
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+            self.tokenizer)
+
         self.logger.on_train_init(folder, filename)
+
 
 
     def train(self, train_dataloader, valid_dataloader, criteria,
@@ -52,22 +55,9 @@ class Trainer(object):
         stop_training = False
 
         while not stop_training:
-            self.num_epochs += 1
-            train_average_scores = self.run_epoch(train_dataloader,
-                                                  epoch, is_training=True,
-                           use_teacher_forcing=teacher_force_train,
-                           verbose=verbose_train)
 
-            train_avg_loss = train_average_scores["avg_loss"]
-
-            state_dict = self.get_trainer_state()
-
-            self.checkpointer.save_latest(state_dict)
-            self.checkpointer.save_value_csv([epoch, train_avg_loss],
-                                             filename="train_loss")
-
-            # Validation
-            if (epoch + 1) % frequency_valid == 0:
+            # we need a first round of evaluation without any training
+            if epoch % frequency_valid == 0:
                 valid_average_scores = self.run_epoch(
                     valid_dataloader, epoch, is_training=False,
                     use_teacher_forcing=teacher_force_valid,
@@ -80,10 +70,23 @@ class Trainer(object):
                 self.scheduler.step(self.score)
 
                 state_dict = self.get_trainer_state()
-
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
+
+            self.num_epochs += 1
+            train_average_scores = self.run_epoch(train_dataloader,
+                                                  epoch, is_training=True,
+                                                  use_teacher_forcing=teacher_force_train,
+                                                  verbose=verbose_train)
+
+            train_avg_loss = train_average_scores["avg_loss"]
+
+            state_dict = self.get_trainer_state()
+
+            self.checkpointer.save_latest(state_dict)
+            self.checkpointer.save_value_csv([epoch, train_avg_loss],
+                                             filename="train_loss")
 
             epoch += 1
             stop_training = self.update_stop_training(epoch, max_num_epochs)
@@ -100,7 +103,7 @@ class Trainer(object):
 
     def update_stop_training(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
-                         self.scheduler.optimizer.param_groups])
+                          self.scheduler.optimizer.param_groups])
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
 
@@ -117,27 +120,28 @@ class Trainer(object):
 
         return False
 
-    def get_function_dict(self):
+    def get_scoring_functions(self):
 
-        function_dict = OrderedDict()
+        function_dict = []
 
-        function_dict["loss"] = loss_to_numpy
-        function_dict["accuracy"] = token_accuracy
-        function_dict["first_accuracy"] = first_token_accuracy
-        function_dict["caption_accuracy"] = caption_accuracy
+        function_dict.append(loss_to_numpy)
+        function_dict.append(token_accuracy)
+        function_dict.append(first_token_accuracy)
+        function_dict.append(caption_accuracy)
+        function_dict.append(self.multiscore_adapter)
 
         return function_dict
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-
+  
         # Log at the beginning of epoch
         self.logger.on_epoch_begin(epoch + 1)
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
-        scores = MultiScorerOperator(self.get_function_dict(), self.multiscorer,
-                                     self.tokenizer)
+
+        scores = ScoresOperator(self.get_scoring_functions())
 
         for sample_counter, (videos, string_captions,
                              captions) in enumerate(dataloader):
