@@ -32,7 +32,6 @@ class Trainer(object):
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1000
         self.logger = logger
         self.logger.on_train_init(folder, filename)
 
