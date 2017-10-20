@@ -90,6 +90,8 @@ class LSTMDecoder(Decoder):
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
+
+        self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
