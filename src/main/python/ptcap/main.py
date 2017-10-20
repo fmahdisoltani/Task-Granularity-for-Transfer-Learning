@@ -23,7 +23,18 @@ from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
 
+def seed_code(seed):
+    import random
+    import numpy
+    random.seed(seed)
+    numpy.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
 def train_model(config_obj, relative_path=""):
+
+    seed_code(1)
     # Find paths to training, validation and test sets
     training_path = os.path.join(relative_path,
                                  config_obj.get("paths", "train_annot"))

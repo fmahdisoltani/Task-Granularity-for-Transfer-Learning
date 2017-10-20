@@ -8,8 +8,8 @@ from ptcap.data.config_parser import YamlConfig
 from ptcap.main import train_model
 
 CONFIG_PATH = [
-    os.path.join(os.getcwd(), "src/main/configs/integration_test.yaml"),]
-    # os.path.join(os.getcwd(), "src/main/configs/load_model_test.yaml")]
+    os.path.join(os.getcwd(), "src/main/configs/integration_test.yaml"),
+    os.path.join(os.getcwd(), "src/main/configs/load_model_test.yaml")]
 
 
 def check_saved_files(checkpoint_path, files_list):
