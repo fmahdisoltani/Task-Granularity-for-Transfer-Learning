@@ -23,18 +23,18 @@ from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
 
 
-def seed_code(seed):
+def seed_code(seed, gpus):
     import random
     import numpy
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if gpus:
+        torch.cuda.manual_seed_all(seed)
 
 
 def train_model(config_obj, relative_path=""):
 
-    seed_code(1)
     # Find paths to training, validation and test sets
     training_path = os.path.join(relative_path,
                                  config_obj.get("paths", "train_annot"))
@@ -65,6 +65,8 @@ def train_model(config_obj, relative_path=""):
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
+
+    seed_code(1, gpus)
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
