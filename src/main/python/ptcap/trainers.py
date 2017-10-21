@@ -1,6 +1,5 @@
 import torch
 
-from collections import OrderedDict
 from collections import namedtuple
 
 from pycocoevalcap.bleu.bleu import Bleu
