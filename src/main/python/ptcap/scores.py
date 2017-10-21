@@ -10,7 +10,6 @@ def caption_accuracy(outputs):
     return {"caption_accuracy": caption_level_accuracy_}
 
 
-
 def caption_level_accuracy(captions, predictions):
     _, caption_len = captions.size()
     equal_values = torch.sum(captions.eq(predictions), dim=1)
@@ -27,15 +26,21 @@ def first_token_accuracy(outputs):
 def fscore(precision, recall, beta=1):
     numerator = (1.0 + beta**2) * precision * recall
     denominator = (beta**2 * precision) + recall
-    return numerator/denominator
+    return {"fscore": safe_div(numerator, denominator)}
 
 
 def gmeasure(precision, recall):
-    return np.sqrt(precision * recall)
+    return {"gmeasure": np.sqrt(precision * recall)}
 
 
 def loss_to_numpy(score_attr):
     return {"loss": score_attr.loss.data.cpu().numpy()[0]}
+
+
+def safe_div(x,y):
+    if y == 0:
+        return 0
+    return x / y
 
 
 def token_accuracy(outputs, num_tokens=None):
@@ -50,74 +55,54 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
     return accuracy
 
 
-class LCS(object):
-    def __init__(self, functions_list, tokenizer):
-        self.functions_list = functions_list
-        self.tokenizer = tokenizer
+class ScoresBase(object):
+    def __init__(self, keyword=""):
+        """
+            Initializes scores_dict and takes in a keyword.
+        Args:
+            keyword: A string used to highlight the entry of a key into
+            scores_dict. For example, "avg" can be used as a keyword to retrieve
+            the keys that contain "avg".
+        """
 
-    def __call__(self, outputs):
-        string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
-                              for str_pred in outputs.predictions]
-        return self.score(string_predictions, outputs.string_captions)
+        self.keyword = keyword
+        self.scores_dict = OrderedDict()
 
-    def score(self, predictions, captions):
-        assert len(predictions) == len(captions)
-        batch_precision = 0
-        batch_recall = 0
-        batch_f1_score = 0
-        batch_g_measure = 0
-        for count, (prediction,caption) in enumerate(zip(predictions,
-                                                         captions)):
-            _, lcs_score = self.compute_lcs(prediction, caption)
-            precision = lcs_score/len(prediction)
-            recall = lcs_score/len(caption)
-            f1_score = fscore(precision, recall)
-            g_measure = gmeasure(precision, recall)
+    def update_moving_average(self, scores_dict, count):
+        assert count > 0
+        scores_dict = OrderedDict(scores_dict)
+        scores_list = list(scores_dict.keys())
+        for score in scores_list:
+            average_score = self.keyword + "_" + score
+            total_score = self.scores_dict.get(average_score, 0) * (count - 1)
+            self.scores_dict[average_score] = (
+                (scores_dict[score] + total_score) / count)
+            scores_dict[average_score] = self.scores_dict[average_score]
+        return scores_dict
 
-            batch_precision += (precision - batch_precision) / (count + 1)
-            batch_recall += (recall - batch_recall) / (count + 1)
-            batch_f1_score += (f1_score - batch_f1_score) / (count + 1)
-            batch_g_measure += (g_measure - batch_g_measure) / (count + 1)
-
-        metrics_dict = {"precision": batch_precision,
-                        "recall": batch_recall,
-                        "f1_score": batch_f1_score,
-                        "g_measure": batch_g_measure
-                        }
-        return metrics_dict
-
-    def compute_lcs(self, prediction, caption):
-        num_rows = len(prediction)
-        num_cols = len(caption)
-
-        C = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
-        for i in range(1, num_rows+1):
-            for j in range(1, num_cols+1):
-                if prediction[i-1] == caption[j-1]:
-                    C[i][j] = C[i-1][j-1] + 1
-                else:
-                    C[i][j] = max(C[i][j-1], C[i-1][j])
-        return C, C[num_cols][num_rows]
+    def get_keyword_scores(self):
+        keyword_dict = {key: self.scores_dict[key] for key in self.scores_dict
+                        if self.keyword in key}
+        return OrderedDict(sorted(keyword_dict.items()))
 
 
-class ScoresOperator(object):
+class ScoresOperator(ScoresBase):
     def __init__(self, functions_list):
         """
-            Initializes scores_dict and functions_dict.
+            Initializes functions_list.
         Args:
             functions_list: A list of the functions that will be applied.
         """
 
-        self.avg_keyword = "avg"
+        super().__init__("avg")
         self.functions_list = functions_list
-        self.scores_dict = OrderedDict()
 
     def compute_scores(self, score_attr, count):
         """
-            Computes all the scores provided by the functions_dict in __init__.
+            Computes all the scores provided by the functions_list in __init__.
         Args:
             score_attr: The input passed as a NamedTuple to be computed by
-                functions_dict and stored in scores_dict.
+                functions_list and stored in self.scores_dict.
             count: An int indicating the number of iterations.
         Returns:
             An OrderedDict containing the most recent scores as well as their
@@ -135,20 +120,59 @@ class ScoresOperator(object):
             scores_dict.update(score_function(score_attr))
         return scores_dict
 
-    def get_average_scores(self):
-        return {key: self.scores_dict[key] for key in self.scores_dict
-                if self.avg_keyword in key}
 
-    def update_moving_average(self, scores_dict, count):
-        assert count > 0
-        scores_dict = OrderedDict(scores_dict)
-        scores_list = list(scores_dict.keys())
-        for score in scores_list:
-            average_score = self.avg_keyword + "_" + score
-            total_score = self.scores_dict.get(average_score, 0) * (count - 1)
-            self.scores_dict[average_score] = (
-                (scores_dict[score] + total_score) / count)
-            scores_dict[average_score] = self.scores_dict[average_score]
+class LCS(ScoresBase):
+    def __init__(self, functions_list, tokenizer):
+        """
+            Initializes functions_list and tokenizer.
+        Args:
+            functions_list: A list of the functions that will be applied.
+        """
+
+        super().__init__("batch")
+        self.functions_list = functions_list
+        self.tokenizer = tokenizer
+
+    def __call__(self, outputs):
+        string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
+                              for str_pred in outputs.predictions]
+        return self.score(string_predictions, outputs.string_captions)
+
+    @classmethod
+    def compute_lcs(cls, prediction, caption):
+        num_rows = len(prediction)
+        num_cols = len(caption)
+
+        C = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
+        for i in range(1, num_rows + 1):
+            for j in range(1, num_cols + 1):
+                if prediction[i - 1] == caption[j - 1]:
+                    C[i][j] = C[i - 1][j - 1] + 1
+                else:
+                    C[i][j] = max(C[i][j - 1], C[i - 1][j])
+        return C, C[num_rows][num_cols]
+
+    def score(self, predictions, captions):
+        assert len(predictions) == len(captions)
+
+        for count, (prediction, caption) in enumerate(zip(predictions,
+                                                          captions)):
+            scores_dict = self.run_scores(prediction.split(), caption.split())
+            # Calculate and update the moving average of the scores.
+            self.update_moving_average(scores_dict, count + 1)
+
+        return self.get_keyword_scores()
+
+    def run_scores(self, prediction, caption):
+        scores_dict = OrderedDict()
+        _, lcs_score = self.compute_lcs(prediction, caption)
+        scores_dict["precision"] = safe_div(lcs_score, len(prediction))
+        scores_dict["recall"] = safe_div(lcs_score, len(caption))
+
+        for score_function in self.functions_list:
+            scores_dict.update(score_function(scores_dict["precision"],
+                                              scores_dict["recall"]))
+
         return scores_dict
 
 

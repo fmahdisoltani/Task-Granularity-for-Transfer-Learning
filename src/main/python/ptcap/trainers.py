@@ -9,8 +9,9 @@ from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
+                          caption_accuracy, first_token_accuracy, fscore,
+                          gmeasure, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
@@ -122,15 +123,16 @@ class Trainer(object):
 
     def get_scoring_functions(self):
 
-        function_dict = []
+        function_list = []
 
-        function_dict.append(loss_to_numpy)
-        function_dict.append(token_accuracy)
-        function_dict.append(first_token_accuracy)
-        function_dict.append(caption_accuracy)
-        function_dict.append(self.multiscore_adapter)
+        function_list.append(loss_to_numpy)
+        function_list.append(token_accuracy)
+        function_list.append(first_token_accuracy)
+        function_list.append(caption_accuracy)
+        function_list.append(self.multiscore_adapter)
+        function_list.append(LCS([fscore, gmeasure], self.tokenizer))
 
-        return function_dict
+        return function_list
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
@@ -184,7 +186,7 @@ class Trainer(object):
                                                 sample_counter + 1)
 
             # Take only the average of the scores in scores_dict
-            average_scores_dict = scores.get_average_scores()
+            average_scores_dict = scores.get_keyword_scores()
 
             self.logger.on_batch_end(
                 average_scores_dict, captions,
