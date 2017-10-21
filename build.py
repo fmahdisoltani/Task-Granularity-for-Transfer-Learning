@@ -17,6 +17,9 @@ name = "ptcap"
 @init
 def set_properties(project):
     project.depends_on('pandas')
+    project.depends_on('pycocoevalcap',
+                       url=('git+ssh://git@github.com/TwentyBN/'
+                            'pycocoevalcap.git@sub_packages'))
     project.depends_on('pyfackel')
     project.depends_on('rtorchn', url=('git+ssh://git@github.com/TwentyBN/'
                                        '20bn-rtorchn.git'))
