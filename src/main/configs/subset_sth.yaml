@@ -1,30 +1,51 @@
 paths:
-  videos_folder: &vidpath /data/20bn-objects/videos_npz
-  annot_folder: /data/20bn-objects/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sth/
+  videos_folder: &vidpath /data-ssd/videos_gulp/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/subset_sth_fc_unfrozen/
 
-  train_annot:  /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_train_20170429.json.gz
-  validation_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_validation_20170429.json.gz
-  test_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_test_20170429.json.gz
+  train_annot:  /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_train_20170929.json.gz
+  validation_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_validation_20170929.json.gz
+  test_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_test_20170929.json.gz
 
-  pretrained_path:
+pretrained:
+  pretrained_folder:
+  pretrained_file: model.latest
 
 device:
-  use_cuda: &use_cuda True
   synchronize_gpu: &sync True
-  gpus: [0]
+  gpus: &gpus [0]
 
 dataloaders:
-  batch_size: &b 16
-  kwargs: {batch_size: *b, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
-  type:
-  kwargs: {use_cuda: *use_cuda}
+  type: EncoderDecoder
+  encoder: CNN3dLSTMEncoder
+  encoder_args:
+  encoder_kwargs: {encoder_output_size: 256, gpus: *gpus}
+  decoder: LSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 256,
+                   num_lstm_layers: 1}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.001}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1.0e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1.0e-4}
 
 training:
-  num_epochs: 2000
-  learning_rate: &lr 0.01
+  num_epochs: 200
+  clip_grad:
   teacher_force: True
   verbose: False
 
@@ -34,6 +55,16 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: accuracy
+  higher_is_better: True
+
+targets:
+  caption_type: template
+
+tokenizer:
+  kwargs: {user_maxlen: 13, cutoff: 2}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1000
 

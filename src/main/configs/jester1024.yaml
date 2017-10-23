@@ -1,16 +1,14 @@
-
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff_cont/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_cont/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff/
-
+  pretrained_folder:  /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff/
   pretrained_file: model.latest
 
 device:
@@ -18,18 +16,18 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 4, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: FCEncoder
+  encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
                    freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
-                   hidden_size: 256,
+                   hidden_size: 1024,
                    num_lstm_layers: 1}
 
 loss:
@@ -63,10 +61,10 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 1}
+  kwargs: {user_maxlen: 13, cutoff: 10}
 
 logging:
   verbose: True
