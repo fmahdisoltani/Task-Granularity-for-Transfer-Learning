@@ -19,13 +19,19 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: CNN3dLSTMEncoder
+  encoder2: FCEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 128, gpus: *gpus}
+  encoder_kwargs2: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
+                   freeze: False}
+
+  encoder: CNN3dLSTMEncoder
+  encoder_kwargs: {encoder_output_size: 256, gpus: *gpus}
+
+
   decoder: LSTMDecoder
   decoder_args:
-  decoder_kwargs: {embedding_size: 57,
-                   hidden_size: 128,
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 256,
                    num_lstm_layers: 1}
 
 loss:
