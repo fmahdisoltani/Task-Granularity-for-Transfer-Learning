@@ -122,16 +122,16 @@ class Trainer(object):
 
     def get_scoring_functions(self):
 
-        function_list = []
+        scoring_functions = []
 
-        function_list.append(loss_to_numpy)
-        function_list.append(token_accuracy)
-        function_list.append(first_token_accuracy)
-        function_list.append(caption_accuracy)
-        function_list.append(self.multiscore_adapter)
-        function_list.append(LCS([fscore, gmeasure], self.tokenizer))
+        scoring_functions.append(loss_to_numpy)
+        scoring_functions.append(token_accuracy)
+        scoring_functions.append(first_token_accuracy)
+        scoring_functions.append(caption_accuracy)
+        scoring_functions.append(self.multiscore_adapter)
+        scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
-        return function_list
+        return scoring_functions
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
