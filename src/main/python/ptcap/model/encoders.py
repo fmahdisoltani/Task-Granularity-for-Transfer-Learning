@@ -134,7 +134,7 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
+        self.lstm = nn.LSTM(input_size=256, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
