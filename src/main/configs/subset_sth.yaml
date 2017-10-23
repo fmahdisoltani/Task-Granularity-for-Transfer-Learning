@@ -15,17 +15,17 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 10, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
   encoder: CNN3dLSTMEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 256, gpus: *gpus}
+  encoder_kwargs: {encoder_output_size: 128, gpus: *gpus}
   decoder: LSTMDecoder
   decoder_args:
-  decoder_kwargs: {embedding_size: 256,
-                   hidden_size: 256,
+  decoder_kwargs: {embedding_size: 57,
+                   hidden_size: 128,
                    num_lstm_layers: 1}
 
 loss:
@@ -50,7 +50,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 100
   teacher_force: False
   verbose: True
 

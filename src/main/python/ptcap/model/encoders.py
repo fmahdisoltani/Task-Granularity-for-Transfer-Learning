@@ -100,12 +100,16 @@ class CNN3dEncoder(Encoder):
 
 
 class CNN3dLSTMEncoder(Encoder):
-    def __init__(self, encoder_output_size=128, gpus=None):
+    def __init__(self, encoder_output_size=52, gpus=None):
         """
         num_features: defines the output size of the encoder
         """
 
+
         super(CNN3dLSTMEncoder, self).__init__()
+        print("*e" * 100)
+        print(encoder_output_size)
+        print("&e" * 100)
 
         self.num_layers = 1
         self.num_features = encoder_output_size
@@ -133,8 +137,11 @@ class CNN3dLSTMEncoder(Encoder):
                                 nn.ReLU(), stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
-
-        self.lstm = nn.LSTM(input_size=256, hidden_size=self.num_features,
+        print("*e" * 100)
+        print("num_feature")
+        print(self.num_features)
+        print("&e" * 100)
+        self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
@@ -169,7 +176,7 @@ class CNN3dLSTMEncoder(Encoder):
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
         lstm_hidden = self.init_hidden(batch_size=h.size()[0])
-        lstm_outputs, _ = self.lstm(h, lstm_hidden)
+        lstm_outputs, _ = self.lstm(h)
 
         h_mean = torch.mean(lstm_outputs, dim=1)
 

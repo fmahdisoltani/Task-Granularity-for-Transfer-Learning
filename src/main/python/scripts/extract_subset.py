@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     for in_json, out_json in zip(input_jsons, output_jsons):
         print("Creating subset from {} to {}".format(in_json, out_json))
-        new_json = create_subset_json_balanced(in_json, TARGET_LABELS, num_samples=100)
+        new_json = create_subset_json_balanced(in_json, TARGET_LABELS, num_samples=10)
 
         with gzip.open(out_json, "wt") as f:
             json.dump(new_json, f)

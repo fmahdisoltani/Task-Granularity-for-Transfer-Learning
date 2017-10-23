@@ -1,14 +1,14 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_cont/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_cont2/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder:  /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff/
+  pretrained_folder:  /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_cont/
   pretrained_file: model.latest
 
 device:

@@ -1,13 +1,13 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_lbl_switched_unfrozen_gulp/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_lbl_switched_unfrozen_gulp_cont/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_tmp_unfrozen_gulp_2/
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_lbl_switched_unfrozen_gulp/
   pretrained_file: model.latest
 
 device:
