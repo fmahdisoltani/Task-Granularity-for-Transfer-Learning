@@ -1,6 +1,6 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_lbl_switched_unfrozen_gulp_cont/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_lbl_switched_unfrozen_gulp_TF/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
@@ -52,7 +52,7 @@ training:
 
 validation:
   frequency: 1
-  teacher_force: False
+  teacher_force: True
   verbose: True
 
 criteria:
