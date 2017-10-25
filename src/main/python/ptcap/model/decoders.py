@@ -14,7 +14,7 @@ class Decoder(nn.Module):
         raise NotImplementedError
 
 
-class DecoderBase(Decoder):
+class DecoderBase(nn.Module):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
                  num_lstm_layers, go_token=0, gpus=None):
@@ -24,7 +24,7 @@ class DecoderBase(Decoder):
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-
+        self.lstm = None
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
         self.use_cuda = True if gpus else False
@@ -73,7 +73,6 @@ class DecoderBase(Decoder):
 
         return probs
 
-
     def predict(self, features, go_tokens, num_step=1):
         lstm_input = go_tokens
         output_probs = []
@@ -96,8 +95,8 @@ class DecoderBase(Decoder):
         master_dict = {}
         self.embedding.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_embedding"))
-        self.lstm.register_forward_hook(
-            forward_hook_closure(master_dict, "decoder_lstm", 0, False))
+        #self.lstm.register_forward_hook(
+         #   forward_hook_closure(master_dict, "decoder_lstm", 0, False))
         self.linear.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_linear"))
         self.logsoftmax.register_forward_hook(
@@ -112,9 +111,9 @@ class LSTMDecoder(DecoderBase):
     def __init__(self, embedding_size, hidden_size, vocab_size,
                  num_lstm_layers, go_token=0, gpus=None):
 
-        super().__init__(self, embedding_size, hidden_size,
+        super().__init__(embedding_size, hidden_size,
                                           vocab_size,
-                                          num_lstm_layers, go_token=0, gpus=None)
+                                          num_lstm_layers, go_token=go_token, gpus=gpus)
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
 
@@ -133,12 +132,12 @@ class LSTMDecoder(DecoderBase):
         return probs, lstm_hidden
 
 
-class CoupledLSTMDecoder(Decoder):
+class CoupledLSTMDecoder(DecoderBase):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
                  num_hidden_lstm, go_token=0, gpus=None):
         super().__init__(embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None)
+                 num_hidden_lstm, go_token, gpus)
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
