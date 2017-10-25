@@ -132,6 +132,11 @@ class Trainer(object):
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
         self.logger.on_epoch_begin(epoch)
+
+        if is_training:
+            self.model.train()
+        else:
+            self.model.eval()
         
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
