@@ -194,11 +194,11 @@ class TestLCS(unittest.TestCase):
 
         scores_dict = self.lcs_obj.score(self.predictions, self.captions)
 
-        self.assertAlmostEqual(scores_dict["batch_precision"],
+        self.assertAlmostEqual(scores_dict["precision"],
                                expected_batch_precision, 8)
-        self.assertAlmostEqual(scores_dict["batch_recall"],
+        self.assertAlmostEqual(scores_dict["recall"],
                                expected_batch_recall, 8)
-        self.assertAlmostEqual(scores_dict["batch_add"], expected_sum, 8)
+        self.assertAlmostEqual(scores_dict["add"], expected_sum, 8)
 
 
 class TestFscore(unittest.TestCase):

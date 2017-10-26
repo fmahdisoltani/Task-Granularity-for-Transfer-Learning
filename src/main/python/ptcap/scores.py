@@ -176,7 +176,7 @@ class LCS(ScoresBase):
 
         self.mean_scores()
 
-        return self.get_keyword_scores()
+        return self.scores_dict
 
     def run_scores(self, prediction, caption):
         scores_dict = OrderedDict()
