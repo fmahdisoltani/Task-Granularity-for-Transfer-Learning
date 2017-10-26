@@ -185,7 +185,7 @@ class Trainer(object):
                                                 sample_counter + 1)
 
             # Take only the average of the scores in scores_dict
-            average_scores_dict = scores.get_keyword_scores()
+            average_scores_dict = scores.get_average_scores()
 
             self.logger.on_batch_end(
                 average_scores_dict, captions,

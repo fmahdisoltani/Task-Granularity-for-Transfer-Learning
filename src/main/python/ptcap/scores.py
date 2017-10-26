@@ -55,58 +55,28 @@ def token_level_accuracy(captions, predictions, num_tokens=None):
     return accuracy
 
 
-class ScoresBase(object):
-    def __init__(self, keyword=""):
-        """
-        Initializes scores_dict and takes in a keyword.
-        Args:
-        keyword: A string used to highlight the entry of a key into
-        scores_dict. For example, "avg" can be used as a keyword to retrieve
-        the keys that contain "avg".
-        """
-
-        self.keyword = keyword
-        self.scores_dict = OrderedDict()
-
-    def update_moving_average(self, scores_dict, count):
-        assert count > 0
-        scores_dict = OrderedDict(scores_dict)
-        scores_list = list(scores_dict.keys())
-        for score in scores_list:
-            average_score = self.keyword + "_" + score
-            total_score = self.scores_dict.get(average_score, 0) * (count - 1)
-            self.scores_dict[average_score] = (
-                (scores_dict[score] + total_score) / count)
-            scores_dict[average_score] = self.scores_dict[average_score]
-        return scores_dict
-
-    def get_keyword_scores(self):
-        keyword_dict = {key: self.scores_dict[key] for key in self.scores_dict
-                        if self.keyword in key}
-        return OrderedDict(sorted(keyword_dict.items()))
-
-
-class ScoresOperator(ScoresBase):
+class ScoresOperator(object):
     def __init__(self, functions_list):
         """
-        Initializes functions_list.
+            Initializes scores_dict and functions_dict.
         Args:
-        functions_list: A list of the functions that will be applied.
+            functions_list: A list of the functions that will be applied.
         """
 
-        super().__init__("avg")
+        self.avg_keyword = "avg"
         self.functions_list = functions_list
+        self.scores_dict = OrderedDict()
 
     def compute_scores(self, score_attr, count):
         """
-        Computes all the scores provided by the functions_list in __init__.
+            Computes all the scores provided by the functions_dict in __init__.
         Args:
-        score_attr: The input passed as a NamedTuple to be computed by
-            functions_list and stored in self.scores_dict.
-        count: An int indicating the number of iterations.
+            score_attr: The input passed as a NamedTuple to be computed by
+                functions_dict and stored in scores_dict.
+            count: An int indicating the number of iterations.
         Returns:
-        An OrderedDict containing the most recent scores as well as their
-        moving average.
+            An OrderedDict containing the most recent scores as well as their
+            moving average.
         """
 
         scores_dict = self.run_scores(score_attr)
@@ -120,8 +90,24 @@ class ScoresOperator(ScoresBase):
             scores_dict.update(score_function(score_attr))
         return scores_dict
 
+    def get_average_scores(self):
+        return {key: self.scores_dict[key] for key in self.scores_dict
+                if self.avg_keyword in key}
 
-class LCS(ScoresBase):
+    def update_moving_average(self, scores_dict, count):
+        assert count > 0
+        scores_dict = OrderedDict(scores_dict)
+        scores_list = list(scores_dict.keys())
+        for score in scores_list:
+            average_score = self.avg_keyword + "_" + score
+            total_score = self.scores_dict.get(average_score, 0) * (count - 1)
+            self.scores_dict[average_score] = (
+                (scores_dict[score] + total_score) / count)
+            scores_dict[average_score] = self.scores_dict[average_score]
+        return scores_dict
+
+
+class LCS(object):
     def __init__(self, functions_list, tokenizer):
         """
         Initializes functions_list and tokenizer.
@@ -129,9 +115,9 @@ class LCS(ScoresBase):
         functions_list: A list of the functions that will be applied.
         """
 
-        super().__init__("batch")
         self.functions_list = functions_list
         self.scores_container = OrderedDict()
+        self.scores_dict = OrderedDict()
         self.tokenizer = tokenizer
 
     def __call__(self, outputs):

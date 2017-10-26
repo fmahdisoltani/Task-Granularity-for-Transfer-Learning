@@ -64,7 +64,7 @@ class ScoreTests(unittest.TestCase):
         scores_operator = ScoresOperator([lambda x: {"add1": x + 1}])
         for count in range(self.num_epochs):
             scores_operator.compute_scores(1, count + 1)
-        average_scores = scores_operator.get_keyword_scores()
+        average_scores = scores_operator.get_average_scores()
         self.assertEqual(list(average_scores.keys()), ["avg_add1"])
 
 
