@@ -131,12 +131,20 @@ class LCS(ScoresBase):
 
         super().__init__("batch")
         self.functions_list = functions_list
+        self.scores_container = OrderedDict()
         self.tokenizer = tokenizer
 
     def __call__(self, outputs):
         string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
                               for str_pred in outputs.predictions]
         return self.score(string_predictions, outputs.string_captions)
+
+    def collect_scores(self, scores_dict):
+        for key, value in scores_dict.items():
+            if key not in self.scores_container:
+                self.scores_container[key] = [value]
+            else:
+                self.scores_container[key].append(value)
 
     @classmethod
     def compute_lcs(cls, prediction, caption):
@@ -152,6 +160,10 @@ class LCS(ScoresBase):
                     C[i][j] = max(C[i][j - 1], C[i - 1][j])
         return C, C[num_rows][num_cols]
 
+    def mean_scores(self):
+        for key, value in self.scores_container.items():
+            self.scores_dict[key] = np.mean(value)
+
     def score(self, predictions, captions):
         assert len(predictions) == len(captions)
 
@@ -159,7 +171,10 @@ class LCS(ScoresBase):
                                                           captions)):
             scores_dict = self.run_scores(prediction.split(), caption.split())
             # Calculate and update the moving average of the scores.
-            self.update_moving_average(scores_dict, count + 1)
+            # self.update_moving_average(scores_dict, count + 1)
+            self.collect_scores(scores_dict)
+
+        self.mean_scores()
 
         return self.get_keyword_scores()
 
