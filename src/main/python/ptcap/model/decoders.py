@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 from torch import nn
 from torch.autograd import Variable
@@ -161,3 +162,33 @@ class CoupledLSTMDecoder(DecoderBase):
         probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
 
         return probs, lstm_hidden
+
+class AttentionDecoder(DecoderBase):
+
+    def __init__(self, embedding_size, hidden_size, vocab_size,
+                 num_hidden_lstm, go_token=0, gpus=None):
+        super().__init__(embedding_size, hidden_size, vocab_size,
+                         num_hidden_lstm, go_token, gpus)
+        self.attention = nn.Linear(self.hidden_size * 4, self.max_length)
+        self.attention_combine = nn.Linear(self.hidden_size * 4,
+                                           self.hidden_size * 2)
+        self.dropout = nn.Dropout(self.dropout_p)
+
+    def forward(self, features, captions, use_teacher_forcing=False):
+        pass
+
+
+    def apply_lstm(self, features, captions, lstm_hidden=None):
+        if lstm_hidden is None:
+            lstm_hidden = self.init_hidden(features)
+
+        embedded = self.embedding(features)
+        embedded = self.dropout(embedded)
+
+        attn_weights = F.softmax(self.attn(torch.cat((embedded[0],
+                                                      hidden[0]), 1)))
+        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
+                                 encoder_outputs.unsqueeze(0))
+
+        output = torch.cat((embedded[0], attn_applied[0]), 1)
+        output = self.attn_combine(output).unsqueeze(0)
