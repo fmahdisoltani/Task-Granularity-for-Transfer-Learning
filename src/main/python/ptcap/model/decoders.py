@@ -312,7 +312,7 @@ class BeamDecoder(Decoder):
     def apply_lstm(self, features, captions, lstm_hidden=None):
 
         if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features)
+            lstm_hidden = self.init_hidden(features[0,:].unsqueeze(0))
         embedded_captions = self.embedding(captions)
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
@@ -346,17 +346,20 @@ class BeamDecoder(Decoder):
 
                 # output_probs[k].append(probs)
 
-                # Beam decoding: Take topk tokens predicted
-                _, k_preds = torch.topk(probs, dim=2)
+                # Beam decoding: Take top "beam_size" tokens predicted
+                _, k_preds = torch.topk(probs, self.beam_size , dim=2)
 
-                table = []
+                new_table = []
                 for j in range(self.beam_size):
+                    print(table[k])
                     new_seq = table[k].seq + k_preds[j]
+
                     new_prob = table[k].prob * probs
                     new_last = k_preds[j]
                     new_hidden = lstm_hidden
+
                     # add_these_to_table
-                    table += TableEntry(new_seq, new_prob, new_last, new_hidden)
+                    new_table += TableEntry(new_seq, new_prob, new_last, new_hidden)
 
                 # create table
                 # table = [TableEntry(k, p, l, h) for k, p, l, h in
