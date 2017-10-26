@@ -250,3 +250,136 @@ class CoupledLSTMDecoder(Decoder):
         self.logsoftmax.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_logsoftmax"))
         return master_dict
+
+
+class BeamDecoder(Decoder):
+
+    def __init__(self, embedding_size, hidden_size, vocab_size,
+                 num_lstm_layers, go_token=0, gpus=None):
+
+        super().__init__()
+        self.num_lstm_layers = num_lstm_layers
+
+        # Embed each token in vocab to a 128 dimensional vector
+        self.embedding = nn.Embedding(vocab_size, embedding_size)
+
+        # batch_first: whether input and output are (batch, seq, feature)
+        self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+
+        self.linear = nn.Linear(hidden_size, vocab_size)
+        self.logsoftmax = nn.LogSoftmax()
+        self.use_cuda = True if gpus else False
+        self.gpus = gpus
+        self.go_token = go_token
+        self.beam_size = 3
+
+        self.activations = self.register_forward_hooks()
+
+    def init_hidden(self, features):
+        """
+        Hidden states of the LSTM are initialized with features.
+        c0 and h0 should have the shape of 1 * batch_size * hidden_size
+        """
+
+        c0 = features.unsqueeze(0)
+        h0 = features.unsqueeze(0)
+        return h0, c0
+
+    def forward(self, features, captions, use_teacher_forcing=False):
+        """
+        This method computes the forward pass of the decoder with or without
+        teacher forcing. It should be noted that the <GO> token is
+        automatically appended to the input captions.
+        Args:
+            features: Video features extracted by the encoder.
+            captions: Video captions (required if use_teacher_forcing=True).
+            use_teacher_forcing: Whether to use teacher forcing or not.
+        Returns:
+            The probability distribution over the vocabulary across the entire
+            sequence.
+        """
+
+        batch_size, num_step = captions.size()
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda(self.gpus[0])
+
+        # Without teacher forcing: use its own predictions as the next input
+        probs = self.predict(features, self.go_token, num_step)
+
+        return probs
+
+    def apply_lstm(self, features, captions, lstm_hidden=None):
+
+        if lstm_hidden is None:
+            lstm_hidden = self.init_hidden(features)
+        embedded_captions = self.embedding(captions)
+        lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
+
+        # Project features in a 'vocab_size'-dimensional space
+        lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
+                                         0)
+        probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
+
+        return probs, lstm_hidden
+
+    def predict(self, features, go_token, num_step=1):
+        from collections import namedtuple
+
+        TableEntry = namedtuple('TableEntry',
+                                ['seq', 'prob', 'last', 'hidden'])
+        seq_key =  Variable(self.go_token * torch.ones(1, 1).long())
+        last_token = go_token
+        seq_prob = 1
+        lstm_hidden = features
+        table_size = 1
+        table = [TableEntry(seq_key, 1, seq_key, features)]
+        for i in range(num_step):
+            for k in range(min(table_size, self.beam_size)):
+                print("%d is i, %d is k".format( i, k))
+                lstm_input = table[k].last
+                if self.use_cuda:
+                    lstm_input = lstm_input.cuda(self.gpus[0])
+                lstm_hidden = table[k].hidden
+                probs, lstm_hidden = self.apply_lstm(features, lstm_input,
+                                                     lstm_hidden=None)
+
+                # output_probs[k].append(probs)
+
+                # Beam decoding: Take topk tokens predicted
+                _, k_preds = torch.topk(probs, dim=2)
+
+                table = []
+                for j in range(self.beam_size):
+                    new_seq = table[k].seq + k_preds[j]
+                    new_prob = table[k].prob * probs
+                    new_last = k_preds[j]
+                    new_hidden = lstm_hidden
+                    # add_these_to_table
+                    table += TableEntry(new_seq, new_prob, new_last, new_hidden)
+
+                # create table
+                # table = [TableEntry(k, p, l, h) for k, p, l, h in
+                #          zip(new_seq, new_prob, new_last, new_hidden)]
+
+                #sort table based on prob
+                table = sorted(table, key=lambda x: x.prob)
+
+
+                # table = sorted(table, key=operator.itemgetter(table_prob))
+
+
+        return table[0].seq
+
+    def register_forward_hooks(self):
+        master_dict = {}
+        self.embedding.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_embedding"))
+        self.lstm.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_lstm", 0, False))
+        self.linear.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_linear"))
+        self.logsoftmax.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_logsoftmax"))
+        return master_dict
+
