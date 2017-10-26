@@ -181,6 +181,7 @@ class CNN3dLSTMEncoder(Encoder):
         h_mean = torch.mean(lstm_outputs, dim=1)
 
         return h_mean
+
     def register_forward_hooks(self):
         master_dict = {}
         self.conv1.register_forward_hook(

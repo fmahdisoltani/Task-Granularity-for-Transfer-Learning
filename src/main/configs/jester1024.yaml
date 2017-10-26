@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_dividing/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_300_unfrozen_really/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
@@ -16,14 +16,14 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 16, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
   encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
-                   freeze: True}
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
