@@ -236,3 +236,92 @@ class CoupledLSTMDecoder(Decoder):
         self.logsoftmax.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_logsoftmax"))
         return master_dict
+
+
+class AttentionDecoder(object):
+
+    def __init__(self, embedding_size, hidden_size, vocab_size,
+                 num_hidden_lstm, go_token=0, gpus=None):
+        super().__init__(embedding_size, hidden_size, vocab_size,
+                         num_hidden_lstm, go_token, gpus)
+        self.attention = nn.Linear(self.hidden_size * 4, self.max_length)
+        self.attention_combine = nn.Linear(self.hidden_size * 4,
+                                           self.hidden_size * 2)
+        self.dropout = nn.Dropout(self.dropout_p)
+
+    def forward(self, encoder_outputs, captions, use_teacher_forcing=False):
+        batch_size, num_step = captions.size()
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda(self.gpus[0])
+
+        if use_teacher_forcing:
+            # Add go token and remove the last token for all captions
+            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            probs, hidden, _ = self.apply_lstm(encoder_outputs,
+                                               captions_with_go_token,
+                                               self.maxlen)
+
+        else:
+            # Without teacher forcing: use its own predictions as the next input
+            probs = self.predict(encoder_outputs, go_part, num_step)
+
+        return probs
+
+    def forward(self, features, captions, use_teacher_forcing=False):
+        """
+        This method computes the forward pass of the decoder with or without
+        teacher forcing. It should be noted that the <GO> token is
+        automatically appended to the input captions.
+        Args:
+            features: Video features extracted by the encoder.
+            captions: Video captions (required if use_teacher_forcing=True).
+            use_teacher_forcing: Whether to use teacher forcing or not.
+        Returns:
+            The probability distribution over the vocabulary across the entire
+            sequence.
+        """
+
+        batch_size = features.size()[0]
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda(self.gpus[0])
+
+        if use_teacher_forcing:
+            # Add go token and remove the last token for all captions
+            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            probs, _ = self.apply_lstm(features, captions_with_go_token)
+
+        else:
+            # Without teacher forcing: use its own predictions as the next input
+            probs = self.predict(features, go_part, self.maxlen)
+
+    def apply_lstm(self, encoder_outputs, captions, max_len):
+
+        last_hidden = None
+
+        for i in range(max_len):
+            probs, last_hidden, _ = self.apply_attention(encoder_outputs,
+                                                         captions, last_hidden)
+
+        return probs
+
+    def apply_attention(self, encoder_outputs, captions, last_hidden):
+
+        embedded_captions = self.embedding(captions)
+        embedded_captions = self.dropout(embedded_captions)
+
+        # Calculate the attention weights and apply the to the encoder's outputs
+        attn_weights = self.attention(last_hidden[-1], encoder_outputs)
+        context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
+
+        rnn_input = torch.cat((embedded_captions, context), 2)
+        output, hidden = self.lstm(rnn_input, last_hidden)
+
+        output = output.squeeze(0)
+        # Try context vs rnn_input
+        output = F.log_softmax(self.linear(torch.cat((output, context), 1)))
+        # vs
+        # output = F.log_softmax(self.linear(torch.cat((output, rnn_input), 1)))
+
+        return output, hidden, attn_weights
