@@ -312,7 +312,7 @@ class BeamDecoder(Decoder):
     def apply_lstm(self, features, captions, lstm_hidden=None):
 
         if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features[0,:].unsqueeze(0))
+            lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
@@ -324,20 +324,23 @@ class BeamDecoder(Decoder):
         return probs, lstm_hidden
 
     def predict(self, features, go_token, num_step=1):
+        features = features[0].unsqueeze(0)
         from collections import namedtuple
 
         TableEntry = namedtuple('TableEntry',
                                 ['seq', 'prob', 'last', 'hidden'])
-        seq_key =  Variable(self.go_token * torch.ones(1, 1).long())
-        last_token = go_token
-        seq_prob = 1
-        lstm_hidden = features
+        seq_key =  go_token
         table_size = 1
-        table = [TableEntry(seq_key, 1, seq_key, features)]
+        table = [TableEntry([seq_key], 1, seq_key, features)]
+
+
         for i in range(num_step):
+            print(i)
+            print("*"*100)
+            new_table = []
             for k in range(min(table_size, self.beam_size)):
-                print("%d is i, %d is k".format( i, k))
-                lstm_input = table[k].last
+
+                lstm_input = Variable(table[k].last * torch.ones(1, 1).long())
                 if self.use_cuda:
                     lstm_input = lstm_input.cuda(self.gpus[0])
                 lstm_hidden = table[k].hidden
@@ -347,29 +350,31 @@ class BeamDecoder(Decoder):
                 # output_probs[k].append(probs)
 
                 # Beam decoding: Take top "beam_size" tokens predicted
-                _, k_preds = torch.topk(probs, self.beam_size , dim=2)
 
-                new_table = []
+                k_probs, k_tokens = torch.topk(probs, self.beam_size , dim=2)
+
+                #new_table = []
                 for j in range(self.beam_size):
-                    print(table[k])
-                    new_seq = table[k].seq + k_preds[j]
-
-                    new_prob = table[k].prob * probs
-                    new_last = k_preds[j]
+                    print("i: ", i, " ","k: ",  k, "j: ", j)
+                    print("seq" , table[k].seq)
+                    new_seq = table[k].seq + [k_tokens[0][0][j].data.cpu()[0]]
+                    print("new_seq", new_seq)
+                    print("b "*50)
+                    new_prob = table[k].prob * k_probs[0][0][j]
+                    new_last = k_tokens[0][0][j]
                     new_hidden = lstm_hidden
 
                     # add_these_to_table
-                    new_table += TableEntry(new_seq, new_prob, new_last, new_hidden)
+                    new_table += [TableEntry(new_seq, new_prob.data.cpu()[0],
+                                             new_last.data.cpu()[0],
+                                             new_hidden)]
 
-                # create table
-                # table = [TableEntry(k, p, l, h) for k, p, l, h in
-                #          zip(new_seq, new_prob, new_last, new_hidden)]
+            table = new_table
+            table_size = len(table)
 
                 #sort table based on prob
-                table = sorted(table, key=lambda x: x.prob)
+            table = sorted(table, key=lambda x: x.prob)
 
-
-                # table = sorted(table, key=operator.itemgetter(table_prob))
 
 
         return table[0].seq
