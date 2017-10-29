@@ -5,7 +5,7 @@ import os
 import fake_data as fkdata
 
 from ptcap.data.config_parser import YamlConfig
-from ptcap.main import train_model
+from scripts.train import train_model
 
 CONFIG_PATH = [
     os.path.join(os.getcwd(), "src/main/configs/integration_test.yaml"),
