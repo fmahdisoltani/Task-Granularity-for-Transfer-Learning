@@ -24,8 +24,8 @@ VIDEO_SIZE = [20, 40, 40]
 
 def create_fake_json():
     """
-        Inspired from https://github.com/TwentyBN/20bn-realtimenet/blob/master/smoke_test.py
-        Credits to Ingo F.
+    Inspired from https://github.com/TwentyBN/20bn-realtimenet/blob/master/smoke_test.py
+    Credits to Ingo F.
     """
 
     json_content = [{
