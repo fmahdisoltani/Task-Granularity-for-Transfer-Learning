@@ -123,14 +123,15 @@ class LCS(object):
     def __call__(self, outputs):
         string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
                               for str_pred in outputs.predictions]
-        return self.score(string_predictions, outputs.string_captions)
+        return self.score_batch(string_predictions, outputs.string_captions)
 
-    def collect_scores(self, scores_dict):
+    def collect_scores(self, batch_scores_dict, scores_dict):
         for key, value in scores_dict.items():
-            if key not in self.scores_container:
-                self.scores_container[key] = [value]
+            if key not in batch_scores_dict:
+                batch_scores_dict[key] = [value]
             else:
-                self.scores_container[key].append(value)
+                batch_scores_dict[key].append(value)
+        return batch_scores_dict
 
     @classmethod
     def compute_lcs(cls, prediction, caption):
@@ -146,25 +147,28 @@ class LCS(object):
                     C[i][j] = max(C[i][j - 1], C[i - 1][j])
         return C, C[num_rows][num_cols]
 
-    def mean_scores(self):
-        for key, value in self.scores_container.items():
-            self.scores_dict[key] = np.mean(value)
+    def mean_scores(self, batch_scores_dict):
+        for key, value in batch_scores_dict.items():
+            batch_scores_dict[key] = np.mean(value)
+        return batch_scores_dict
 
-    def score(self, predictions, captions):
+    def score_batch(self, predictions, captions):
         assert len(predictions) == len(captions)
+
+        batch_scores_dict = OrderedDict()
 
         for count, (prediction, caption) in enumerate(zip(predictions,
                                                           captions)):
-            scores_dict = self.run_scores(prediction.split(), caption.split())
-            # Calculate and update the moving average of the scores.
-            # self.update_moving_average(scores_dict, count + 1)
-            self.collect_scores(scores_dict)
+            scores_dict = self.score_sample(prediction.split(), caption.split())
 
-        self.mean_scores()
+            batch_scores_dict = self.collect_scores(batch_scores_dict,
+                                                    scores_dict)
 
-        return self.scores_dict
+        batch_scores_dict = self.mean_scores(batch_scores_dict)
 
-    def run_scores(self, prediction, caption):
+        return batch_scores_dict
+
+    def score_sample(self, prediction, caption):
         scores_dict = OrderedDict()
         _, lcs_score = self.compute_lcs(prediction, caption)
         scores_dict["precision"] = safe_div(lcs_score, len(prediction))

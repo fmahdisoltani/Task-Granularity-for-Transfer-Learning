@@ -176,8 +176,8 @@ class TestLCS(unittest.TestCase):
                                                       self.captions)):
             with self.subTest(captions=self.captions[i],
                               predictions=self.predictions[i]):
-                scores_dict = self.lcs_obj.run_scores(prediction.split(),
-                                                 caption.split())
+                scores_dict = self.lcs_obj.score_sample(prediction.split(),
+                                                        caption.split())
                 self.assertAlmostEqual(scores_dict["precision"],
                                        expected_precision[i], 8)
                 self.assertAlmostEqual(scores_dict["recall"],
@@ -192,7 +192,7 @@ class TestLCS(unittest.TestCase):
         expected_sum = self.test_function(expected_batch_precision,
                                           expected_batch_recall)["add"]
 
-        scores_dict = self.lcs_obj.score(self.predictions, self.captions)
+        scores_dict = self.lcs_obj.score_batch(self.predictions, self.captions)
 
         self.assertAlmostEqual(scores_dict["precision"],
                                expected_batch_precision, 8)
