@@ -1,6 +1,8 @@
 import torch
+import torch.functional as F
 
 from torch import nn
+from torch.autograd import Variable
 
 from ptcap.tensorboardY import forward_hook_closure
 
@@ -238,37 +240,32 @@ class CoupledLSTMDecoder(Decoder):
         return master_dict
 
 
-class AttentionDecoder(object):
+class AttentionDecoder(Decoder):
 
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
-        super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_hidden_lstm, go_token, gpus)
-        self.attention = nn.Linear(self.hidden_size * 4, self.max_length)
-        self.attention_combine = nn.Linear(self.hidden_size * 4,
-                                           self.hidden_size * 2)
-        self.dropout = nn.Dropout(self.dropout_p)
+    def __init__(self, embedding_size, hidden_size, num_step, vocab_size,
+                 num_lstm_layers, dropout=0.5):
+        super(Decoder, self).__init__()
+
+        # Embed each token in vocab to a 128 dimensional vector
+        self.embedding = nn.Embedding(vocab_size, embedding_size)
+
+        # batch_first: whether input and output are (batch, seq, feature)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
+                            batch_first=True)
+
+        self.linear = nn.Linear(hidden_size, vocab_size)
+        self.logsoftmax = nn.LogSoftmax()
+        self.num_step = num_step
+
+        self.activations = self.register_forward_hooks()
+        self.attention = nn.Linear(hidden_size * 2, hidden_size * 2)
+        self.dropout = nn.Dropout(dropout)
+
+        #####################################################
+
+        self.attn_softmax = torch.nn.Softmax()
 
     def forward(self, encoder_outputs, captions, use_teacher_forcing=False):
-        batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
-
-        if use_teacher_forcing:
-            # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, hidden, _ = self.apply_lstm(encoder_outputs,
-                                               captions_with_go_token,
-                                               self.maxlen)
-
-        else:
-            # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(encoder_outputs, go_part, num_step)
-
-        return probs
-
-    def forward(self, features, captions, use_teacher_forcing=False):
         """
         This method computes the forward pass of the decoder with or without
         teacher forcing. It should be noted that the <GO> token is
@@ -282,19 +279,16 @@ class AttentionDecoder(object):
             sequence.
         """
 
-        batch_size = features.size()[0]
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
-
         if use_teacher_forcing:
-            # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+
+            probs, hidden = self.apply_lstm(encoder_outputs, captions,
+                                               self.num_step)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, self.maxlen)
+            probs = self.apply_lstm(encoder_outputs, captions, self.num_step)
+
+        return probs
 
     def apply_lstm(self, encoder_outputs, captions, max_len):
 
@@ -304,7 +298,7 @@ class AttentionDecoder(object):
             probs, last_hidden, _ = self.apply_attention(encoder_outputs,
                                                          captions, last_hidden)
 
-        return probs
+        return probs, last_hidden
 
     def apply_attention(self, encoder_outputs, captions, last_hidden):
 
@@ -325,3 +319,26 @@ class AttentionDecoder(object):
         # output = F.log_softmax(self.linear(torch.cat((output, rnn_input), 1)))
 
         return output, hidden, attn_weights
+
+    def get_attention(self, encoder_outputs, embedding, state):
+        attn_scores = Variable(torch.zeros(self.encoder_seq_len))
+        # if USE_CUDA: attn_energies = attn_energies.cuda()
+        for i in range(self.encoder_seq_len):
+            attn_scores[i] = self.alignment(state, encoder_outputs[i])
+        attn_weights = self.attn_softmax(attn_scores)
+        context = torch.mm(attn_weights, encoder_outputs)
+        next_state = self.lstm(torch.cat([embedding, context], 1), state)
+        output = g(embedding, next_state, context)
+
+
+    def register_forward_hooks(self):
+        master_dict = {}
+        self.embedding.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_embedding"))
+        self.lstm.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_lstm", 0, False))
+        self.linear.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_linear"))
+        self.logsoftmax.register_forward_hook(
+            forward_hook_closure(master_dict, "decoder_logsoftmax"))
+        return master_dict

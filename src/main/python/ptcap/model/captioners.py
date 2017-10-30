@@ -44,8 +44,8 @@ class EncoderDecoder(Captioner):
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
-        features = self.encoder(videos)
-        probs = self.decoder(features, captions, use_teacher_forcing)
+        features, states = self.encoder(videos)
+        probs = self.decoder(states, captions, use_teacher_forcing)
 
         return probs
 
