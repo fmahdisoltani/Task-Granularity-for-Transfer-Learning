@@ -137,17 +137,16 @@ class LSTMDecoder(Decoder):
 class CoupledLSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, num_step):
+                 num_lstm_layers, num_step):
 
         super(Decoder, self).__init__()
-        self.num_hidden_lstm = num_hidden_lstm
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
-                            batch_first=True)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size,
+                            num_lstm_layers, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
@@ -242,28 +241,35 @@ class CoupledLSTMDecoder(Decoder):
 
 class AttentionDecoder(Decoder):
 
-    def __init__(self, embedding_size, hidden_size, num_step, vocab_size,
-                 num_lstm_layers, dropout=0.5):
+    def __init__(self, encoder_hidden_size, embedding_size,
+                 hidden_size, num_step, vocab_size, num_lstm_layers, dropout=0):
         super(Decoder, self).__init__()
+
+        cell_type = nn.LSTM
+
+        factor = 2 if "LSTM" in str(cell_type) else 1
+
+        self.attn_softmax = torch.nn.Softmax()
+        self.dropout = nn.Dropout(dropout)
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
-        # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
-                            batch_first=True)
+        self.hidden_size = hidden_size
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.num_step = num_step
+
+        # batch_first: whether input and output are (batch, seq, feature)
+        self.lstm = cell_type(embedding_size + encoder_hidden_size, hidden_size,
+                              num_lstm_layers, batch_first=True)
+
+        self.num_step = int(num_step)
+
+        self.alignment = nn.Linear(self.hidden_size * factor +
+                                   encoder_hidden_size, 1)
 
         self.activations = self.register_forward_hooks()
-        self.attention = nn.Linear(hidden_size * 2, hidden_size * 2)
-        self.dropout = nn.Dropout(dropout)
-
-        #####################################################
-
-        self.attn_softmax = torch.nn.Softmax()
 
     def forward(self, encoder_outputs, captions, use_teacher_forcing=False):
         """
@@ -279,57 +285,63 @@ class AttentionDecoder(Decoder):
             sequence.
         """
 
-        if use_teacher_forcing:
-
-            probs, hidden = self.apply_lstm(encoder_outputs, captions,
-                                               self.num_step)
-
-        else:
-            # Without teacher forcing: use its own predictions as the next input
-            probs = self.apply_lstm(encoder_outputs, captions, self.num_step)
-
-        return probs
-
-    def apply_lstm(self, encoder_outputs, captions, max_len):
-
         last_hidden = None
 
-        for i in range(max_len):
-            probs, last_hidden, _ = self.apply_attention(encoder_outputs,
-                                                         captions, last_hidden)
+        output_probs = []
+        token = captions[:, 0]
 
-        return probs, last_hidden
+        for i in range(self.num_step):
+            probs, last_hidden, _ = self.apply_attention(encoder_outputs,
+                                                            token, last_hidden)
+            output_probs.append(probs.unsqueeze(1))
+            if use_teacher_forcing:
+                token = captions[:, i]
+            else:
+                _, token = torch.max(probs, dim=1)
+
+        concatenated_probs = torch.cat(output_probs, dim=1)
+        return concatenated_probs
+
+    def init_hidden(self, features):
+        """
+        Hidden states of the LSTM are initialized with features.
+        c0 and h0 should have the shape of 1 * batch_size * hidden_size
+        """
+
+        c0 = features.unsqueeze(0)
+        h0 = features.unsqueeze(0)
+        return h0, c0
 
     def apply_attention(self, encoder_outputs, captions, last_hidden):
 
         embedded_captions = self.embedding(captions)
         embedded_captions = self.dropout(embedded_captions)
 
-        # Calculate the attention weights and apply the to the encoder's outputs
-        attn_weights = self.attention(last_hidden[-1], encoder_outputs)
-        context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
+        if last_hidden is None:
+            last_hidden = self.init_hidden(encoder_outputs[:, -1])
 
-        rnn_input = torch.cat((embedded_captions, context), 2)
-        output, hidden = self.lstm(rnn_input, last_hidden)
-
-        output = output.squeeze(0)
-        # Try context vs rnn_input
-        output = F.log_softmax(self.linear(torch.cat((output, context), 1)))
-        # vs
-        # output = F.log_softmax(self.linear(torch.cat((output, rnn_input), 1)))
+        output, hidden, attn_weights = self.get_attention(encoder_outputs,
+                                                          embedded_captions,
+                                                          last_hidden)
 
         return output, hidden, attn_weights
 
     def get_attention(self, encoder_outputs, embedding, state):
-        attn_scores = Variable(torch.zeros(self.encoder_seq_len))
+        batch_size, encoder_seq_len = encoder_outputs.size()[0:2]
+        attn_scores = Variable(torch.zeros(batch_size, encoder_seq_len))
+        flat_state = torch.cat(state, 2).squeeze(0)
         # if USE_CUDA: attn_energies = attn_energies.cuda()
-        for i in range(self.encoder_seq_len):
-            attn_scores[i] = self.alignment(state, encoder_outputs[i])
+        for i in range(encoder_seq_len):
+            current_output = encoder_outputs[:, i]
+            cat_states = torch.cat((flat_state, current_output), 1)
+            attn_scores[:, i] = self.alignment(cat_states)
         attn_weights = self.attn_softmax(attn_scores)
-        context = torch.mm(attn_weights, encoder_outputs)
-        next_state = self.lstm(torch.cat([embedding, context], 1), state)
-        output = g(embedding, next_state, context)
-
+        transposed_encoder_outputs = encoder_outputs.transpose(2, 1)
+        context = transposed_encoder_outputs.bmm(attn_weights.unsqueeze(2))
+        context_and_embedding = torch.cat([context.squeeze(2), embedding], 1)
+        final_output, next_hidden = self.lstm(context_and_embedding.unsqueeze(1), state)
+        output = self.logsoftmax(self.linear(final_output.squeeze(1)))
+        return output, next_hidden, attn_weights
 
     def register_forward_hooks(self):
         master_dict = {}

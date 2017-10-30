@@ -24,6 +24,7 @@ model:
   decoder: AttentionDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 25,
+                   encoder_hidden_size: *enc_out_size,
                    hidden_size: *enc_out_size,
                    num_lstm_layers: 1}
 
