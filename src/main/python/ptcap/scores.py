@@ -24,8 +24,8 @@ def first_token_accuracy(outputs):
 
 
 def fscore(precision, recall, beta=1):
-    numerator = (1.0 + beta**2) * precision * recall
-    denominator = (beta**2 * precision) + recall
+    numerator = (1.0 + (beta ** 2)) * precision * recall
+    denominator = ((beta ** 2) * precision) + recall
     return {"fscore": safe_div(numerator, denominator)}
 
 
