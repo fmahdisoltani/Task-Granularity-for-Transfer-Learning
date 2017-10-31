@@ -39,10 +39,11 @@ optimizer:
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
-           min_lr: 1.0e-8,
+           min_lr: 1.0e-4,
            optimizer: *optimizer,
            patience: 3,
-           threshold: 1.0e-4}
+           threshold: 1.0e-4,
+           verbose: True}
 
 training:
   num_epochs: 2

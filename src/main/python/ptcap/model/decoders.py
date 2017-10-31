@@ -257,7 +257,8 @@ class AttentionDecoder(Decoder):
 
         self.hidden_size = hidden_size
 
-        self.linear = nn.Linear(hidden_size, vocab_size)
+        self.linear = nn.Linear(hidden_size * factor + embedding_size +
+                                encoder_hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
 
         # batch_first: whether input and output are (batch, seq, feature)
@@ -292,7 +293,7 @@ class AttentionDecoder(Decoder):
 
         for i in range(self.num_step):
             probs, last_hidden, _ = self.apply_attention(encoder_outputs,
-                                                            token, last_hidden)
+                                                         token, last_hidden)
             output_probs.append(probs.unsqueeze(1))
             if use_teacher_forcing:
                 token = captions[:, i]
@@ -336,11 +337,13 @@ class AttentionDecoder(Decoder):
             cat_states = torch.cat((flat_state, current_output), 1)
             attn_scores[:, i] = self.alignment(cat_states)
         attn_weights = self.attn_softmax(attn_scores)
-        transposed_encoder_outputs = encoder_outputs.transpose(2, 1)
-        context = transposed_encoder_outputs.bmm(attn_weights.unsqueeze(2))
-        context_and_embedding = torch.cat([context.squeeze(2), embedding], 1)
-        final_output, next_hidden = self.lstm(context_and_embedding.unsqueeze(1), state)
-        output = self.logsoftmax(self.linear(final_output.squeeze(1)))
+        context = attn_weights.unsqueeze(1).bmm(encoder_outputs)
+        context_and_embedding = torch.cat([context, embedding.unsqueeze(1)], 2)
+        final_output, next_hidden = self.lstm(context_and_embedding, state)
+        flat_next_hidden = torch.cat(state, 2).squeeze(0)
+        final_input = torch.cat([flat_next_hidden,
+                                 context_and_embedding.squeeze(1)], 1)
+        output = self.logsoftmax(self.linear(final_input))
         return output, next_hidden, attn_weights
 
     def register_forward_hooks(self):

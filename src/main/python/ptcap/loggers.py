@@ -71,7 +71,7 @@ class CustomLogger(object):
         end_time = time.time()
         self.logger.info("\nTraining complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
-        print("program took {}".format(end_time - self.start_time))
+        self.logger.info("program took {}".format(end_time - self.start_time))
 
     def log_captions_and_predictions(self, captions, predictions):
 
