@@ -267,6 +267,8 @@ class AttentionDecoder(Decoder):
 
         self.num_step = int(num_step)
 
+        self.tanh = nn.Tanh()
+
         self.alignment = nn.Linear(self.hidden_size * factor +
                                    encoder_hidden_size, 1)
 
@@ -294,13 +296,13 @@ class AttentionDecoder(Decoder):
         for i in range(self.num_step):
             probs, last_hidden, _ = self.apply_attention(encoder_outputs,
                                                          token, last_hidden)
-            output_probs.append(probs.unsqueeze(1))
+            output_probs.append(probs)
             if use_teacher_forcing:
                 token = captions[:, i]
             else:
                 _, token = torch.max(probs, dim=1)
 
-        concatenated_probs = torch.cat(output_probs, dim=1)
+        concatenated_probs = torch.stack(output_probs, dim=1)
         return concatenated_probs
 
     def init_hidden(self, features):
@@ -328,23 +330,31 @@ class AttentionDecoder(Decoder):
         return output, hidden, attn_weights
 
     def get_attention(self, encoder_outputs, embedding, state):
-        batch_size, encoder_seq_len = encoder_outputs.size()[0:2]
-        attn_scores = Variable(torch.zeros(batch_size, encoder_seq_len))
-        flat_state = torch.cat(state, 2).squeeze(0)
-        # if USE_CUDA: attn_energies = attn_energies.cuda()
-        for i in range(encoder_seq_len):
-            current_output = encoder_outputs[:, i]
-            cat_states = torch.cat((flat_state, current_output), 1)
-            attn_scores[:, i] = self.alignment(cat_states)
-        attn_weights = self.attn_softmax(attn_scores)
+        # Compute the attention for every encoder output state
+        attn_weights = self.get_attention_weights(encoder_outputs, state)
+
+        # Get the context vector
         context = attn_weights.unsqueeze(1).bmm(encoder_outputs)
-        context_and_embedding = torch.cat([context, embedding.unsqueeze(1)], 2)
-        final_output, next_hidden = self.lstm(context_and_embedding, state)
+
+        # Input context vector and embedding to LSTM
+        rnn_input = torch.cat([context, embedding.unsqueeze(1)], 2)
+        final_output, next_hidden = self.lstm(rnn_input, state)
+
+        # Compute output probabilities
         flat_next_hidden = torch.cat(state, 2).squeeze(0)
-        final_input = torch.cat([flat_next_hidden,
-                                 context_and_embedding.squeeze(1)], 1)
+        final_input = torch.cat([flat_next_hidden, rnn_input.squeeze(1)], 1)
         output = self.logsoftmax(self.linear(final_input))
+
         return output, next_hidden, attn_weights
+
+    def get_attention_weights(self, encoder_outputs, state):
+        flat_state = torch.cat(state, 2).squeeze(0)
+        tr_encoder_outputs = encoder_outputs.transpose(1, 0)
+        attn_scores = [self.tanh(self.alignment(torch.cat((flat_state, output), 1)))
+                       for output in tr_encoder_outputs]
+        cat_attn_scores = torch.stack(attn_scores).squeeze(2).transpose(1, 0)
+        attn_weights = self.attn_softmax(cat_attn_scores)
+        return attn_weights
 
     def register_forward_hooks(self):
         master_dict = {}
