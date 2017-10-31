@@ -257,6 +257,9 @@ class AttentionDecoder(Decoder):
 
         self.hidden_size = hidden_size
 
+        self.init_linear = nn.Linear(encoder_hidden_size,
+                                     self.hidden_size * factor)
+
         self.linear = nn.Linear(hidden_size * factor + embedding_size +
                                 encoder_hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
@@ -273,6 +276,8 @@ class AttentionDecoder(Decoder):
                                    encoder_hidden_size, 1)
 
         self.activations = self.register_forward_hooks()
+
+        self.v = nn.Parameter(torch.FloatTensor(1, self.hidden_size))
 
     def forward(self, encoder_outputs, captions, use_teacher_forcing=False):
         """
@@ -311,8 +316,17 @@ class AttentionDecoder(Decoder):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
-        c0 = features.unsqueeze(0)
-        h0 = features.unsqueeze(0)
+        # Double check this as well
+        init_state = self.tanh(self.init_linear(features))
+        # if factor == 2:
+        h_state, c_state = init_state[:, :self.hidden_size], \
+                           init_state[:, self.hidden_size:]
+        h0 = init_state.unsqueeze(0)
+        c0 = init_state.unsqueeze(0)
+
+
+        # c0 = features.unsqueeze(0)
+        # h0 = features.unsqueeze(0)
         return h0, c0
 
     def apply_attention(self, encoder_outputs, captions, last_hidden):
@@ -350,8 +364,10 @@ class AttentionDecoder(Decoder):
     def get_attention_weights(self, encoder_outputs, state):
         flat_state = torch.cat(state, 2).squeeze(0)
         tr_encoder_outputs = encoder_outputs.transpose(1, 0)
-        attn_scores = [self.tanh(self.alignment(torch.cat((flat_state, output), 1)))
-                       for output in tr_encoder_outputs]
+        alignment_scores = [self.alignment(torch.cat((flat_state, output), 1))
+                            for output in tr_encoder_outputs]
+        attn_scores = [self.v.dot(self.tanh(score)) #  Double check this line!!
+                       for score in alignment_scores]
         cat_attn_scores = torch.stack(attn_scores).squeeze(2).transpose(1, 0)
         attn_weights = self.attn_softmax(cat_attn_scores)
         return attn_weights
