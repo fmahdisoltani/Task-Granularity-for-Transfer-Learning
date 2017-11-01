@@ -1,6 +1,5 @@
 import torch
 
-from collections import OrderedDict
 from collections import namedtuple
 
 from pycocoevalcap.bleu.bleu import Bleu
@@ -18,7 +17,6 @@ class Trainer(object):
                  writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
-        self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
 
@@ -26,9 +24,11 @@ class Trainer(object):
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
-        self.loss_function = (loss_function.cuda(gpus[0])
-                              if self.use_cuda else loss_function)
+        self.model = self.model if self.gpus is None else (
+            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(
+                self.gpus[0]))
+        self.loss_function = loss_function if self.gpus is None else (
+            loss_function.cuda(self.gpus[0]))
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
@@ -44,12 +44,12 @@ class Trainer(object):
 
         self.logger.on_train_init(folder, filename)
 
-
-
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
+
+        self.logger.on_train_begin()
 
         epoch = 0
         stop_training = False
@@ -132,6 +132,13 @@ class Trainer(object):
 
         return function_dict
 
+    def get_input_captions(self, captions, is_training):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if is_training:
+            input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
+        return input_captions
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
   
@@ -147,12 +154,15 @@ class Trainer(object):
                              captions) in enumerate(dataloader):
 
             self.logger.on_batch_begin()
-            videos, captions = (Variable(videos),
-                                Variable(captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
-            probs = self.model((videos, captions), use_teacher_forcing)
+            input_captions = self.get_input_captions(captions, is_training)
+
+            videos, captions, input_captions = (Variable(videos),
+                                                Variable(captions),
+                                                Variable(input_captions))
+            if self.gpus:
+                captions = captions.cuda(self.gpus[0], async=True)
+
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter

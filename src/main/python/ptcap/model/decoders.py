@@ -1,13 +1,11 @@
 import torch
 
 from torch import nn
-from torch.autograd import Variable
 
 from ptcap.tensorboardY import forward_hook_closure
 
 
 class Decoder(nn.Module):
-
     def forward(self, decoder_states, teacher_captions,
                 use_teacher_forcing=False):
         """(BxD, BxKxV) -> BxKxV"""
@@ -15,9 +13,8 @@ class Decoder(nn.Module):
 
 
 class DecoderBase(nn.Module):
-
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+                 num_lstm_layers, num_step, go_token, gpus):
 
         super().__init__()
         self.num_lstm_layers = num_lstm_layers
@@ -27,9 +24,7 @@ class DecoderBase(nn.Module):
         self.lstm = None
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
-        self.go_token = go_token
+        self.num_step = num_step
 
         self.activations = self.register_forward_hooks()
 
@@ -46,8 +41,8 @@ class DecoderBase(nn.Module):
     def forward(self, features, captions, use_teacher_forcing=False):
         """
         This method computes the forward pass of the decoder with or without
-        teacher forcing. It should be noted that the <GO> token is
-        automatically appended to the input captions.
+        teacher forcing. It should be noted that the <GO> token is assumed to be
+        present in the input captions.
         Args:
             features: Video features extracted by the encoder.
             captions: Video captions (required if use_teacher_forcing=True).
@@ -57,19 +52,12 @@ class DecoderBase(nn.Module):
             sequence.
         """
 
-        batch_size, num_step = captions.size()
-        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
-
         if use_teacher_forcing:
-            # Add go token and remove the last token for all captions
-            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+            probs, _ = self.apply_lstm(features, captions)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            probs = self.predict(features, captions, self.num_step)
 
         return probs
 
@@ -95,8 +83,8 @@ class DecoderBase(nn.Module):
         master_dict = {}
         self.embedding.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_embedding"))
-        #self.lstm.register_forward_hook(
-         #   forward_hook_closure(master_dict, "decoder_lstm", 0, False))
+        # self.lstm.register_forward_hook(
+        #   forward_hook_closure(master_dict, "decoder_lstm", 0, False))
         self.linear.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_linear"))
         self.logsoftmax.register_forward_hook(
@@ -109,16 +97,16 @@ class DecoderBase(nn.Module):
 
 class LSTMDecoder(DecoderBase):
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+
+                 num_lstm_layers, num_step, go_token=0, gpus=None):
 
         super().__init__(embedding_size, hidden_size,
-                                          vocab_size,
-                                          num_lstm_layers, go_token=go_token, gpus=gpus)
+                         vocab_size,
+                         num_lstm_layers, num_step, go_token=go_token, gpus=gpus)
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
-
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
@@ -133,18 +121,16 @@ class LSTMDecoder(DecoderBase):
 
 
 class CoupledLSTMDecoder(DecoderBase):
-
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_hidden_lstm, num_step, go_token=0, gpus=None):
         super().__init__(embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token, gpus)
+                         num_hidden_lstm, num_step, go_token, gpus)
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
                             batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
-
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
@@ -153,6 +139,8 @@ class CoupledLSTMDecoder(DecoderBase):
         expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
         expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
+
+        self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
