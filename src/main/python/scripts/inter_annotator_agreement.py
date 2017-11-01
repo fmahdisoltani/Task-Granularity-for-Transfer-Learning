@@ -13,11 +13,15 @@ def skip(lines):
         pass
 
 
+def parse_file(folder_num, index):
+    path = os.path.join(PATH + folder_num, str(index) + ".csv")
+    if os.path.exists(path):
+        csv_file = pd.read_csv(path)
+        # Do stuff to get annotations
+
+    return -1
+
 if __name__ == '__main__':
     for i in range(10):
-        path = os.path.join(PATH + "1", str(i + 1) + ".csv")
-        csv_file1 = pd.read_csv(path)
-        # Do stuff
-
-        path = os.path.join(PATH + "2", str(i + 1) + ".csv")
-        csv_file2 = pd.read_csv(path)
+        parse_file("1", i + 1)
+        parse_file("2", i + 1)
