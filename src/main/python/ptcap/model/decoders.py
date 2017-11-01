@@ -272,12 +272,14 @@ class AttentionDecoder(Decoder):
 
         self.tanh = nn.Tanh()
 
+        alignment_size = self.hidden_size
+
         self.alignment = nn.Linear(self.hidden_size * factor +
-                                   encoder_hidden_size, 1)
+                                   encoder_hidden_size, alignment_size)
 
         self.activations = self.register_forward_hooks()
 
-        self.v = nn.Parameter(torch.FloatTensor(1, self.hidden_size))
+        self.pre_attn = nn.Linear(alignment_size, 1)
 
     def forward(self, encoder_outputs, captions, use_teacher_forcing=False):
         """
@@ -321,8 +323,8 @@ class AttentionDecoder(Decoder):
         # if factor == 2:
         h_state, c_state = init_state[:, :self.hidden_size], \
                            init_state[:, self.hidden_size:]
-        h0 = init_state.unsqueeze(0)
-        c0 = init_state.unsqueeze(0)
+        h0 = h_state.unsqueeze(0)
+        c0 = c_state.unsqueeze(0)
 
 
         # c0 = features.unsqueeze(0)
@@ -366,8 +368,7 @@ class AttentionDecoder(Decoder):
         tr_encoder_outputs = encoder_outputs.transpose(1, 0)
         alignment_scores = [self.alignment(torch.cat((flat_state, output), 1))
                             for output in tr_encoder_outputs]
-        attn_scores = [self.v.dot(self.tanh(score)) #  Double check this line!!
-                       for score in alignment_scores]
+        attn_scores = [self.pre_attn(self.tanh(score)) for score in alignment_scores]
         cat_attn_scores = torch.stack(attn_scores).squeeze(2).transpose(1, 0)
         attn_weights = self.attn_softmax(cat_attn_scores)
         return attn_weights
