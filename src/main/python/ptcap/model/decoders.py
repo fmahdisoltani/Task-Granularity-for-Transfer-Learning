@@ -21,7 +21,6 @@ class DecoderBase(nn.Module):
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
-        self.lstm = None
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
         self.num_step = num_step
@@ -83,8 +82,6 @@ class DecoderBase(nn.Module):
         master_dict = {}
         self.embedding.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_embedding"))
-        # self.lstm.register_forward_hook(
-        #   forward_hook_closure(master_dict, "decoder_lstm", 0, False))
         self.linear.register_forward_hook(
             forward_hook_closure(master_dict, "decoder_linear"))
         self.logsoftmax.register_forward_hook(
@@ -92,7 +89,7 @@ class DecoderBase(nn.Module):
         return master_dict
 
     def apply_lstm(self):
-        pass
+        raise NotImplementedError("apply_lstm should be implemented")
 
 
 class LSTMDecoder(DecoderBase):
