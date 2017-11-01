@@ -358,6 +358,8 @@ class AttentionDecoder(Decoder):
 
         # Compute output probabilities
         flat_next_hidden = torch.cat(state, 2).squeeze(0)
+        # OR
+        flat_next_hidden = torch.cat(next_hidden, 2).squeeze(0)
         final_input = torch.cat([flat_next_hidden, rnn_input.squeeze(1)], 1)
         output = self.logsoftmax(self.linear(final_input))
 
