@@ -100,6 +100,7 @@ class LSTMDecoder(DecoderBase):
 
                  num_lstm_layers, num_step, go_token=0, gpus=None):
 
+
         super().__init__(embedding_size, hidden_size,
                          vocab_size,
                          num_lstm_layers, num_step, go_token=go_token, gpus=gpus)
