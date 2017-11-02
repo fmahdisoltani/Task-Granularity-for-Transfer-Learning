@@ -12,7 +12,7 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: [0]
+  gpus:
 
 dataloaders:
   kwargs: {batch_size: &b 1, num_workers: 16, pin_memory: True}

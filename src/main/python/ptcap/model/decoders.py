@@ -143,10 +143,10 @@ class LSTMDecoder(Decoder):
 class CoupledLSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_lstm_layers, go_token=0, gpus=None):
 
         super(Decoder, self).__init__()
-        self.num_hidden_lstm = num_hidden_lstm
+        self.num_hidden_lstm = num_lstm_layers
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
@@ -203,23 +203,29 @@ class CoupledLSTMDecoder(Decoder):
         return probs
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
-
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
-        batch_size, seq_len, _ = embedded_captions.size()
-        altered_lstm_hidden = lstm_hidden[0][0].unsqueeze(1)
-        expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
-        expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
-        lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
+        lstm_input = self.prepare_lstm_input(embedded_captions, features)
+
+        self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
-        lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
-                                         0)
+        lstm_out_projected = torch.stack([self.linear(h)
+                                          for h in lstm_output], 0)
         probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
 
         return probs, lstm_hidden
+
+    def prepare_lstm_input(self, embedded_captions, features):
+        batch_size, seq_len, _ = embedded_captions.size()
+        unsqueezed_features = features.unsqueeze(1)
+        expansion_size = [batch_size, seq_len, unsqueezed_features.size(2)]
+    
+        expanded_features = unsqueezed_features.expand(*expansion_size)
+        lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
+        return lstm_input
 
     def predict(self, features, go_tokens, num_step=1):
         lstm_input = go_tokens
