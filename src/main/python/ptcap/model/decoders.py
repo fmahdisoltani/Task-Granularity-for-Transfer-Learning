@@ -14,7 +14,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, num_step, go_token, gpus):
+                 num_lstm_layers, num_step):
 
         super().__init__()
         self.num_lstm_layers = num_lstm_layers
@@ -93,14 +93,11 @@ class DecoderBase(nn.Module):
 
 
 class LSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, vocab_size,
+    def __init__(self, embedding_size, hidden_size, vocab_size, num_lstm_layers,
+                 num_step):
 
-                 num_lstm_layers, num_step, go_token=0, gpus=None):
-
-
-        super().__init__(embedding_size, hidden_size,
-                         vocab_size,
-                         num_lstm_layers, num_step, go_token=go_token, gpus=gpus)
+        super().__init__(embedding_size, hidden_size, vocab_size,
+                         num_lstm_layers, num_step)
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
 
@@ -120,9 +117,10 @@ class LSTMDecoder(DecoderBase):
 
 class CoupledLSTMDecoder(DecoderBase):
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, num_step, go_token=0, gpus=None):
+                 num_hidden_lstm, num_step):
+
         super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_hidden_lstm, num_step, go_token, gpus)
+                         num_hidden_lstm, num_step)
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
@@ -133,6 +131,7 @@ class CoupledLSTMDecoder(DecoderBase):
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
         batch_size, seq_len, _ = embedded_captions.size()
+
         altered_lstm_hidden = lstm_hidden[0][0].unsqueeze(1)
         expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
         expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)

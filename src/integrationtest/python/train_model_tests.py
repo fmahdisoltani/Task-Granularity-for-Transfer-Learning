@@ -53,9 +53,9 @@ if __name__ == '__main__':
     checkpoints = []
 
     # Run models and get their checkpoint folders
-    for config_path in CONFIG_PATH:
-        checkpoint_folder = simulate_training(config_path)
-        checkpoints.append(checkpoint_folder)
+    # for config_path in CONFIG_PATH:
+    #     checkpoint_folder = simulate_training(config_path)
+    #     checkpoints.append(checkpoint_folder)
 
     # Clean up the checkpoint folders
     for checkpoint_folder in checkpoints:
