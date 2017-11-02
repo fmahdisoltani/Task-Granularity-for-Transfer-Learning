@@ -13,17 +13,20 @@ class Decoder(nn.Module):
 
 
 class DecoderBase(nn.Module):
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, num_step):
+    def __init__(self, embedding_size, hidden_size,
+                 num_lstm_layers, vocab_size, num_step):
 
         super().__init__()
+
+        self.embedding_size = embedding_size
+        self.hidden_size = hidden_size
         self.num_lstm_layers = num_lstm_layers
+        self.num_step = num_step
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.num_step = num_step
 
         self.activations = self.register_forward_hooks()
 
@@ -93,13 +96,13 @@ class DecoderBase(nn.Module):
 
 
 class LSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, vocab_size, num_lstm_layers,
-                 num_step):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_lstm_layers, num_step)
+        super().__init__(*args, **kwargs)
+
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+        self.lstm = nn.LSTM(self.embedding_size, self.hidden_size,
+                            self.num_lstm_layers, batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
@@ -116,33 +119,34 @@ class LSTMDecoder(DecoderBase):
 
 
 class CoupledLSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, num_step):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_hidden_lstm, num_step)
+        super().__init__(*args, **kwargs)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1,
+        self.lstm = nn.LSTM(self.embedding_size+self.hidden_size,
+                            self.hidden_size, self.num_lstm_layers,
                             batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
-        batch_size, seq_len, _ = embedded_captions.size()
-
-        altered_lstm_hidden = lstm_hidden[0][0].unsqueeze(1)
-        expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
-        expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
-        lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
+        lstm_input = self.prepare_lstm_input(embedded_captions, features)
 
         self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
-        lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
-                                         0)
+        lstm_out_projected = torch.stack([self.linear(h)
+                                          for h in lstm_output], 0)
         probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
 
         return probs, lstm_hidden
+
+    def prepare_lstm_input(self, embedded_captions, features):
+        batch_size, seq_len, _ = embedded_captions.size()
+        expansion_size = [batch_size, seq_len, features.size(2)]
+        expanded_features = features.expand(*expansion_size)
+        lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
+        return lstm_input
