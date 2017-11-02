@@ -25,9 +25,9 @@ class TestDimensions(unittest.TestCase):
                                    ), {}),
 
             "FullyConnectedMapper": ((4, 10), {}),
-            "DecoderBase": ((17, self.num_features, 1, self.vocab_size, 23,), {}),
-            "LSTMDecoder": ((17, self.num_features, 1, self.vocab_size, 23,), {}),
-            "CoupledLSTMDecoder": ((17, self.num_features, 1, self.vocab_size, 23,),
+            "DecoderBase": ((17, self.num_features, self.vocab_size, 1, self.caption_len,), {}),
+            "LSTMDecoder": ((17, self.num_features, self.vocab_size, 1, self.caption_len,), {}),
+            "CoupledLSTMDecoder": ((17, self.num_features, self.vocab_size, 1, self.caption_len,),
                                    {}),
 
             "RtorchnCaptioner": ((self.vocab_size,), {}),
@@ -37,7 +37,7 @@ class TestDimensions(unittest.TestCase):
                  "decoder_kwargs": {"embedding_size": 17,
                                     "hidden_size": self.num_features,
                                     "vocab_size": self.vocab_size,
-                                    "num_lstm_layers": 23,
+                                    "num_lstm_layers": 1,
                                     "num_step": self.caption_len}}),
 
         }
