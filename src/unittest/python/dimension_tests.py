@@ -25,15 +25,12 @@ class TestDimensions(unittest.TestCase):
                                    ), {}),
 
             "FullyConnectedMapper": ((4, 10), {}),
-            "DecoderBase": ((17, self.num_features,  1,),
-                            {"vocab_size": self.vocab_size,
-                             "num_step": self.caption_len}),
-            "LSTMDecoder": ((17, self.num_features, 1,),
-                            {"vocab_size": self.vocab_size,
-                             "num_step": self.caption_len}),
-            "CoupledLSTMDecoder": ((17, self.num_features, 1,),
-                                   {"vocab_size": self.vocab_size,
-                                    "num_step": self.caption_len}),
+            "DecoderBase": ((17, self.num_features, 1, self.vocab_size,
+                             self.caption_len), {}),
+            "LSTMDecoder": ((17, self.num_features, 1, self.vocab_size,
+                             self.caption_len), {}),
+            "CoupledLSTMDecoder": ((17, self.num_features, 1, self.vocab_size,
+                             self.caption_len), {}),
 
             "RtorchnCaptioner": ((self.vocab_size,), {}),
             "EncoderDecoder": (
@@ -110,10 +107,7 @@ class TestDimensions(unittest.TestCase):
                 with self.subTest(captioner_class=captioner_class):
                     self.assertIn(captioner_class.__name__, self.arguments)
                     args, kwargs = self.arguments[captioner_class.__name__]
-                    print("^"*100)
-                    print (args)
-                    print(kwargs)
-                    print("&"*100)
+
                     captioner = captioner_class(*args, **kwargs)
                     captioned = captioner(video_batch, use_teacher_forcing)
 
