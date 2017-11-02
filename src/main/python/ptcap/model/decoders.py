@@ -99,7 +99,9 @@ class LSTMDecoder(DecoderBase):
         super().__init__(embedding_size, hidden_size, vocab_size,
                          num_lstm_layers, num_step)
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+        print (num_lstm_layers)
+        print("****"*10)
+        self.lstm = nn.LSTM(embedding_size, hidden_size,num_lstm_layers , batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
