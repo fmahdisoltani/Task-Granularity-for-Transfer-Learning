@@ -13,8 +13,8 @@ class Decoder(nn.Module):
 
 
 class DecoderBase(nn.Module):
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, num_step):
+    def __init__(self, embedding_size, hidden_size,
+                 num_lstm_layers, vocab_size, num_step):
 
         super().__init__()
         self.num_lstm_layers = num_lstm_layers
@@ -93,11 +93,12 @@ class DecoderBase(nn.Module):
 
 
 class LSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, vocab_size, num_lstm_layers,
-                 num_step):
+    def __init__(self, embedding_size, hidden_size, num_lstm_layers,
+                 *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_lstm_layers, num_step)
+        super().__init__(embedding_size, hidden_size, num_lstm_layers, *args,
+                         **kwargs)
+
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, num_lstm_layers,
                             batch_first=True)
@@ -117,11 +118,11 @@ class LSTMDecoder(DecoderBase):
 
 
 class CoupledLSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, num_step):
+    def __init__(self, embedding_size, hidden_size,
+                 num_lstm_layers, *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size, vocab_size,
-                         num_lstm_layers, num_step)
+        super().__init__(embedding_size, hidden_size,
+                         num_lstm_layers, *args, **kwargs)
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size,
