@@ -1,5 +1,6 @@
 import numpy as np
 
+import cv2
 import glob
 from PIL import Image
 
@@ -81,13 +82,16 @@ class NumpyVideoDataset(VideoDataset):
     
 
 class GulpVideoDataset(VideoDataset):
-    def __init__(self, gulp_dir, *args, **kwargs):
+    def __init__(self, gulp_dir, size=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # instantiate the GulpDirectory
         self.gulp_dir = GulpDirectory(gulp_dir)
+        self.size = tuple(size) if size else None
 
     def _get_video(self, index):
 
         frames, _ = self.gulp_dir[self.video_ids[index]]
+        if self.size:
+            frames = [cv2.resize(f, self.size) for f in frames]
         return np.array([np.array(f) for f in frames])
