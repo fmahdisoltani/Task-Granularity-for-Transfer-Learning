@@ -17,15 +17,20 @@ class DecoderBase(nn.Module):
                  num_lstm_layers, vocab_size, num_step):
 
         super().__init__()
+
+        self.embedding_size = embedding_size
+        self.hidden_size = hidden_size
         self.num_lstm_layers = num_lstm_layers
+        self.num_step = num_step
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.num_step = num_step
+
 
         self.activations = self.register_forward_hooks()
+
 
     def init_hidden(self, features):
         """
@@ -93,15 +98,13 @@ class DecoderBase(nn.Module):
 
 
 class LSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size, num_lstm_layers,
-                 *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size, num_lstm_layers, *args,
-                         **kwargs)
+        super().__init__(*args, **kwargs)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size, hidden_size, num_lstm_layers,
-                            batch_first=True)
+        self.lstm = nn.LSTM(self.embedding_size, self.hidden_size,
+                            self.num_lstm_layers, batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
@@ -118,15 +121,14 @@ class LSTMDecoder(DecoderBase):
 
 
 class CoupledLSTMDecoder(DecoderBase):
-    def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
-        super().__init__(embedding_size, hidden_size,
-                         num_lstm_layers, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size,
-                            num_lstm_layers, batch_first=True)
+        self.lstm = nn.LSTM(self.embedding_size+self.hidden_size,
+                            self.hidden_size, self.num_lstm_layers,
+                            batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
