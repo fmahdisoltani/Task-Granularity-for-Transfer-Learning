@@ -148,8 +148,10 @@ class TestCaptionLevelAccuracy(unittest.TestCase):
 
 class TestLCS(unittest.TestCase):
     def setUp(self):
-        self.captions = ["A B C", "B B B", "A B C", "A B C", "A B C", "A B C"]
-        self.predictions = ["",   "A A A", "A A A", "A B B", "A B",   "A B C"]
+        self.captions = ["A B C", "B B B", "A B C", "A B C", "A B C", "A B C",
+                         "A B A B", "A C B C"]
+        self.predictions = ["",   "A A A", "A A A", "A B B", "A B",   "A B C",
+                            "A B", "A D B D"]
 
         def test_function(x, y): return {"add": x + y}
         self.test_function = test_function
@@ -157,7 +159,7 @@ class TestLCS(unittest.TestCase):
 
     def test_compute_lcs(self):
 
-        expected_lcs = [0, 0, 1, 2, 2, 3]
+        expected_lcs = [0, 0, 1, 2, 2, 3, 2, 2]
 
         for i, (prediction, caption) in enumerate(zip(self.predictions,
                                                       self.captions)):
@@ -169,8 +171,8 @@ class TestLCS(unittest.TestCase):
 
     def test_run_scores(self):
 
-        expected_precision = [0, 0, 1.0/3, 2.0/3, 1, 1]
-        expected_recall = [0, 0, 1.0/3, 2.0/3, 2.0/3, 1]
+        expected_precision = [0, 0, 1.0/3, 2.0/3, 1, 1, 1, 0.5]
+        expected_recall = [0, 0, 1.0/3, 2.0/3, 2.0/3, 1, 0.5, 0.5]
 
         for i, (prediction, caption) in enumerate(zip(self.predictions,
                                                       self.captions)):
@@ -187,8 +189,8 @@ class TestLCS(unittest.TestCase):
 
     def test_score(self):
 
-        expected_batch_precision = 0.5
-        expected_batch_recall = 4.0/9
+        expected_batch_precision = 9/16
+        expected_batch_recall = 11/24
         expected_sum = self.test_function(expected_batch_precision,
                                           expected_batch_recall)["add"]
 

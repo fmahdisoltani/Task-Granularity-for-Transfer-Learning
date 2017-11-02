@@ -108,11 +108,19 @@ class ScoresOperator(object):
 
 
 class LCS(object):
+    """
+    The main functionality of this class is to compute the LCS (Lowest Common
+    Subsequence) between a caption and prediction. By default, it returns the
+    precision and recall values calculated based on the LCS between a prediction
+    and a caption.
+    """
     def __init__(self, functions_list, tokenizer):
         """
         Initializes functions_list and tokenizer.
         Args:
-        functions_list: A list of the functions that will be applied.
+        functions_list: A list of the functions that will be applied on the
+        precision and recall values calculated based on the LCS between a
+        prediction and a caption.
         """
 
         self.functions_list = functions_list
@@ -138,34 +146,31 @@ class LCS(object):
         num_rows = len(prediction)
         num_cols = len(caption)
 
-        C = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
+        table = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
         for i in range(1, num_rows + 1):
             for j in range(1, num_cols + 1):
                 if prediction[i - 1] == caption[j - 1]:
-                    C[i][j] = C[i - 1][j - 1] + 1
+                    table[i][j] = table[i - 1][j - 1] + 1
                 else:
-                    C[i][j] = max(C[i][j - 1], C[i - 1][j])
-        return C, C[num_rows][num_cols]
+                    table[i][j] = max(table[i][j - 1], table[i - 1][j])
+        return table, table[num_rows][num_cols]
 
     def mean_scores(self, batch_scores_dict):
-        for key, value in batch_scores_dict.items():
-            batch_scores_dict[key] = np.mean(value)
+        for metric_name, metric_value in batch_scores_dict.items():
+            batch_scores_dict[metric_name] = np.mean(metric_value)
         return batch_scores_dict
 
     def score_batch(self, predictions, captions):
         assert len(predictions) == len(captions)
 
         batch_scores_dict = OrderedDict()
-
         for count, (prediction, caption) in enumerate(zip(predictions,
                                                           captions)):
             scores_dict = self.score_sample(prediction.split(), caption.split())
-
             batch_scores_dict = self.collect_scores(batch_scores_dict,
                                                     scores_dict)
 
         batch_scores_dict = self.mean_scores(batch_scores_dict)
-
         return batch_scores_dict
 
     def score_sample(self, prediction, caption):
