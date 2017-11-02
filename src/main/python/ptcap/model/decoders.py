@@ -28,9 +28,7 @@ class DecoderBase(nn.Module):
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
 
-
         self.activations = self.register_forward_hooks()
-
 
     def init_hidden(self, features):
         """
