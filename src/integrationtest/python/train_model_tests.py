@@ -17,7 +17,7 @@ def check_saved_files(checkpoint_path, files_list):
         if not os.path.exists(os.path.join(checkpoint_path, file_name)):
             raise FileNotFoundError
 
-            
+
 def simulate_training(config_path):
     # Read config file for training a model from scratch
     config_obj = YamlConfig(config_path)
@@ -34,8 +34,8 @@ def simulate_training(config_path):
 
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
-                                               "model.latest",
-                                               "tokenizer_dicts"])
+                                          "model.latest",
+                                          "tokenizer_dicts"])
     return checkpoint_folder
 
 
@@ -45,6 +45,7 @@ def setup_fake_video_data():
 
     # Create fake data first
     fkdata.create_fake_video_data()
+
 
 if __name__ == '__main__':
 

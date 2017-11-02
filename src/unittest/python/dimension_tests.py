@@ -25,13 +25,11 @@ class TestDimensions(unittest.TestCase):
                                    ), {}),
 
             "FullyConnectedMapper": ((4, 10), {}),
+            "DecoderBase": ((17, self.num_features, self.vocab_size, 23,), {}),
+            "LSTMDecoder": ((17, self.num_features, self.vocab_size, 23,), {}),
+            "CoupledLSTMDecoder": ((17, self.num_features, self.vocab_size, 23,),
+                                   {}),
 
-            "FullyConnectedDecoder": ((self.num_features, self.caption_len,
-                                       self.vocab_size), {}),
-            'LSTMDecoder': ((17, self.num_features, self.vocab_size, 23,
-                             self.caption_len), {}),
-            "CoupledLSTMDecoder": ((17, self.num_features, self.vocab_size, 23,
-                                    self.caption_len), {}),
             "RtorchnCaptioner": ((self.vocab_size,), {}),
             "EncoderDecoder": (
                 (encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder),
