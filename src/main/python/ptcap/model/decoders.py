@@ -132,8 +132,7 @@ class CoupledLSTMDecoder(DecoderBase):
         embedded_captions = self.embedding(captions)
         batch_size, seq_len, _ = embedded_captions.size()
 
-        altered_lstm_hidden = features
-        expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
+        expansion_size = [batch_size, seq_len, features.size(2)]
         expanded_lstm_hidden = features.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
 
