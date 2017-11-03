@@ -107,12 +107,7 @@ def train_model(config_obj, relative_path=""):
     decoder_args = config_obj.get("model", "decoder_args")
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
-    decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
-
-    # TODO: Remove GPUs?
-    gpus = config_obj.get("device", "gpus")
-
-    decoder_kwargs["gpus"] = gpus
+    decoder_kwargs["num_step"] = tokenizer.maxlen
 
     # Create model, loss, and optimizer objects
     model = getattr(ptcap.model.captioners, model_type)(
@@ -121,8 +116,7 @@ def train_model(config_obj, relative_path=""):
         encoder_args=encoder_args,
         encoder_kwargs=encoder_kwargs,
         decoder_args=decoder_args,
-        decoder_kwargs=decoder_kwargs,
-        gpus=gpus)
+        decoder_kwargs=decoder_kwargs)
 
     loss_function = getattr(ptcap.losses, loss_type)()
 
@@ -137,7 +131,9 @@ def train_model(config_obj, relative_path=""):
     scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
         **scheduler_kwargs)
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
+                            config_obj.get("logging", "tensorboard_frequency"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
