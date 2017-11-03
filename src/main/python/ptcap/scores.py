@@ -134,11 +134,11 @@ class LCS(object):
         return self.score_batch(string_predictions, outputs.string_captions)
 
     def collect_scores(self, batch_scores_dict, scores_dict):
-        for key, value in scores_dict.items():
-            if key not in batch_scores_dict:
-                batch_scores_dict[key] = [value]
+        for metric, metric_value in scores_dict.items():
+            if metric not in batch_scores_dict:
+                batch_scores_dict[metric] = [metric_value]
             else:
-                batch_scores_dict[key].append(value)
+                batch_scores_dict[metric].append(metric_value)
         return batch_scores_dict
 
     @classmethod
@@ -156,8 +156,8 @@ class LCS(object):
         return table, table[num_rows][num_cols]
 
     def mean_scores(self, batch_scores_dict):
-        for metric_name, metric_value in batch_scores_dict.items():
-            batch_scores_dict[metric_name] = np.mean(metric_value)
+        for metric, metric_value in batch_scores_dict.items():
+            batch_scores_dict[metric] = np.mean(metric_value)
         return batch_scores_dict
 
     def score_batch(self, predictions, captions):
