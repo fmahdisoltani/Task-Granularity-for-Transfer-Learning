@@ -3,6 +3,7 @@ from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import  BiJesterNetII
 from .encoders import Encoder
+from rtorchn.core.networks.resnets import InflatedResNet18
 
 
 class PretrainedEncoder(Encoder):
@@ -94,3 +95,16 @@ class BIJesterEncoder(PretrainedEncoder):
           features = self.encoder.extract_features(video_batch)
           return features.mean(dim=1)
 
+class Resnet18Encoder(PretrainedEncoder):
+
+    def __init__(self, pretrained_path=None, freeze=False, ):
+        num_classes = 1363
+        encoder_args = (num_classes,)
+        super(Resnet18Encoder, self).__init__(encoder=InflatedResNet18,
+                                               encoder_args=encoder_args,
+                                               pretrained_path=pretrained_path,
+                                               freeze=freeze)
+
+    def forward(self, video_batch):
+        features = self.encoder.extract_features(video_batch)
+        return features.mean(dim=1)
