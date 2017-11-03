@@ -23,6 +23,10 @@ class Trainer(object):
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
 
+        self.model = self.model if self.gpus is None else (
+            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda())
+        self.loss_function = loss_function if self.gpus is None else (
+            loss_function.cuda(self.gpus[0]))
         self.num_epochs, self.model, scheduler.optimizer = init_state
         self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
         self.loss_function = (loss_function.cuda(gpus[0])
@@ -147,8 +151,8 @@ class Trainer(object):
             videos, captions = (Variable(videos),
                                 Variable(captions))
             if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
+                videos = videos.cuda(self.gpus[0], async=True)
+                captions = captions.cuda(self.gpus[0], async=True)
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
