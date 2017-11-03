@@ -36,7 +36,7 @@ class FullyConnectedDecoder(Decoder):
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+                 num_lstm_layers, go_token=0):
 
         super(LSTMDecoder, self).__init__()
         self.num_lstm_layers = num_lstm_layers
@@ -49,8 +49,8 @@ class LSTMDecoder(Decoder):
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
+        # self.use_cuda = True if gpus else False
+        # self.gpus = gpus
         self.go_token = go_token
 
         self.activations = self.register_forward_hooks()
@@ -143,7 +143,7 @@ class LSTMDecoder(Decoder):
 class CoupledLSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_hidden_lstm, go_token=0):
 
         super(Decoder, self).__init__()
         self.num_hidden_lstm = num_hidden_lstm
@@ -156,8 +156,6 @@ class CoupledLSTMDecoder(Decoder):
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
         self.go_token = go_token
 
         self.activations = self.register_forward_hooks()

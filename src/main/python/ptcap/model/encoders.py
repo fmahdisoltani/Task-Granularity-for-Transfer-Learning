@@ -25,7 +25,7 @@ class FullyConnectedEncoder(Encoder):
 
 
 class CNN3dEncoder(Encoder):
-    def __init__(self, num_features=128, gpus=None):
+    def __init__(self, num_features=128):
         super(CNN3dEncoder, self).__init__()
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
@@ -100,7 +100,7 @@ class CNN3dEncoder(Encoder):
 
 
 class CNN3dLSTMEncoder(Encoder):
-    def __init__(self, encoder_output_size=52, gpus=None):
+    def __init__(self, encoder_output_size=52):
         """
         num_features: defines the output size of the encoder
         """
@@ -113,8 +113,6 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.num_layers = 1
         self.num_features = encoder_output_size
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)

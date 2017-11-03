@@ -110,9 +110,9 @@ def train_model(config_obj, relative_path=""):
     decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
 
     # TODO: Remove GPUs?
-    gpus = config_obj.get("device", "gpus")
-
-    decoder_kwargs["gpus"] = gpus
+    # gpus = config_obj.get("device", "gpus")
+    #
+    # decoder_kwargs["gpus"] = gpus
 
     # Create model, loss, and optimizer objects
     model = getattr(ptcap.model.captioners, model_type)(
@@ -121,8 +121,8 @@ def train_model(config_obj, relative_path=""):
         encoder_args=encoder_args,
         encoder_kwargs=encoder_kwargs,
         decoder_args=decoder_args,
-        decoder_kwargs=decoder_kwargs,
-        gpus=gpus)
+        decoder_kwargs=decoder_kwargs)
+        # ,gpus=gpus)
 
     loss_function = getattr(ptcap.losses, loss_type)()
 

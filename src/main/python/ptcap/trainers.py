@@ -16,7 +16,7 @@ class Trainer(object):
                  writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
-        self.use_cuda = True if gpus else False
+        # self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
 
@@ -24,9 +24,14 @@ class Trainer(object):
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
-        self.loss_function = (loss_function.cuda(gpus[0])
-                              if self.use_cuda else loss_function)
+        # self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
+        # self.loss_function = (loss_function.cuda(gpus[0])
+        #                       if self.use_cuda else loss_function)
+
+        self.model = self.model if self.gpus is None else (
+            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda())
+        self.loss_function = loss_function if self.gpus is None else (
+            loss_function.cuda(self.gpus[0]))
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
