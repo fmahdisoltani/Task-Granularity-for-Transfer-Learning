@@ -92,5 +92,5 @@ class BIJesterEncoder(PretrainedEncoder):
 
       def forward(self, video_batch):
           features = self.encoder.extract_features(video_batch)
-          return features.mean(dim=1)
+          return features
 
