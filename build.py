@@ -16,13 +16,16 @@ name = "ptcap"
 
 @init
 def set_properties(project):
+    project.depends_on('gulpio',
+                       url='git+ssh://git@github.com/TwentyBN/GulpIO.git')
     project.depends_on('pandas')
     project.depends_on('pyfackel')
     project.depends_on('rtorchn', url=('git+ssh://git@github.com/TwentyBN/'
                                        '20bn-rtorchn.git'))
     project.depends_on('tensorboard-pytorch')
     project.depends_on('testfixtures')
-
+    project.depends_on('torchy',
+                       url='git+ssh://git@github.com/TwentyBN/Torchy.git@make_resnet18_importable')
     project.set_property('coverage_threshold_warn', 0)
     project.set_property('flake8_verbose_output', "True")
     project.set_property('integrationtest_inherit_environment', True)

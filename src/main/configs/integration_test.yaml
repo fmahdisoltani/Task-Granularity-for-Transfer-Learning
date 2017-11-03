@@ -1,5 +1,5 @@
 paths:
-  videos_folder: fake_data/videos
+  videos_folder: /home/waseem/data/20bn-somethingsomething-2017-10-31
   checkpoint_folder: checkpoint_sample/
 
   train_annot: &train_annot fake_data/json/fake.json

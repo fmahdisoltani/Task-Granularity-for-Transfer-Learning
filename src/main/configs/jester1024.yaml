@@ -1,11 +1,11 @@
 paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
+  videos_folder: &vidpath /home/waseem/data/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/hhhhhhhhhhhhhhhhhhh/
+  checkpoint_folder: /home/waseem/Models/CoupledLSTMDecoder/
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
   pretrained_folder:
@@ -16,18 +16,18 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 32, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: BIJesterEncoder
+  encoder: FCEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
+  encoder_kwargs: {pretrained_path: /home/waseem/Models/pretrained_CNN_256/model.checkpoint,
                    freeze: True}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
-                   hidden_size: 1024,
+                   hidden_size: 256,
                    num_lstm_layers: 1}
 
 loss:
