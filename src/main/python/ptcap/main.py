@@ -72,13 +72,13 @@ def train_model(config_obj, relative_path=""):
 
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = Compose([prep.RandomCrop([48, 96, 96]),
-                            prep.PadVideo([48, 96, 96]),
+    preprocessor = Compose([prep.RandomCrop([48, 224, 224]),
+                            prep.PadVideo([48, 224, 224]),
                             prep.Float32Converter(64.),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([48, 96, 96]),
-                                prep.PadVideo([48, 96, 96]),
+    val_preprocessor = Compose([CenterCropper([48, 224, 224]),
+                                prep.PadVideo([48, 224, 224]),
                                 prep.Float32Converter(64.),
                                 prep.PytorchTransposer()])
 
@@ -86,13 +86,13 @@ def train_model(config_obj, relative_path=""):
                                     tokenizer=tokenizer,
                                     preprocess=preprocessor,
                                     gulp_dir=videos_folder,
-                                    size=[128, 128])
+                                    size=[224, 224])
 
     validation_set = GulpVideoDataset(annotation_parser=validation_parser,
                                       tokenizer=tokenizer,
                                       preprocess=val_preprocessor,
                                       gulp_dir=videos_folder,
-                                      size=[128, 128])
+                                      size=[224, 224])
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
