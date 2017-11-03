@@ -8,8 +8,9 @@ from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
+                          caption_accuracy, first_token_accuracy, fscore,
+                          gmeasure, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
@@ -122,15 +123,16 @@ class Trainer(object):
 
     def get_scoring_functions(self):
 
-        function_dict = []
+        scoring_functions = []
 
-        function_dict.append(loss_to_numpy)
-        function_dict.append(token_accuracy)
-        function_dict.append(first_token_accuracy)
-        function_dict.append(caption_accuracy)
-        function_dict.append(self.multiscore_adapter)
+        scoring_functions.append(loss_to_numpy)
+        scoring_functions.append(token_accuracy)
+        scoring_functions.append(first_token_accuracy)
+        scoring_functions.append(caption_accuracy)
+        scoring_functions.append(self.multiscore_adapter)
+        scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
-        return function_dict
+        return scoring_functions
 
     def get_input_captions(self, captions, is_training):
         batch_size = captions.size(0)
