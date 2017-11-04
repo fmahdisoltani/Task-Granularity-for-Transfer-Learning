@@ -1,6 +1,7 @@
 import time
 
 import torch
+import torch.nn as nn
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -26,7 +27,9 @@ class Trainer(object):
         print("&"*100)
         print(gpus)
         if self.gpus:
-            self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
+            # self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
+            self.net = DataParallelWrapper(self.net, device_ids=self.gpus).cuda(
+                self.gpus[0])
             self.loss = loss_function.cuda(self.gpus[0])
 
         else:
@@ -208,3 +211,15 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+class DataParallelWrapper(nn.DataParallel):
+    def __init__(self, m, device_ids):
+        super().__init__(m, device_ids=device_ids)
+        self.use_cuda = m.use_cuda
+        self.gpus = m.gpus
+
+    def initialize(self):
+        self.module.initialize()
+
+    def reset_states(self):
+        self.module.reset_states()
