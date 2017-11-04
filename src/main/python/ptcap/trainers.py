@@ -28,9 +28,9 @@ class Trainer(object):
         print(gpus)
         if self.gpus:
             # self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
-            self.net = DataParallelWrapper(self.net, device_ids=self.gpus).cuda(
+            self.model = DataParallelWrapper(model, device_ids=self.gpus).cuda(
                 self.gpus[0])
-            self.loss = loss_function.cuda(self.gpus[0])
+            self.loss_function = loss_function.cuda(self.gpus[0])
 
         else:
             print("JO"*100)
@@ -51,7 +51,7 @@ class Trainer(object):
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1
+        #self.tensorboard_frequency = 1
         self.logger = logger
         self.logger.on_train_init(folder, filename)
 
