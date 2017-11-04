@@ -27,7 +27,7 @@ class Trainer(object):
         print("&"*100)
         print(gpus)
         if self.gpus:
-            print("SELF>GPUS not NONE "*100)
+            print("SELF.GPUS not NONE "*100)
             # self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
 
             self.model = DataParallelWrapper(model, device_ids=self.gpus).cuda(
@@ -53,7 +53,7 @@ class Trainer(object):
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1
+        #self.tensorboard_frequency = 1
         self.logger = logger
         self.logger.on_train_init(folder, filename)
 
