@@ -81,7 +81,7 @@ class LSTMDecoder(Decoder):
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, captions, self.num_step)
+            probs = self.predict(features, captions, 13)
 
         return probs
 
