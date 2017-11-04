@@ -40,9 +40,9 @@ class Trainer(object):
 
         self.logger = logger
 
-        self.multiscore_adapter = MultiScoreAdapter(
-            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
-            self.tokenizer)
+        #self.multiscore_adapter = MultiScoreAdapter(
+        #    MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+        #    self.tokenizer)
 
         self.logger.on_train_init(folder, filename)
 
@@ -134,7 +134,7 @@ class Trainer(object):
         function_dict.append(token_accuracy)
         function_dict.append(first_token_accuracy)
         function_dict.append(caption_accuracy)
-        function_dict.append(self.multiscore_adapter)
+        #function_dict.append(self.multiscore_adapter)
 
         return function_dict
 
@@ -155,7 +155,7 @@ class Trainer(object):
         else:
             self.model.eval()
         
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions predictions")
         scores = ScoresOperator(self.get_scoring_functions())
 
         for sample_counter, (videos, string_captions,
