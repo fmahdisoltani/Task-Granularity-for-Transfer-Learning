@@ -27,10 +27,12 @@ class Trainer(object):
         print("&"*100)
         print(gpus)
         if self.gpus:
+            print("SELF>GPUS not NONE "*100)
             # self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
-            self.net = DataParallelWrapper(self.net, device_ids=self.gpus).cuda(
+
+            self.model = DataParallelWrapper(model, device_ids=self.gpus).cuda(
                 self.gpus[0])
-            self.loss = loss_function.cuda(self.gpus[0])
+            self.loss_function = loss_function.cuda(self.gpus[0])
 
         else:
             print("JO"*100)
