@@ -147,13 +147,13 @@ class CNN3dLSTMEncoder(Encoder):
         self.activations = self.register_forward_hooks()
 
 
-    def init_hidden(self, batch_size):
-        h0 = Variable(torch.zeros(1, batch_size, self.num_features))
-        c0 = Variable(torch.zeros(1, batch_size, self.num_features))
-        if self.use_cuda:
-            h0 = h0.cuda(self.gpus[0])
-            c0 = c0.cuda(self.gpus[0])
-        return (h0, c0)
+    # def init_hidden(self, batch_size):
+    #     h0 = Variable(torch.zeros(1, batch_size, self.num_features))
+    #     c0 = Variable(torch.zeros(1, batch_size, self.num_features))
+    #     if self.use_cuda:
+    #         h0 = h0.cuda(self.gpus[0])
+    #         c0 = c0.cuda(self.gpus[0])
+    #     return (h0, c0)
 
     def forward(self, videos):
         # Video encoding
@@ -175,7 +175,7 @@ class CNN3dLSTMEncoder(Encoder):
         h = h.view(h.size()[0:3])
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
-        lstm_hidden = self.init_hidden(batch_size=h.size()[0])
+        # lstm_hidden = self.init_hidden(batch_size=h.size()[0])
         lstm_outputs, _ = self.lstm(h)
 
         h_mean = torch.mean(lstm_outputs, dim=1)

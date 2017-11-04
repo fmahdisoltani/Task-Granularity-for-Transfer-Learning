@@ -189,8 +189,8 @@ class CoupledLSTMDecoder(Decoder):
 
         batch_size, num_step = captions.size()
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        if self.use_cuda:
-            go_part = go_part.cuda(self.gpus[0])
+        # if self.use_cuda:
+        #go_part = go_part.cuda(self.gpus[0])
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions

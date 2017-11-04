@@ -163,9 +163,9 @@ class Trainer(object):
 
             videos, captions = (Variable(videos),
                                 Variable(captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0], async=True)
-                captions = captions.cuda(self.gpus[0], async=True)
+            # if self.use_cuda:
+            #     videos = videos.cuda(self.gpus[0], async=True)
+            #     captions = captions.cuda(self.gpus[0], async=True)
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
