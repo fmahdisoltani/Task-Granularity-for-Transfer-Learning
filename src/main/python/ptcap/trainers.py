@@ -27,7 +27,7 @@ class Trainer(object):
         print(gpus)
         if self.gpus:
             self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
-            self.loss = loss_function.cuda(self.gpus[0])
+            self.loss_function = loss_function.cuda(self.gpus[0])
 
         else:
             print("JO"*100)
