@@ -29,12 +29,9 @@ class RtorchnCaptioner(Captioner):
 
 class EncoderDecoder(Captioner):
     def __init__(self, encoder, decoder, encoder_args=None, encoder_kwargs=None,
-                 decoder_args=None, decoder_kwargs=None, gpus=None):
+                 decoder_args=None, decoder_kwargs=None):
 
-        print("gpus: {}".format(gpus))
         super(EncoderDecoder, self).__init__()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
         encoder_args = encoder_args or ()
         encoder_kwargs = encoder_kwargs or {}
         decoder_args = decoder_args or ()
@@ -76,3 +73,4 @@ class EncoderDecoder(Captioner):
 #                                         encoder_args=encoder_args,
 #                                         decoder_args=decoder_args,
 #                                         gpus=gpus)
+

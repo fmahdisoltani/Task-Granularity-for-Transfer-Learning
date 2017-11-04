@@ -3,11 +3,14 @@ import time
 import torch
 
 from collections import namedtuple
-from collections import OrderedDict
 
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, caption_accuracy,
+from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 
 
@@ -16,7 +19,6 @@ class Trainer(object):
                  writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
-        self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
 
@@ -24,9 +26,11 @@ class Trainer(object):
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
-        self.loss_function = (loss_function.cuda(gpus[0])
-                              if self.use_cuda else loss_function)
+        self.model = self.model if self.gpus is None else (
+            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(
+                self.gpus[0]))
+        self.loss_function = loss_function if self.gpus is None else (
+            loss_function.cuda(self.gpus[0]))
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
@@ -34,17 +38,20 @@ class Trainer(object):
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1
         self.logger = logger
-        self.logger.on_train_init(folder, filename)
 
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+            self.tokenizer)
+
+        self.logger.on_train_init(folder, filename)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
-        # start_time = time.time()
+        self.logger.on_train_begin()
 
         epoch = 0
         stop_training = False
@@ -119,18 +126,28 @@ class Trainer(object):
 
         return False
 
-    def get_function_dict(self):
+    def get_scoring_functions(self):
 
-        function_dict = OrderedDict()
-        function_dict["loss"] = loss_to_numpy
-        function_dict["accuracy"] = token_accuracy
-        function_dict["first_accuracy"] = first_token_accuracy
-        function_dict["caption_accuracy"] = caption_accuracy
+        function_dict = []
+
+        function_dict.append(loss_to_numpy)
+        function_dict.append(token_accuracy)
+        function_dict.append(first_token_accuracy)
+        function_dict.append(caption_accuracy)
+        function_dict.append(self.multiscore_adapter)
 
         return function_dict
 
+    def get_input_captions(self, captions, is_training):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if is_training:
+            input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
+        return input_captions
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+
         self.logger.on_epoch_begin(epoch)
 
         if is_training:
@@ -139,17 +156,21 @@ class Trainer(object):
             self.model.eval()
         
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
-        scores = ScoresOperator(self.get_function_dict())
+        scores = ScoresOperator(self.get_scoring_functions())
 
-        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+        for sample_counter, (videos, string_captions,
+                             captions) in enumerate(dataloader):
+
             self.logger.on_batch_begin()
+            input_captions = self.get_input_captions(captions, is_training)
 
-            videos, captions = (Variable(videos),
-                                Variable(captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
-            probs = self.model((videos, captions), use_teacher_forcing)
+            videos, captions, input_captions = (Variable(videos),
+                                                Variable(captions),
+                                                Variable(input_captions))
+            if self.gpus:
+                captions = captions.cuda(self.gpus[0], async=True)
+
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter
@@ -174,7 +195,8 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions)
+            batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
