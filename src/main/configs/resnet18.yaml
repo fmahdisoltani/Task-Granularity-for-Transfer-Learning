@@ -12,11 +12,10 @@ pretrained:
   pretrained_file: model.latest
 
 device:
-  synchronize_gpu: &sync True
-  gpus: &gpus [0,1,2,3]
+  gpus: [0,1,2,3]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder

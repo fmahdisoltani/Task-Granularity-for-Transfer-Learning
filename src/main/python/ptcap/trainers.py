@@ -1,6 +1,7 @@
 import time
 
 import torch
+import torch.nn as nn
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -27,6 +28,9 @@ class Trainer(object):
         print(gpus)
         if self.gpus:
             self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
+
+            print("SELF.GPUS not NONE "*100)
+            # self.model = torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(self.gpus[0])
             self.loss_function = loss_function.cuda(self.gpus[0])
 
         else:
@@ -48,7 +52,7 @@ class Trainer(object):
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1
+        #self.tensorboard_frequency = 1
         self.logger = logger
         self.logger.on_train_init(folder, filename)
 
@@ -160,9 +164,13 @@ class Trainer(object):
 
             videos, captions = (Variable(videos),
                                 Variable(captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0], async=True)
-                captions = captions.cuda(self.gpus[0], async=True)
+            # if self.use_cuda:
+            #     videos = videos.cuda(self.gpus[0], async=True)
+            #     captions = captions.cuda(self.gpus[0], async=True)
+
+            captions = captions.cuda(self.gpus[0], async=True)
+
+
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
@@ -208,3 +216,15 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+class DataParallelWrapper(nn.DataParallel):
+    def __init__(self, m, device_ids):
+        super().__init__(m, device_ids=device_ids)
+        self.use_cuda = m.use_cuda
+        self.gpus = m.gpus
+
+    def initialize(self):
+        self.module.initialize()
+
+    def reset_states(self):
+        self.module.reset_states()
