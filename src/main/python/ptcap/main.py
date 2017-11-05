@@ -72,13 +72,13 @@ def train_model(config_obj, relative_path=""):
 
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = Compose([prep.RandomCrop([48, 96, 96]),
-                            prep.PadVideo([48, 96, 96]),
+    preprocessor = Compose([prep.RandomCrop([48, 224,224]),
+                            prep.PadVideo([48, 224, 224]),
                             prep.Float32Converter(64.),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([48, 96, 96]),
-                                prep.PadVideo([48, 96, 96]),
+    val_preprocessor = Compose([CenterCropper([48, 224, 224]),
+                                prep.PadVideo([48, 224, 224]),
                                 prep.Float32Converter(64.),
                                 prep.PytorchTransposer()])
 
@@ -137,7 +137,8 @@ def train_model(config_obj, relative_path=""):
     scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
         **scheduler_kwargs)
 
-    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"))
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"), 
+                        config_obj.get("logging", "tensorboard_frequency"))
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
