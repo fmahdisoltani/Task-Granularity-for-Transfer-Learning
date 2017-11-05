@@ -1,5 +1,5 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/20bn-somethingsomething/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/gsomething/videos_gulp/
 
   checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
 
