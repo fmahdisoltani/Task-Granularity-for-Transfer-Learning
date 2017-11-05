@@ -174,7 +174,7 @@ class Trainer(object):
             #                    Variable(captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
-                #captions = captions.cuda(self.gpus[0])
+                captions = captions.cuda(self.gpus[0])
             probs = self.model((videos, captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
