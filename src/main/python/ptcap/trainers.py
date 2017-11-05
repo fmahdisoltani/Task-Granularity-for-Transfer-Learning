@@ -188,9 +188,9 @@ class Trainer(object):
                     torch.nn.utils.clip_grad_norm(self.model.parameters(),
                                                   self.clip_grad)
 
-                self.writer.add_activations(self.model, global_step)
-                self.writer.add_state_dict(self.model, global_step)
-                self.writer.add_gradients(self.model, global_step)
+                # self.writer.add_activations(self.model, global_step)
+                # self.writer.add_state_dict(self.model, global_step)
+                # self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
 
