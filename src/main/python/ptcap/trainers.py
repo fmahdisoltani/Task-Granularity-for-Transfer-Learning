@@ -140,10 +140,10 @@ class Trainer(object):
         return function_dict
 
     
-    def get_input_captions(self, captions, is_training):
+    def get_input_captions(self, captions, use_teacher_forcing):
        batch_size = captions.size(0)
        input_captions = torch.LongTensor(batch_size, 1).zero_()
-       if is_training:
+       if use_teacher_forcing:
            input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
        return input_captions
 
@@ -163,7 +163,7 @@ class Trainer(object):
             self.logger.on_batch_begin()
 
             
-            input_captions = self.get_input_captions(captions, is_training)
+            input_captions = self.get_input_captions(captions, use_teacher_forcing)
 
             videos, captions, input_captions = (Variable(videos),
                                                 Variable(captions),
