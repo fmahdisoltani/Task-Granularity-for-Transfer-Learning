@@ -1,7 +1,7 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/gsomething/videos_gulp/
+  videos_folder: &vidpath /data-ssd/videos_gulp/
 
-  checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
@@ -22,7 +22,7 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path:,
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
                    freeze: True}
   decoder: LSTMDecoder
   decoder_args:
@@ -69,4 +69,3 @@ tokenizer:
 logging:
   verbose: True
   tensorboard_frequency: 1000
-
