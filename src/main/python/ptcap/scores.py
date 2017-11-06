@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from collections import OrderedDict
@@ -22,8 +23,24 @@ def first_token_accuracy(outputs):
     return {"first_accuracy": first_token_accuracy_}
 
 
+def fscore(precision, recall, beta=1):
+    numerator = (1.0 + (beta ** 2)) * precision * recall
+    denominator = ((beta ** 2) * precision) + recall
+    return {"fscore": safe_div(numerator, denominator)}
+
+
+def gmeasure(precision, recall):
+    return {"gmeasure": np.sqrt(precision * recall)}
+
+
 def loss_to_numpy(score_attr):
     return {"loss": score_attr.loss.data.cpu().numpy()[0]}
+
+
+def safe_div(x,y):
+    if y == 0:
+        return 0
+    return x / y
 
 
 def token_accuracy(outputs, num_tokens=None):
@@ -87,6 +104,85 @@ class ScoresOperator(object):
             self.scores_dict[average_score] = (
                 (scores_dict[score] + total_score) / count)
             scores_dict[average_score] = self.scores_dict[average_score]
+        return scores_dict
+
+
+class LCS(object):
+    """
+    The main functionality of this class is to compute the LCS (Lowest Common
+    Subsequence) between a caption and prediction. By default, it returns the
+    precision and recall values calculated based on the LCS between a prediction
+    and a caption.
+    """
+    def __init__(self, functions_list, tokenizer):
+        """
+        Initializes functions_list and tokenizer.
+        Args:
+        functions_list: A list of the functions that will be applied on the
+        precision and recall values calculated based on the LCS between a
+        prediction and a caption.
+        """
+
+        self.functions_list = functions_list
+        self.scores_container = OrderedDict()
+        self.scores_dict = OrderedDict()
+        self.tokenizer = tokenizer
+
+    def __call__(self, outputs):
+        string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
+                              for str_pred in outputs.predictions]
+        return self.score_batch(string_predictions, outputs.string_captions)
+
+    def collect_scores(self, batch_scores_dict, scores_dict):
+        for metric, metric_value in scores_dict.items():
+            if metric not in batch_scores_dict:
+                batch_scores_dict[metric] = [metric_value]
+            else:
+                batch_scores_dict[metric].append(metric_value)
+        return batch_scores_dict
+
+    @classmethod
+    def compute_lcs(cls, prediction, caption):
+        num_rows = len(prediction)
+        num_cols = len(caption)
+
+        table = [[0] * (num_cols + 1) for _ in range(num_rows + 1)]
+        for i in range(1, num_rows + 1):
+            for j in range(1, num_cols + 1):
+                if prediction[i - 1] == caption[j - 1]:
+                    table[i][j] = table[i - 1][j - 1] + 1
+                else:
+                    table[i][j] = max(table[i][j - 1], table[i - 1][j])
+        return table, table[num_rows][num_cols]
+
+    def mean_scores(self, batch_scores_dict):
+        for metric, metric_value in batch_scores_dict.items():
+            batch_scores_dict[metric] = np.mean(metric_value)
+        return batch_scores_dict
+
+    def score_batch(self, predictions, captions):
+        assert len(predictions) == len(captions)
+
+        batch_scores_dict = OrderedDict()
+        for count, (prediction, caption) in enumerate(zip(predictions,
+                                                          captions)):
+            scores_dict = self.score_sample(prediction.split(), caption.split())
+            batch_scores_dict = self.collect_scores(batch_scores_dict,
+                                                    scores_dict)
+
+        batch_scores_dict = self.mean_scores(batch_scores_dict)
+        return batch_scores_dict
+
+    def score_sample(self, prediction, caption):
+        scores_dict = OrderedDict()
+        _, lcs_score = self.compute_lcs(prediction, caption)
+        scores_dict["precision"] = safe_div(lcs_score, len(prediction))
+        scores_dict["recall"] = safe_div(lcs_score, len(caption))
+
+        for score_function in self.functions_list:
+            scores_dict.update(score_function(scores_dict["precision"],
+                                              scores_dict["recall"]))
+
         return scores_dict
 
 
