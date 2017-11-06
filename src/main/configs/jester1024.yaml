@@ -1,5 +1,5 @@
 paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
   checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_new_cutoff_5_unfrozen_tmp/
 
@@ -10,8 +10,7 @@ paths:
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_tmp/
-  pretrained_folder2:
+  pretrained_folder:
   pretrained_file: model.latest
 
 device:
