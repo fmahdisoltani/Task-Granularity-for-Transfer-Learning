@@ -83,7 +83,7 @@ class BIJesterEncoder(PretrainedEncoder):
       def __init__(self, pretrained_path=None, freeze=False):
 
           encoder_output_size = 1024
-          num_classes = 174
+          num_classes = 178
           encoder_args = (num_classes, encoder_output_size)
           super(BIJesterEncoder, self).__init__(encoder=BiJesterNetII,
                                                 encoder_args=encoder_args,

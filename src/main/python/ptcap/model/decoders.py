@@ -45,7 +45,7 @@ class LSTMDecoder(Decoder):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size, hidden_size, 1, batch_first=True)
+        self.lstm = nn.LSTM(embedding_size, hidden_size, self.num_lstm_layers, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
@@ -152,7 +152,7 @@ class CoupledLSTMDecoder(Decoder):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, 1, batch_first=True)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, self.num_hidden_lstm, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
