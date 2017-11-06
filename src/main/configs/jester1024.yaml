@@ -1,11 +1,11 @@
 paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
+  checkpoint_folder: /home/guillaume/model_checkpoints/captioning/jester1024_cutoff_5_unfrozen_lbl/
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
   pretrained_folder:
@@ -22,8 +22,8 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
-                   freeze: True}
+  encoder_kwargs: {pretrained_path: /home/guillaume/model_checkpoints/captioning/bijesternet1024_step1/model.checkpoint,
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -64,7 +64,7 @@ targets:
   caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 10}
+  kwargs: {user_maxlen: 13, cutoff: 5}
 
 logging:
   verbose: True
