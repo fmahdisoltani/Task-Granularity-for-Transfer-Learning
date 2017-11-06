@@ -57,7 +57,7 @@ validation:
   verbose: True
 
 criteria:
-  score: accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
