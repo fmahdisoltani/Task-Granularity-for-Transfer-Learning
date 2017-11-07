@@ -1,4 +1,7 @@
+import pickle
+import json
 import os
+import time
 
 import numpy as np
 import pandas as pd
@@ -7,6 +10,7 @@ import torch
 
 from collections import Counter, namedtuple
 
+from gensim.models import KeyedVectors
 from scipy.stats import kendalltau, pearsonr, spearmanr, zscore
 from sklearn.metrics import cohen_kappa_score
 from torch.autograd import Variable
@@ -18,6 +22,7 @@ from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
+from pycocoevalcap.spice.spice import Spice
 
 NUM = 0
 LINES = 11
@@ -84,6 +89,21 @@ def get_correlations(metrics_dict, final_score, corr_score_dict):
     return corr_dict
 
 
+def get_encodings(accuracies, caption, prediction, tokenizer, score_attr):
+    encoded_caption = Variable(
+        torch.LongTensor([tokenizer.encode_caption(caption)]))
+    encoded_prediction = Variable(
+        torch.LongTensor([tokenizer.encode_caption(prediction)]))
+    in_tuple = score_attr([caption], encoded_caption, encoded_prediction)
+    lcs_output = accuracies["LCS"](in_tuple)
+
+    accuracy_dict = {name: [value(in_tuple)[name]] for name, value in
+                  accuracies.items()
+                  if name is not "LCS"}
+    accuracy_dict.update({name: [value] for name, value in lcs_output.items()})
+    return accuracy_dict
+
+
 def get_scores(metric_scores, key=None):
     scores_dict = {}
     for metric_name in metric_scores:
@@ -114,6 +134,15 @@ def get_stats(annotations_dict):
     agg_all = Counter(zip(action, object))
 
     return agg_action, agg_object, agg_all
+
+
+def get_wmd(model, caption, prediction):
+    from nltk.corpus import stopwords
+    stop_words = stopwords.words('english')
+    cap = [w for w in caption.split() if (w in model and w not in stop_words)]
+    pred = [w for w in prediction.split() if (w in model and w not in stop_words)]
+    wmd = model.wmdistance(cap, pred)
+    return {"wmd": [-1*wmd]}
 
 
 def master_method():
@@ -174,7 +203,12 @@ def master_method():
 
     agg_action, agg_objects, agg_all = get_stats(global_dict)
 
-    author1_metric, author2_metric, final_actions, final_objects, final_score = normalize(author1_dict, author2_dict)
+    (author1_metric, author2_metric, final_actions, final_objects,
+     final_score) = normalize(author1_dict, author2_dict)
+
+    with open("/home/waseem/Metrics Analysis/author_based", "wb") as f:
+        pickle.dump((author1_metric, author2_metric, final_actions, final_objects,
+                     final_score), f)
 
     for name, corr in correlation_metrics.items():
         if name is not "Kappa":
@@ -270,6 +304,14 @@ def print_dict(some_dict):
 
 
 def try_metrics(captions, predictions):
+
+    print("Loading Word Vectors...")
+    a = time.time()
+    # model = KeyedVectors.load_word2vec_format(
+    #     '/home/waseem/Models/GoogleNews-vectors-negative300.bin', binary=True)
+    b = time.time()
+    print("Word Vectors loaded in {}".format(b - a))
+
     tokenizer = Tokenizer()
     tokenizer.load_dictionaries("/home/waseem/Models/")
 
@@ -279,28 +321,39 @@ def try_metrics(captions, predictions):
                   "LCS": LCS([fscore, gmeasure], tokenizer)}
 
     ScoreAttr = namedtuple("ScoresAttr", "string_captions captions predictions")
-    multi_scorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor())
+    multi_scorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor(),
+                               SPICE=Spice())
 
     output_dict = {}
 
+    a = time.time()
+
     for caption, prediction in zip(captions, predictions):
 
-        encoded_caption = Variable(
-            torch.LongTensor([tokenizer.encode_caption(caption)]))
-        encoded_prediction = Variable(
-            torch.LongTensor([tokenizer.encode_caption(prediction)]))
-        in_tuple = ScoreAttr([caption], encoded_caption, encoded_prediction)
-        output_val = {name: [value(in_tuple)[name]] for name, value in
-                      accuracies.items()
-                      if name is not "LCS"}
-        lcs_output = accuracies["LCS"](in_tuple)
-        output_val.update({name: [value] for name, value in lcs_output.items()})
+        encodings = get_encodings(accuracies, caption, prediction, tokenizer,
+                                  ScoreAttr)
+        output_val = encodings
+
         multi_scores = multi_scorer.score((caption,), [prediction])
         output_val.update({key: [value] for key, value in multi_scores.items()})
+
+        # wmd = get_wmd(model, caption, prediction)
+        # output_val.update(wmd)
+
         if output_dict == {}:
             output_dict = output_val
         else:
             update_dict(output_dict, output_val)
+            with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
+                json.dump(output_dict, f)
+
+    b = time.time()
+
+    print("try_metrics took {}".format(b - a))
+
+    with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
+        json.dump(output_dict, f)
+
     return output_dict
 
 
