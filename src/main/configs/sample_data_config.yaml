@@ -1,6 +1,6 @@
 paths:
-  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_npz
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/checkpoint_sample/
+  videos_folder: &vidpath /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/videos_gulp
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_sample/
 
   train_annot: &train_annot /home/farzaneh/PycharmProjects/pytorch-captioning/sample_data/json/training_sample.json
   validation_annot: *train_annot
@@ -12,7 +12,7 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: [0]
+  gpus:
 
 dataloaders:
   kwargs: {batch_size: &b 1, num_workers: 16, pin_memory: True}
