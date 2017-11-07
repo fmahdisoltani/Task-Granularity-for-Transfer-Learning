@@ -39,12 +39,7 @@ class EncoderDecoder(Captioner):
         encoder_kwargs = encoder_kwargs or {}
         decoder_args = decoder_args or ()
         decoder_kwargs = decoder_kwargs or {}
-        print("*"*100)
-        print(encoder_args)
-        print(encoder_kwargs)
-        print(decoder_args)
-        print(decoder_kwargs)
-        print("&"*100)
+
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
         self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
