@@ -12,7 +12,8 @@ from sklearn.metrics import cohen_kappa_score
 from torch.autograd import Variable
 
 from ptcap.data.tokenizer import Tokenizer
-from ptcap.scores import caption_accuracy, first_token_accuracy, token_accuracy
+from ptcap.scores import (LCS, caption_accuracy, first_token_accuracy, fscore,
+                          gmeasure, token_accuracy)
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
@@ -180,10 +181,6 @@ def master_method():
             print("\nThe " + name + " score is: {}".format(
                 corr(author1_metric, author2_metric)))
 
-    accuracy_dict = try_accuracy(sentences["s1"], sentences["s2"])
-    correlation_summary(accuracy_dict, final_score, final_actions, final_objects,
-                        correlation_metrics)
-
     metrics_dict = try_metrics(sentences["s1"], sentences["s2"])
     correlation_summary(metrics_dict, final_score, final_actions, final_objects,
                         correlation_metrics)
@@ -272,37 +269,36 @@ def print_dict(some_dict):
         print(key + ": " + str(some_dict[key]) + "\n")
 
 
-def try_accuracy(captions, predictions):
-    accuracies = {"caption_accuracy": caption_accuracy,
-                  "first_accuracy": first_token_accuracy,
-                  "accuracy": token_accuracy}
-    output_dict = {}
-    ScoreAttr = namedtuple("ScoresAttr", "captions predictions")
-
+def try_metrics(captions, predictions):
     tokenizer = Tokenizer()
     tokenizer.load_dictionaries("/home/waseem/Models/")
 
-    for caption, prediction in zip(captions, predictions):
-        encoded_caption = Variable(torch.LongTensor([tokenizer.encode_caption(caption)]))
-        encoded_prediction = Variable(torch.LongTensor([tokenizer.encode_caption(prediction)]))
-        in_tuple = ScoreAttr(encoded_caption, encoded_prediction)
-        output_val = {name: [value(in_tuple)[name]] for name, value in accuracies.items()}
-        if output_dict == {}:
-            output_dict = output_val
-        else:
-            update_dict(output_dict, output_val)
-    return output_dict
+    accuracies = {"caption_accuracy": caption_accuracy,
+                  "first_accuracy": first_token_accuracy,
+                  "accuracy": token_accuracy,
+                  "LCS": LCS([fscore, gmeasure], tokenizer)}
 
-
-def try_metrics(captions, predictions):
+    ScoreAttr = namedtuple("ScoresAttr", "string_captions captions predictions")
     multi_scorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor())
 
     output_dict = {}
 
     for caption, prediction in zip(captions, predictions):
-        output_val = multi_scorer.score((caption,), [prediction])
+
+        encoded_caption = Variable(
+            torch.LongTensor([tokenizer.encode_caption(caption)]))
+        encoded_prediction = Variable(
+            torch.LongTensor([tokenizer.encode_caption(prediction)]))
+        in_tuple = ScoreAttr([caption], encoded_caption, encoded_prediction)
+        output_val = {name: [value(in_tuple)[name]] for name, value in
+                      accuracies.items()
+                      if name is not "LCS"}
+        lcs_output = accuracies["LCS"](in_tuple)
+        output_val.update({name: [value] for name, value in lcs_output.items()})
+        multi_scores = multi_scorer.score((caption,), [prediction])
+        output_val.update({key: [value] for key, value in multi_scores.items()})
         if output_dict == {}:
-            output_dict = {key: [value] for key, value in output_val.items()}
+            output_dict = output_val
         else:
             update_dict(output_dict, output_val)
     return output_dict
