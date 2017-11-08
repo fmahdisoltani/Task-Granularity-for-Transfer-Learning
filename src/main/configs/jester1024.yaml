@@ -1,14 +1,14 @@
 paths:
   videos_folder: &vidpath /home/waseem/data/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/waseem/Models/jester1024_cutoff_5_unfrozen_lbl_METEOR
+  checkpoint_folder: /home/waseem/Models/jester1024_cutoff_5_unfrozen_lbl_METEOR_continue
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder:
+  pretrained_folder: /home/waseem/Models/jester1024_cutoff_5_unfrozen_lbl_METEOR
   pretrained_file: model.best
 
 device:
