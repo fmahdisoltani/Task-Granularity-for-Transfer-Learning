@@ -1,8 +1,8 @@
 paths:
-  videos_folder: fake_data/videos
+  videos_folder: /home/waseem/data/20bn-somethingsomething-2017-10-31
   checkpoint_folder: checkpoint_sample/
 
-  train_annot: &train_annot fake_data/json/fake.json
+  train_annot: &train_annot /data/20bn-somethingsomething/json/validation_20171031.json.gz
   validation_annot: *train_annot
   test_annot: *train_annot
 
@@ -12,10 +12,10 @@ pretrained:
 
 device:
   synchronize_gpu: True
-  gpus:
+  gpus: [0]
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 20, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -45,7 +45,7 @@ scheduler:
            verbose: True}
 
 training:
-  num_epochs: 2
+  num_epochs: 200
   clip_grad: 1
   teacher_force: True
   verbose: True
@@ -56,8 +56,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: METEOR
+  higher_is_better: True
 
 targets:
   caption_type: template
