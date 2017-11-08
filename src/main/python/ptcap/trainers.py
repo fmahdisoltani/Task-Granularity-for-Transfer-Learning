@@ -128,7 +128,7 @@ class Trainer(object):
 
         return False
 
-    def get_function_dict(self):
+    def get_function_dict(self, is_training):
 
         scoring_functions = []
 
@@ -136,8 +136,10 @@ class Trainer(object):
         scoring_functions.append(token_accuracy)
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
-        scoring_functions.append(self.multiscore_adapter)
-        scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
+
+        if not is_training:
+            scoring_functions.append(self.multiscore_adapter)
+            scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
         return scoring_functions
 
@@ -152,7 +154,7 @@ class Trainer(object):
 
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
-        scores = ScoresOperator(self.get_function_dict())
+        scores = ScoresOperator(self.get_function_dict(is_training))
 
         for sample_counter, (videos, string_captions, captions) in enumerate(dataloader):
             self.logger.on_batch_begin()
