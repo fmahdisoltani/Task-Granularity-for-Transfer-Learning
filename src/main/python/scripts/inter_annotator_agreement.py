@@ -344,8 +344,8 @@ def try_metrics(captions, predictions):
             output_dict = output_val
         else:
             update_dict(output_dict, output_val)
-            with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
-                json.dump(output_dict, f)
+            # with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
+            #     json.dump(output_dict, f)
 
     b = time.time()
 
