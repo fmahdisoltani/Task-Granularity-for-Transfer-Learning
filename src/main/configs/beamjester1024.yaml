@@ -16,7 +16,7 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 1, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -64,7 +64,7 @@ targets:
   caption_type: template
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 3000}
+  kwargs: {user_maxlen: 13, cutoff: 5}
 
 logging:
   verbose: True

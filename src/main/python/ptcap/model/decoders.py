@@ -52,6 +52,7 @@ class LSTMDecoder(Decoder):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.go_token = go_token
+        self.vocab_size = vocab_size
 
         self.activations = self.register_forward_hooks()
 
@@ -123,6 +124,9 @@ class LSTMDecoder(Decoder):
             _, preds = torch.max(probs, dim=2)
 
             lstm_input = preds
+
+
+
 
         concatenated_probs = torch.cat(output_probs, dim=1)
         return concatenated_probs
@@ -272,6 +276,7 @@ class BeamDecoder(Decoder):
         self.gpus = gpus
         self.go_token = go_token
         self.beam_size = 3
+        self.vocab_size = vocab_size
 
         self.activations = self.register_forward_hooks()
 
@@ -376,8 +381,18 @@ class BeamDecoder(Decoder):
             table = sorted(table, key=lambda x: x.prob)
 
 
+        y_onehot = torch.zeros(num_step, self.vocab_size)
 
-        return table[0].seq
+        # In your for loop
+        #y_onehot.zero_()
+        #get rid of <go>
+        inds= table[0].seq[1:]
+        #y_onehot.scatter_(1, inds, 1)
+############################
+        y_onehot = torch.zeros(num_step, self.vocab_size)
+        y_onehot.scatter_(1, torch.LongTensor([[p] for p in inds]), 1)
+        ##############################
+        return Variable(y_onehot.unsqueeze(0))
 
     def register_forward_hooks(self):
         master_dict = {}
