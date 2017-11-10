@@ -88,20 +88,22 @@ class LSTMDecoder(Decoder):
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
             captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions_with_go_token)
+            lstm_hidden = self.init_hidden(features)
+            probs, _ = self.apply_lstm(captions_with_go_token, lstm_hidden)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, go_part, num_step)
+            lstm_hidden = self.init_hidden(features)
+            probs = self.predict(lstm_hidden, go_part, num_step)
 
         return probs
 
-    def apply_lstm(self, features, captions, lstm_hidden=None):
+    def apply_lstm(self, captions, lstm_hidden=None):
 
-        if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features)
+        # if lstm_hidden is None:
+        #     lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
-        lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
+        lstm_output, lstm_hidden   = self.lstm(embedded_captions, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
         lstm_out_projected = torch.stack([self.linear(h) for h in lstm_output],
@@ -110,14 +112,13 @@ class LSTMDecoder(Decoder):
 
         return probs, lstm_hidden
 
-    def predict(self, features, go_tokens, num_step=1):
+    def predict(self, lstm_hidden, go_tokens, num_step=1):
         lstm_input = go_tokens
         output_probs = []
-        lstm_hidden = None
+        # lstm_hidden = None
 
         for i in range(num_step):
-            probs, lstm_hidden = self.apply_lstm(features, lstm_input,
-                                                 lstm_hidden)
+            probs, lstm_hidden = self.apply_lstm(lstm_input, lstm_hidden)
 
             output_probs.append(probs)
             # Greedy decoding
@@ -223,7 +224,7 @@ class CoupledLSTMDecoder(Decoder):
         batch_size, seq_len, _ = embedded_captions.size()
         unsqueezed_features = features.unsqueeze(1)
         expansion_size = [batch_size, seq_len, unsqueezed_features.size(2)]
-    
+
         expanded_features = unsqueezed_features.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
         return lstm_input
