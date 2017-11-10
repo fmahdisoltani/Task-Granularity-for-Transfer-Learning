@@ -229,6 +229,7 @@ class CoupledLSTMDecoder(Decoder):
         return lstm_input
 
     def predict(self, features, go_tokens, num_step=1):
+        #Je suis
         lstm_input = go_tokens
         output_probs = []
         lstm_hidden = None
