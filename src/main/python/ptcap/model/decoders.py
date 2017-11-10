@@ -146,6 +146,7 @@ class CoupledLSTMDecoder(Decoder):
                  num_lstm_layers, go_token=0, gpus=None):
 
         super(Decoder, self).__init__()
+        self.hidden_size = hidden_size
         self.num_hidden_lstm = num_lstm_layers
 
         # Embed each token in vocab to a 128 dimensional vector
@@ -156,6 +157,11 @@ class CoupledLSTMDecoder(Decoder):
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
+
+        self.mapping = nn.Linear(hidden_size, 2*hidden_size)
+
+        self.tanh = nn.Tanh()
+
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.go_token = go_token
@@ -168,9 +174,11 @@ class CoupledLSTMDecoder(Decoder):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
-        c0 = features.unsqueeze(0)
-        h0 = features.unsqueeze(0)
-        return h0, c0
+        mapped_features = self.tanh(self.mapping(features))
+
+        c0 = mapped_features[:, :self.hidden_size].unsqueeze(0)
+        h0 = mapped_features[:, self.hidden_size: 2*self.hidden_size].unsqueeze(0)
+        return h0.contiguous(), c0.contiguous()
 
     def forward(self, features, captions, use_teacher_forcing=False):
         """
@@ -204,8 +212,8 @@ class CoupledLSTMDecoder(Decoder):
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
 
-        # if lstm_hidden is None:
-        #     lstm_hidden = self.init_hidden(features)
+        if lstm_hidden is None:
+            lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
         batch_size, seq_len, _ = embedded_captions.size()
         altered_lstm_hidden = features.unsqueeze(1)
