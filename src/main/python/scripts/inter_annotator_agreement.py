@@ -311,10 +311,6 @@ def parse_file(folder_num, index):
 def preprocess(str_num1, str_num2):
     num1 = float(str_num1)
     num2 = float(str_num2)
-    # if num1 == 0.5 and num2 == 0:
-    #     num1 = 0.0
-    # if num1 == 0.5 and num2 == 1:
-    #     num1 = 1.0
     if num1 == 0.5:
         num1 = 1.0
     if num1 == 1.5:
@@ -329,12 +325,6 @@ def preprocess(str_num1, str_num2):
         num2 = 5.0
     if num2 == 5.0:
         num2 = 3.0
-    # if num2 == 3 and num1 <= 1:
-    #     num2 = 2.0
-    # if num2 == 3 and num1 >= 2:
-    #     num2 = 4.0
-    # if num2 == 4 and num1 <= 1:
-    #     num2 = 4.0
     return num1, num2
 
 
