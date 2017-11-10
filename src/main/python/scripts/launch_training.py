@@ -10,7 +10,7 @@ Options:
 from docopt import docopt
 
 from ptcap.data.config_parser import YamlConfig
-from ptcap.scripts.train import train_model
+from ptcap.train import train_model
 
 
 if __name__ == "__main__":

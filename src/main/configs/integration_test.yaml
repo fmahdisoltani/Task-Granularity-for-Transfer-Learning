@@ -14,7 +14,7 @@ device:
   gpus:
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 0, pin_memory: False}
+  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -54,8 +54,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: METEOR
+  higher_is_better: True
 
 targets:
   caption_type: template
