@@ -63,7 +63,7 @@ class DecoderBase(nn.Module):
 
         return probs
 
-    def predict(self, features, go_tokens, num_step=1):
+    def predict(self, features, go_tokens, num_step):
         lstm_input = go_tokens
         output_probs = []
         lstm_hidden = None

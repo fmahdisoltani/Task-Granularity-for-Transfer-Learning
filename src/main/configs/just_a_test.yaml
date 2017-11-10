@@ -19,10 +19,10 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: CNN3dLSTMEncoder
+  encoder: CNN3dEncoder
   encoder_args:
   encoder_kwargs: {encoder_output_size: &encoder_output_size 1024}
-  decoder: CoupledLSTMDecoder
+  decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: *encoder_output_size,

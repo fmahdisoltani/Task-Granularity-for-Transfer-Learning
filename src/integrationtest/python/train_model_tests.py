@@ -33,8 +33,7 @@ def simulate_training(config_path):
     train_model(config_obj, os.getcwd())
 
     # Check checkpoint folder
-    check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
-                                          "model.latest",
+    check_saved_files(checkpoint_folder, ["config.yaml", "model.latest",
                                           "tokenizer_dicts"])
     return checkpoint_folder
 
