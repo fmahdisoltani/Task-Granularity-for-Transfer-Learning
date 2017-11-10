@@ -84,16 +84,14 @@ class LSTMDecoder(Decoder):
         go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
         if self.use_cuda:
             go_part = go_part.cuda(self.gpus[0])
-
+        lstm_hidden = self.init_hidden(features)
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
             captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            lstm_hidden = self.init_hidden(features)
             probs, _ = self.apply_lstm(captions_with_go_token, lstm_hidden)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            lstm_hidden = self.init_hidden(features)
             probs = self.predict(lstm_hidden, go_part, num_step)
 
         return probs
