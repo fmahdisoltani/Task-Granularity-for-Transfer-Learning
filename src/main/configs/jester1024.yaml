@@ -8,8 +8,8 @@ paths:
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder:
-  pretrained_file: model.latest
+  pretrained_folder: /home/waseem/Models/jester1024_cutoff_5_unfrozen_lbl_METEOR
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
@@ -36,6 +36,7 @@ loss:
 optimizer:
   type: &optimizer Adam
   kwargs: {lr: 1.0e-4}
+
 
 scheduler:
   type: ReduceLROnPlateau
