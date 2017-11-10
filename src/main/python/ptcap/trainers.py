@@ -157,7 +157,7 @@ class Trainer(object):
                 captions = captions.cuda(self.gpus[0])
                 input_captions = input_captions.cuda(self.gpus[0])
 
-            probs = self.model((videos, captions), use_teacher_forcing)
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter

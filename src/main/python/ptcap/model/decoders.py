@@ -225,7 +225,7 @@ class CoupledLSTMDecoder(Decoder):
         batch_size, seq_len, _ = embedded_captions.size()
         unsqueezed_features = features.unsqueeze(1)
         expansion_size = [batch_size, seq_len, unsqueezed_features.size(2)]
-    
+
         expanded_features = unsqueezed_features.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
         return lstm_input
