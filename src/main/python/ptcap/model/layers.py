@@ -23,3 +23,4 @@ class CNN3dLayer(nn.Module):
             h = self.batchnorm(h)
 
         return self.activation(h)
+
