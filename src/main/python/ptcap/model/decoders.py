@@ -143,10 +143,10 @@ class LSTMDecoder(Decoder):
 class CoupledLSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_hidden_lstm, go_token=0, gpus=None):
+                 num_lstm_layers, go_token=0, gpus=None):
 
         super(Decoder, self).__init__()
-        self.num_hidden_lstm = num_hidden_lstm
+        self.num_hidden_lstm = num_lstm_layers
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
@@ -204,11 +204,11 @@ class CoupledLSTMDecoder(Decoder):
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
 
-        if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features)
+        # if lstm_hidden is None:
+        #     lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
         batch_size, seq_len, _ = embedded_captions.size()
-        altered_lstm_hidden = lstm_hidden[0][0].unsqueeze(1)
+        altered_lstm_hidden = features.unsqueeze(1)
         expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
         expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
