@@ -34,14 +34,25 @@ def correlation_summary(metrics_dict, final_score, final_actions, final_objects,
 
     corr_dict = get_correlations(metrics_dict, final_score, correlation_metrics)
 
+    metrics_df = pd.DataFrame(data=corr_dict)
+    metrics_df.to_csv("/home/waseem/Metrics Analysis/metrics_metric.csv")
+
     print("\nThe correlations with the metrics are:")
     print_dict(corr_dict)
 
     corr_actions_dict = get_correlations(metrics_dict, final_actions, correlation_metrics)
+
+    actions_df = pd.DataFrame(data=corr_actions_dict)
+    actions_df.to_csv("/home/waseem/Metrics Analysis/metrics_actions.csv")
+
     print("\nThe correlations with the actions are:")
     print_dict(corr_actions_dict)
 
     corr_objects_dict = get_correlations(metrics_dict, final_objects, correlation_metrics)
+
+    objects_df = pd.DataFrame(data=corr_objects_dict)
+    objects_df.to_csv("/home/waseem/Metrics Analysis/metrics_objects.csv")
+
     print("\nThe correlations with the objects are:")
     print_dict(corr_objects_dict)
 
@@ -81,11 +92,16 @@ def get_annotations(csv_file):
 
 def get_correlations(metrics_dict, final_score, corr_score_dict):
     corr_dict = {}
-    for metric in metrics_dict:
-        corr_dict[metric] = {}
+    if isinstance(metrics_dict, dict):
+        for metric in metrics_dict:
+            corr_dict[metric] = {}
+            for name, corr in corr_score_dict.items():
+                if "Kappa" not in name:
+                    corr_dict[metric][name] = corr(metrics_dict[metric], final_score)[0]
+    elif isinstance(metrics_dict, list):
         for name, corr in corr_score_dict.items():
             if "Kappa" not in name:
-                corr_dict[metric][name] = corr(metrics_dict[metric], final_score)[0]
+                corr_dict[name] = corr(metrics_dict, final_score)[0]
     return corr_dict
 
 
@@ -206,18 +222,42 @@ def master_method():
     (author1_metric, author2_metric, final_actions, final_objects,
      final_score) = normalize(author1_dict, author2_dict)
 
-    with open("/home/waseem/Metrics Analysis/author_based", "wb") as f:
-        pickle.dump((author1_metric, author2_metric, final_actions, final_objects,
-                     final_score), f)
+    bins1 = split_into_bins(author2_metric, 1)
+    bins2 = split_into_bins(author2_metric, 2)
 
-    for name, corr in correlation_metrics.items():
-        if name is not "Kappa":
-            print("\nThe " + name + " score is: {}".format(
-                corr(author1_metric, author2_metric)))
+    for bin_name1, bin1 in bins1.items():
+        for bin_name2, bin2 in bin2.items():
+            corr = get_correlations(scores, gt, correlation_metrics)
 
-    metrics_dict = try_metrics(sentences["s1"], sentences["s2"])
-    correlation_summary(metrics_dict, final_score, final_actions, final_objects,
-                        correlation_metrics)
+
+    corr_bin_dict = {}
+
+    for bin_name, bin in bins.items():
+        gt = [author1_metric[i] for i in bin]
+        scores = [author2_metric[i] for i in bin]
+        corr = get_correlations(scores, gt, correlation_metrics)
+        # scatter_plot(gt, scores)
+        print("Correlations are {}".format(corr))
+        if bin_name not in corr_bin_dict:
+            corr_bin_dict[bin_name] = corr
+        else:
+            corr_bin_dict[bin_name] = corr
+    print(corr_bin_dict)
+    # corr = get_correlations(output_dict["METEOR"], final_score, correlation_metrics)
+    # print("Correlations are {}".format(corr))
+
+    # with open("/home/waseem/Metrics Analysis/author_based", "wb") as f:
+    #     pickle.dump((author1_metric, author2_metric, final_actions, final_objects,
+    #                  final_score), f)
+
+    # for name, corr in correlation_metrics.items():
+    #     if name is not "Kappa":
+    #         print("\nThe " + name + " score is: {}".format(
+    #             corr(author1_metric, author2_metric)))
+
+    # metrics_dict = try_metrics(sentences["s1"], sentences["s2"])
+    # correlation_summary(metrics_dict, final_score, final_actions, final_objects,
+    #                     correlation_metrics)
 
     # bubble_chart(agg_all)
     # bar_plot(final_score)
@@ -303,12 +343,30 @@ def print_dict(some_dict):
         print(key + ": " + str(some_dict[key]) + "\n")
 
 
+def split_into_bins(final_score, k):
+    bins = {}
+
+    min_val = np.min(final_score)
+
+    diff = (np.max(final_score) - min_val) / k
+
+    for i, score in enumerate(final_score):
+        for j in range(k):
+            if score <= min_val + (j + 1) * diff:
+                if "bin_" + str(j + 1) in bins:
+                    bins["bin_" + str(j + 1)].append(i)
+                else:
+                    bins["bin_" + str(j + 1)] = [i]
+                break
+    return bins
+
+
 def try_metrics(captions, predictions):
 
     print("Loading Word Vectors...")
     a = time.time()
-    # model = KeyedVectors.load_word2vec_format(
-    #     '/home/waseem/Models/GoogleNews-vectors-negative300.bin', binary=True)
+    model = KeyedVectors.load_word2vec_format(
+        '/home/waseem/Models/GoogleNews-vectors-negative300.bin', binary=True)
     b = time.time()
     print("Word Vectors loaded in {}".format(b - a))
 
@@ -337,8 +395,8 @@ def try_metrics(captions, predictions):
         multi_scores = multi_scorer.score((caption,), [prediction])
         output_val.update({key: [value] for key, value in multi_scores.items()})
 
-        # wmd = get_wmd(model, caption, prediction)
-        # output_val.update(wmd)
+        wmd = get_wmd(model, caption, prediction)
+        output_val.update(wmd)
 
         if output_dict == {}:
             output_dict = output_val
@@ -351,8 +409,8 @@ def try_metrics(captions, predictions):
 
     print("try_metrics took {}".format(b - a))
 
-    with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
-        json.dump(output_dict, f)
+    # with open("/home/waseem/Metrics Analysis/metric_values", "w") as f:
+    #     json.dump(output_dict, f)
 
     return output_dict
 
