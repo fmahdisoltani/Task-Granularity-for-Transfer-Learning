@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/guillaume/model_checkpoints/captioning/jester1024_cutoff_5_unfrozen_lbl/
+  checkpoint_folder: /home/guillaume/model_checkpoints/captioning/jester1024_cutoff_5_unfrozen_lbl_lr=0.0001_coupled/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
@@ -13,7 +13,7 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0]
+  gpus: &gpus [1]
 
 dataloaders:
   kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
@@ -24,7 +24,7 @@ model:
   encoder_args:
   encoder_kwargs: {pretrained_path: /home/guillaume/model_checkpoints/captioning/bijesternet1024_step1/model.checkpoint,
                    freeze: False}
-  decoder: LSTMDecoder
+  decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: 1024,
@@ -35,14 +35,14 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.001}
+  kwargs: {lr: 0.0001}
 
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
            min_lr: 1.0e-8,
            optimizer: *optimizer,
-           patience: 3,
+           patience: 2,
            threshold: 1.0e-4}
 
 training:
@@ -61,7 +61,7 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}
