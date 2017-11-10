@@ -63,7 +63,7 @@ class DecoderBase(nn.Module):
 
         return probs
 
-    def predict(self, features, go_tokens, num_step=1):
+    def predict(self, features, go_tokens, num_step):
         lstm_input = go_tokens
         output_probs = []
         lstm_hidden = None
@@ -146,7 +146,8 @@ class CoupledLSTMDecoder(DecoderBase):
 
     def prepare_lstm_input(self, embedded_captions, features):
         batch_size, seq_len, _ = embedded_captions.size()
-        expansion_size = [batch_size, seq_len, features.size(2)]
-        expanded_features = features.expand(*expansion_size)
-        lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
+        altered_lstm_hidden = features.unsqueeze(1)
+        expansion_size = [batch_size, seq_len, altered_lstm_hidden.size(2)]
+        expanded_lstm_hidden = altered_lstm_hidden.expand(*expansion_size)
+        lstm_input = torch.cat([embedded_captions, expanded_lstm_hidden], dim=2)
         return lstm_input

@@ -25,7 +25,7 @@ class FullyConnectedEncoder(Encoder):
 
 
 class CNN3dEncoder(Encoder):
-    def __init__(self, num_features=128):
+    def __init__(self, encoder_output_size=128):
         super(CNN3dEncoder, self).__init__()
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
@@ -45,7 +45,7 @@ class CNN3dEncoder(Encoder):
                                 stride=1, padding=(1, 0, 0))
         self.conv5 = CNN3dLayer(128, 128, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
-        self.conv6 = CNN3dLayer(128, num_features, (3, 3, 3), nn.ReLU(),
+        self.conv6 = CNN3dLayer(128, encoder_output_size, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))

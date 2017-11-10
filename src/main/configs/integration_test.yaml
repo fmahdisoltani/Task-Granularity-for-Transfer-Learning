@@ -54,8 +54,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: METEOR
+  higher_is_better: True
 
 targets:
   caption_type: template
