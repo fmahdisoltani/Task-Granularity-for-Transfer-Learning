@@ -190,18 +190,18 @@ class CoupledLSTMDecoder(Decoder):
         """
 
         batch_size, num_step = captions.size()
-        # go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
-        # if self.use_cuda:
-        #     go_part = go_part.cuda(self.gpus[0])
+        go_part = Variable(self.go_token * torch.ones(batch_size, 1).long())
+        if self.use_cuda:
+            go_part = go_part.cuda(self.gpus[0])
 
         if use_teacher_forcing:
             # Add go token and remove the last token for all captions
-            # captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
-            probs, _ = self.apply_lstm(features, captions)
+            captions_with_go_token = torch.cat([go_part, captions[:, :-1]], 1)
+            probs, _ = self.apply_lstm(features, captions_with_go_token)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, captions, num_step)
+            probs = self.predict(features, go_part, num_step)
 
         return probs
 
