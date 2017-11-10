@@ -12,4 +12,4 @@ class SequenceCrossEntropy(nn.Module):
         loss = 0.
         for t in range(num_step):
             loss += self.loss_function(preds[:, t], target[:, t])
-        return loss / (batch_size*num_step)
+        return loss / num_step
