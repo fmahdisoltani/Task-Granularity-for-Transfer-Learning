@@ -5,7 +5,6 @@ from torch.autograd import Variable
 
 from ptcap.tensorboardY import forward_hook_closure
 
-
 class Decoder(nn.Module):
 
     def forward(self, decoder_states, teacher_captions,
@@ -33,6 +32,7 @@ class FullyConnectedDecoder(Decoder):
         return predictions.view(batch_size, -1, self.vocab_size)
 
 
+
 class LSTMDecoder(Decoder):
 
     def __init__(self, embedding_size, hidden_size, vocab_size,
@@ -43,6 +43,7 @@ class LSTMDecoder(Decoder):
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.mapping = nn.Linear(1024, hidden_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
         self.lstm = nn.LSTM(embedding_size, hidden_size, self.num_lstm_layers, batch_first=True)
@@ -61,8 +62,8 @@ class LSTMDecoder(Decoder):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
-        c0 = features.unsqueeze(0)
-        h0 = features.unsqueeze(0)
+        c0 = self.mapping(features).unsqueeze(0)
+        h0 = self.mapping(features).unsqueeze(0)
         return h0, c0
 
     def forward(self, features, captions, use_teacher_forcing=False):
