@@ -147,13 +147,13 @@ class CoupledLSTMDecoder(Decoder):
                  num_lstm_layers, go_token=0, gpus=None):
 
         super(Decoder, self).__init__()
-        self.num_hidden_lstm = num_lstm_layers
+        self.num_lstm_layers = num_lstm_layers
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
 
         # batch_first: whether input and output are (batch, seq, feature)
-        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, self.num_hidden_lstm, batch_first=True)
+        self.lstm = nn.LSTM(embedding_size + hidden_size, hidden_size, self.num_lstm_layers, batch_first=True)
 
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.logsoftmax = nn.LogSoftmax()
