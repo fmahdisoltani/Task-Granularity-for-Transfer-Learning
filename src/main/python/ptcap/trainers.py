@@ -121,6 +121,14 @@ class Trainer(object):
 
         return function_dict
 
+    def get_input_captions(self, captions, use_teacher_forcing):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if use_teacher_forcing:
+            input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
+        return input_captions
+
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
         self.logger.on_epoch_begin(epoch)
@@ -136,12 +144,22 @@ class Trainer(object):
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
             self.logger.on_batch_begin()
 
-            videos, captions = (Variable(videos),
-                                Variable(captions))
+            input_captions = self.get_input_captions(captions,
+                                                     use_teacher_forcing)
+
+            videos, captions, input_captions = (Variable(videos),
+                                                Variable(captions),
+                                                Variable(input_captions))
+
+
+            #videos, captions = (Variable(videos),
+            #                    Variable(captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
-            probs = self.model((videos, captions), use_teacher_forcing)
+                input_captions = input_captions.cuda(self.gpus[0])
+
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter
