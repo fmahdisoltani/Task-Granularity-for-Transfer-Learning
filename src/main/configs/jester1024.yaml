@@ -8,8 +8,8 @@ paths:
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder: /home/waseem/Models/jester1024_cutoff_5_unfrozen_lbl_METEOR
-  pretrained_file: model.best
+  pretrained_folder:
+  pretrained_file:
 
 device:
   synchronize_gpu: &sync True
