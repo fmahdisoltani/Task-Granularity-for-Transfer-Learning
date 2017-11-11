@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 
 from collections import namedtuple
 
@@ -26,7 +27,7 @@ class Trainer(object):
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
         self.model = self.model if self.gpus is None else (
-            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(
+            DataParallelWrapper(model, device_ids=self.gpus).cuda(
                 self.gpus[0]))
         self.loss_function = loss_function if self.gpus is None else (
             loss_function.cuda(self.gpus[0]))
@@ -210,3 +211,13 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+
+class DataParallelWrapper(nn.DataParallel):
+    def __init__(self, model, device_ids):
+        super().__init__(model, device_ids=device_ids)
+        self.gpus = model.gpus
+
+    @property
+    def activations(self):
+        return self.module.activations
