@@ -1,11 +1,11 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-gestures/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-jester/videos_gulp/
 
   checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/gestures/
 
-  train_annot: &train_annot /data/20bn-gestures/json/train_20171031.json.gz
-  validation_annot: /data/20bn-gestures/json/validation_20171031.json.gz
-  test_annot: /data/20bn-gestures/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-jester/json/train_20171031.json.gz
+  validation_annot: /data/20bn-jester/json/validation_20171031.json.gz
+  test_annot: /data/20bn-jester/json/test_20171031.json.gz
 
 pretrained:
   pretrained_folder:
@@ -13,17 +13,16 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0]
+  gpus: &gpus [0, 1, 2, 3]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 32, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: BIJesterEncoder
+  encoder: CNN3dLSTMEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/fmahdisoltani/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
-                   freeze: True}
+  encoder_kwargs: {encoder_output_size: 1024}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -35,7 +34,7 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.001}
+  kwargs: {lr: 0.0001}
 
 scheduler:
   type: ReduceLROnPlateau
@@ -57,7 +56,7 @@ validation:
   verbose: True
 
 criteria:
-  score: accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
