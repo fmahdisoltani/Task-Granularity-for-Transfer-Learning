@@ -1,20 +1,14 @@
 paths:
-  videos_folder: &vidpath /data/20bn-gestures/videos_npz
-  annot_folder: /data/20bn-gestures/json
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/checkpoint_gestures_np/
+  videos_folder: &vidpath /data-ssd/20bn-gestures/videos_gulp/
 
-paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
+  checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/gestures/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff/
-
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
+  train_annot: &train_annot /data/20bn-gestures/json/train_20171031.json.gz
+  validation_annot: /data/20bn-gestures/json/validation_20171031.json.gz
+  test_annot: /data/20bn-gestures/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_frozen_gulp_cutoff/
-
+  pretrained_folder:
   pretrained_file: model.latest
 
 device:
@@ -22,18 +16,18 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 32, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: FCEncoder
+  encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
-                   freeze: False}
+  encoder_kwargs: {pretrained_path: /home/fmahdisoltani/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
+                   freeze: True}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
-                   hidden_size: 256,
+                   hidden_size: 1024,
                    num_lstm_layers: 1}
 
 loss:
@@ -59,7 +53,7 @@ training:
 
 validation:
   frequency: 1
-  teacher_force: False
+  teacher_force: True
   verbose: True
 
 criteria:
@@ -70,9 +64,8 @@ targets:
   caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 1}
+  kwargs: {user_maxlen: 13, cutoff: 10}
 
 logging:
   verbose: True
   tensorboard_frequency: 1000
-
