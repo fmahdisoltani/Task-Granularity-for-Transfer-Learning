@@ -1,19 +1,21 @@
 paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_new_cutoff_5_unfrozen_tmp_lr=0.0001/
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
+
+
 
 pretrained:
   pretrained_folder:
-  pretrained_file: model.latest
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0]
+  gpus: &gpus [0,1]
 
 dataloaders:
   kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
@@ -22,8 +24,8 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_official_1024/model.checkpoint,
-                   freeze: True}
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint,
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -35,7 +37,7 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.001}
+  kwargs: {lr: 0.0001}
 
 scheduler:
   type: ReduceLROnPlateau
@@ -57,14 +59,14 @@ validation:
   verbose: True
 
 criteria:
-  score: accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 10}
+  kwargs: {user_maxlen: 13, cutoff: 5}
 
 logging:
   verbose: True

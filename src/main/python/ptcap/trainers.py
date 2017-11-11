@@ -1,5 +1,3 @@
-import time
-
 import torch
 
 from collections import namedtuple
@@ -9,6 +7,7 @@ from torch.autograd import Variable
 
 from ptcap.scores import (ScoresOperator, caption_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.utils import DataParallelWrapper
 
 
 class Trainer(object):
@@ -24,9 +23,12 @@ class Trainer(object):
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model.cuda(gpus[0]) if self.use_cuda else self.model
-        self.loss_function = (loss_function.cuda(gpus[0])
-                              if self.use_cuda else loss_function)
+        self.model = self.model if self.gpus is None else(
+            DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
+        )
+        self.loss_function = loss_function if self.gpus is None else(
+            loss_function.cuda(gpus[0])
+        )
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
@@ -43,8 +45,6 @@ class Trainer(object):
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
-
-        # start_time = time.time()
 
         epoch = 0
         stop_training = False
@@ -88,10 +88,6 @@ class Trainer(object):
 
         self.logger.on_train_end(self.scheduler.best)
 
-        # end_time = time.time()
-        #
-        # print("Total time {}".format(end_time - start_time))
-
     def get_trainer_state(self):
         return {
             "epoch": self.num_epochs,
@@ -129,6 +125,13 @@ class Trainer(object):
 
         return function_dict
 
+    def get_input_captions(self, captions, use_teacher_forcing):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if use_teacher_forcing:
+            input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
+        return input_captions
+
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
         self.logger.on_epoch_begin(epoch)
@@ -143,13 +146,18 @@ class Trainer(object):
 
         for sample_counter, (videos, _, captions) in enumerate(dataloader):
             self.logger.on_batch_begin()
+            input_captions = self.get_input_captions(captions,
+                                                     use_teacher_forcing)
 
-            videos, captions = (Variable(videos),
-                                Variable(captions))
+            videos, captions, input_captions = (Variable(videos),
+                                                Variable(captions),
+                                                Variable(input_captions))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
-            probs = self.model((videos, captions), use_teacher_forcing)
+                input_captions = input_captions.cuda(self.gpus[0])
+
+            probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
 
             global_step = len(dataloader) * epoch + sample_counter
@@ -162,9 +170,9 @@ class Trainer(object):
                     torch.nn.utils.clip_grad_norm(self.model.parameters(),
                                                   self.clip_grad)
 
-                self.writer.add_activations(self.model, global_step)
-                self.writer.add_state_dict(self.model, global_step)
-                self.writer.add_gradients(self.model, global_step)
+                # self.writer.add_activations(self.model, global_step)
+                # self.writer.add_state_dict(self.model, global_step)
+                # self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
 

@@ -105,11 +105,7 @@ class CNN3dLSTMEncoder(Encoder):
         num_features: defines the output size of the encoder
         """
 
-
         super(CNN3dLSTMEncoder, self).__init__()
-        print("*e" * 100)
-        print(encoder_output_size)
-        print("&e" * 100)
 
         self.num_layers = 1
         self.num_features = encoder_output_size
@@ -137,15 +133,11 @@ class CNN3dLSTMEncoder(Encoder):
                                 nn.ReLU(), stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
-        print("*e" * 100)
-        print("num_feature")
-        print(self.num_features)
-        print("&e" * 100)
+
         self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
                             num_layers=self.num_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
-
 
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(1, batch_size, self.num_features))
