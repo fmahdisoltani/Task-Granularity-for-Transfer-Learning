@@ -10,12 +10,12 @@ paths:
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_new_cutoff_5_unfrozen_tmp/
-  pretrained_file: model.latest
+  pretrained_folder:
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0]
+  gpus: &gpus [0,1]
 
 dataloaders:
   kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
