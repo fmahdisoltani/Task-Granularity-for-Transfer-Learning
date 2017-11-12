@@ -16,14 +16,14 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step):
+                 num_lstm_layers, vocab_size):
 
         super().__init__()
 
         self.embedding_size = embedding_size
         self.hidden_size = hidden_size
         self.num_lstm_layers = num_lstm_layers
-        self.num_step = num_step
+        # self.num_step = num_step
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
@@ -57,13 +57,14 @@ class DecoderBase(nn.Module):
             The probability distribution over the vocabulary across the entire
             sequence.
         """
+        batch_size, num_step = captions.size()
 
         if use_teacher_forcing:
             probs, _ = self.apply_lstm(features, captions)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, captions, self.num_step)
+            probs = self.predict(features, captions, num_step)
 
         return probs
 
