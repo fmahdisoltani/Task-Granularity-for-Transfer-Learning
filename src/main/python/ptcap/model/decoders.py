@@ -28,6 +28,7 @@ class DecoderBase(nn.Module):
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
+        self.mapping = nn.Linear(1024, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
 
         self.activations = self.register_forward_hooks()
