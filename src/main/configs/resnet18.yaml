@@ -1,11 +1,11 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-jester/videos_gulp/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/videos_gulp/
 
-  checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/gestures/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/resnet18_cutoff_10_unfrozen_lbl/
 
-  train_annot: &train_annot /data/20bn-jester/json/train_20171031.json.gz
-  validation_annot: /data/20bn-jester/json/validation_20171031.json.gz
-  test_annot: /data/20bn-jester/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171004.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171004.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171004.json.gz
 
 pretrained:
   pretrained_folder:
@@ -13,20 +13,21 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0, 1, 2, 3]
+  gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 32, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: CNN3dLSTMEncoder
+  encoder: Resnet18Encoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024}
+  encoder_kwargs: {pretrained_path: /data/checkpoints/super_inflated_resnet_v2/model.checkpoint,
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
-                   hidden_size: 1024,
+                   hidden_size: 512,
                    num_lstm_layers: 1}
 
 loss:
@@ -34,7 +35,7 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.0001}
+  kwargs: {lr: 0.001}
 
 scheduler:
   type: ReduceLROnPlateau
@@ -68,3 +69,4 @@ tokenizer:
 logging:
   verbose: True
   tensorboard_frequency: 1000
+
