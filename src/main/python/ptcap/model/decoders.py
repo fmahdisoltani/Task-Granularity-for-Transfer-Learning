@@ -63,7 +63,9 @@ class LSTMDecoder(Decoder):
         """
 
         #c0 = self.mapping(features).features.unsqueeze(0).expand(2, 4,1024)
-        c0 = h0 = features.unsqueeze(0).expand(self.num_lstm_layers, *features.size())
+        augmented_features = self.mapping(features).unsqueeze(0)
+        expansion_size = self.mapping(features).size()
+        c0 = h0 = augmented_features.expand(self.num_lstm_layers, *expansion_size)
         #h0 = self.mapping(features).unsqueeze(0)
         h0 = c0
         return h0.contiguous() , c0.contiguous()
