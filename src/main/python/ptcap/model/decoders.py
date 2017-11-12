@@ -62,9 +62,11 @@ class LSTMDecoder(Decoder):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
-        c0 = self.mapping(features).unsqueeze(0)
-        h0 = self.mapping(features).unsqueeze(0)
-        return h0, c0
+        #c0 = self.mapping(features).features.unsqueeze(0).expand(2, 4,1024)
+        c0 = h0 = features.unsqueeze(0).expand(self.num_lstm_layers, *features.size())
+        #h0 = self.mapping(features).unsqueeze(0)
+        h0 = c0
+        return h0.contiguous() , c0.contiguous()
 
     def forward(self, features, captions, use_teacher_forcing=False):
         """
