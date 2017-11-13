@@ -13,7 +13,7 @@ from ptcap.utils import DataParallelWrapper
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
-                 gpus=None, clip_grad=None):
+                 gpus=None, clip_grad=None, classif_loss_function=None):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -29,6 +29,8 @@ class Trainer(object):
         self.loss_function = loss_function if self.gpus is None else(
             loss_function.cuda(gpus[0])
         )
+        self.classif_loss_function = classif_loss_function if self.gpus is None\
+            else(classif_loss_function.cuda(gpus[0]))
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
