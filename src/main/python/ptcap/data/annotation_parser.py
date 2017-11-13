@@ -35,10 +35,10 @@ class AnnotationParser(object):
         return self.get_captions("template") + self.get_captions("label")
 
     def get_labels(self):
-        all_templates = list(set(self.annotations["template"]))
+        all_templates = sorted(set(self.annotations["template"]))
         print("Number of different classes: ", len(all_templates))
         class_dict = {k: idx for idx, k in enumerate(all_templates)}
-        return [class_dict.get(p) for p in self.annotations["template"]]
+        return [class_dict[p] for p in self.annotations["template"]]
 
 
 class JsonParser(AnnotationParser):
