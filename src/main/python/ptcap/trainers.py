@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, caption_accuracy,
+from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 from ptcap.utils import DataParallelWrapper
 
@@ -123,6 +123,7 @@ class Trainer(object):
         function_dict["accuracy"] = token_accuracy
         function_dict["first_accuracy"] = first_token_accuracy
         function_dict["caption_accuracy"] = caption_accuracy
+        function_dict["classif_accuracy"] = classif_accuracy
 
         return function_dict
 
@@ -142,31 +143,32 @@ class Trainer(object):
         else:
             self.model.eval()
         
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
+        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
 
-        for sample_counter, (videos, _, captions, labels) in enumerate(dataloader):
+        for sample_counter, (videos, _, captions, classif_targets) in enumerate(dataloader):
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
 
-            videos, captions, input_captions, labels = (Variable(videos),
+            videos, captions, input_captions, classif_targets = (Variable(videos),
                                                 Variable(captions),
                                                 Variable(input_captions),
-                                                Variable(labels))
+                                                Variable(classif_targets))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
                 input_captions = input_captions.cuda(self.gpus[0])
-                labels = labels.cuda(self.gpus[0])
+                classif_targets = classif_targets.cuda(self.gpus[0])
 
             probs, classif_probs = \
                 self.model((videos, input_captions), use_teacher_forcing)
 
-            classif_loss = self.classif_loss_function(classif_probs, labels)
+            classif_loss = self.classif_loss_function(classif_probs, classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
             loss = classif_loss + captioning_loss
+            #loss = captioning_loss
 
             global_step = len(dataloader) * epoch + sample_counter
 
@@ -190,7 +192,11 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions)
+            classif_targets = classif_targets.cpu()
+            classif_probs = classif_probs.cpu()
+
+            batch_outputs = ScoreAttr(loss, captions, predictions,
+                                      classif_targets, classif_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
