@@ -1,9 +1,8 @@
-import time
+import numpy as np
 
 import torch
 
 from collections import namedtuple
-from collections import OrderedDict
 
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
@@ -110,8 +109,11 @@ class Trainer(object):
         }
 
     def update_stop_training(self, epoch, num_epoch):
-        current_lr = max([param_group['lr'] for param_group in
+        current_lr = max([param_group["lr"] for param_group in
                           self.scheduler.optimizer.param_groups])
+        self.writer.add_scalars({"learning rate": np.log10(current_lr)},
+                                global_step=epoch, is_training=True)
+
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
 
@@ -157,6 +159,9 @@ class Trainer(object):
         scores = ScoresOperator(self.get_function_dict(is_training))
 
         for sample_counter, (videos, string_captions, captions) in enumerate(dataloader):
+            if sample_counter == 10:
+                break
+
             self.logger.on_batch_begin()
 
             videos, captions = (Variable(videos),

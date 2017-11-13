@@ -160,6 +160,8 @@ class CoupledLSTMDecoder(Decoder):
 
         self.mapping = nn.Linear(hidden_size, 2*hidden_size)
 
+        self.relu = nn.ReLU()
+
         self.tanh = nn.Tanh()
 
         self.use_cuda = True if gpus else False
@@ -174,7 +176,7 @@ class CoupledLSTMDecoder(Decoder):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
-        mapped_features = self.tanh(self.mapping(features))
+        mapped_features = self.mapping(features)
 
         c0 = mapped_features[:, :self.hidden_size].unsqueeze(0)
         h0 = mapped_features[:, self.hidden_size: 2*self.hidden_size].unsqueeze(0)
