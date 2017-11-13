@@ -44,7 +44,7 @@ class DecoderBase(nn.Module):
         expansion_size = self.mapping(features).size()
         c0 = h0 = augmented_features.expand(self.num_lstm_layers, *expansion_size)
         #h0 = self.mapping(features).unsqueeze(0)
-        h0 = c0
+        # h0 = c0
         return h0.contiguous() , c0.contiguous()
 
     def forward(self, features, captions, use_teacher_forcing=False):
@@ -144,8 +144,7 @@ class LSTMDecoder(DecoderBase):
 
 class CoupledLSTMDecoder(Decoder):
 
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+    def __init__(self,  *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
