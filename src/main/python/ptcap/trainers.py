@@ -40,7 +40,6 @@ class Trainer(object):
         self.logger = logger
         self.logger.on_train_init(folder, filename)
 
-
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
@@ -144,21 +143,28 @@ class Trainer(object):
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
 
-        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+        for sample_counter, (videos, _, captions, labels) in enumerate(dataloader):
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
 
-            videos, captions, input_captions = (Variable(videos),
+            videos, captions, input_captions, labels = (Variable(videos),
                                                 Variable(captions),
-                                                Variable(input_captions))
+                                                Variable(input_captions),
+                                                Variable(labels))
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
                 input_captions = input_captions.cuda(self.gpus[0])
+                labels = labels.cuda(self.gpus[0])
 
-            probs = self.model((videos, input_captions), use_teacher_forcing)
-            loss = self.loss_function(probs, captions)
+            probs, classif_probs = \
+                self.model((videos, input_captions), use_teacher_forcing)
+
+            classif_loss = self.classif_loss_function(classif_probs, labels)
+            captioning_loss = self.loss_function(probs, captions)
+
+            loss = classif_loss + captioning_loss
 
             global_step = len(dataloader) * epoch + sample_counter
 
