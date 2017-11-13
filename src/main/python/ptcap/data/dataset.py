@@ -15,6 +15,7 @@ class VideoDataset(Dataset):
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
         self.captions = annotation_parser.get_captions()
+        self.labels = annotation_parser.get_labels()
         self.preprocess = preprocess
 
     def __len__(self):
@@ -30,7 +31,7 @@ class VideoDataset(Dataset):
         if self.preprocess is not None:
             video = self.preprocess(video)
         tokenized_caption = self._get_tokenized_caption(index)
-        return video, self.captions[index], np.array(tokenized_caption)
+        return video, self.captions[index], np.array(tokenized_caption), self.labels[index]
 
     def _get_video(self, index):
         pass
