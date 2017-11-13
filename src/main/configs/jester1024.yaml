@@ -1,15 +1,15 @@
 paths:
   videos_folder: &vidpath /home/waseem/data/20bn-somethingsomething-2017-10-31
 
-  checkpoint_folder: /home/waseem/Models/CoupledLSTM_linear_init_hidden_caption_accuracy
+  checkpoint_folder: /home/waseem/Models/CoupledLSTM_linear_init_hidden_caption_accuracy_continue
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder:
-  pretrained_file:
+  pretrained_folder: /home/waseem/Models/CoupledLSTM_linear_init_hidden_caption_accuracy
+  pretrained_file: model.latest
 
 device:
   synchronize_gpu: &sync True
