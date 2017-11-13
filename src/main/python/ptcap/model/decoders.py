@@ -144,8 +144,7 @@ class LSTMDecoder(DecoderBase):
 
 class CoupledLSTMDecoder(Decoder):
 
-    def __init__(self, embedding_size, hidden_size, vocab_size,
-                 num_lstm_layers, go_token=0, gpus=None):
+    def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
