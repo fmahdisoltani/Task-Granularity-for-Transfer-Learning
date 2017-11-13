@@ -168,6 +168,8 @@ class CNN3dLSTMEncoder(Encoder):
         h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
 
         lstm_hidden = self.init_hidden(batch_size=h.size()[0])
+
+        self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)
 
         h_mean = torch.mean(lstm_outputs, dim=1)
