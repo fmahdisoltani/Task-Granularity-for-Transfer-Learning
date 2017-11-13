@@ -49,7 +49,7 @@ class EncoderDecoder(Captioner):
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder(videos)
-        classif_probs = self.encoder.predict_from_features(features)
+        classif_probs = self.encoder.encoder.predict_from_features(features)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
         return probs, classif_probs
