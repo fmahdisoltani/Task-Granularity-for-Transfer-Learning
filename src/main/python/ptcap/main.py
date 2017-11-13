@@ -51,6 +51,7 @@ def train_model(config_obj, relative_path=""):
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
     loss_type = config_obj.get("loss", "type")
+    classif_loss_type = "CrossEntropy" #TODO: FIX reading from config file
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
@@ -125,6 +126,7 @@ def train_model(config_obj, relative_path=""):
         gpus=gpus)
 
     loss_function = getattr(ptcap.losses, loss_type)()
+    classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
     params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = getattr(torch.optim, optimizer_type)(
@@ -150,7 +152,8 @@ def train_model(config_obj, relative_path=""):
     # Trainer
     trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
                       writer, checkpointer, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad)
+                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad,
+                      classif_loss_function=classif_loss_function)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, criteria, num_epoch,
