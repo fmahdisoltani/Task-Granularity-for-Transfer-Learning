@@ -114,13 +114,9 @@ class Trainer(object):
         self.writer.add_scalars({"learning rate": np.log10(current_lr)},
                                 global_step=epoch, is_training=True)
 
-        print("current_lr: {}".format(current_lr))
-
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
         eps = 0.01 * min_lr
-
-        print("min_lr: {}".format(min_lr))
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
@@ -164,9 +160,6 @@ class Trainer(object):
         scores = ScoresOperator(self.get_function_dict(is_training))
 
         for sample_counter, (videos, string_captions, captions) in enumerate(dataloader):
-            if sample_counter == 10:
-                break
-
             self.logger.on_batch_begin()
 
             videos, captions = (Variable(videos),
