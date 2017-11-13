@@ -112,6 +112,7 @@ class Trainer(object):
                                 global_step=epoch, is_training=True)
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
+        eps = 0.01 * min_lr
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
@@ -119,7 +120,7 @@ class Trainer(object):
                                     (epoch, num_epoch))
             return True
 
-        elif current_lr <= min_lr:
+        elif current_lr <= (min_lr + eps):
             self.logger.log_message("Learning rate is equal to the minimum "
                                     "learning rate ({:.4})", (min_lr,))
             return True
