@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 
@@ -106,6 +108,8 @@ class Trainer(object):
     def update_stop_training(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
                           self.scheduler.optimizer.param_groups])
+        self.writer.add_scalars({"learning rate": np.log10(current_lr)},
+                                global_step=epoch, is_training=True)
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
 
