@@ -93,7 +93,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             epoch += 1
-            stop_training = self.update_stop_training(epoch, max_num_epochs)
+            stop_training = self.update_stopping_criteria(epoch, max_num_epochs)
 
         self.logger.on_train_end(self.scheduler.best)
 
@@ -105,7 +105,7 @@ class Trainer(object):
             "score": self.score,
         }
 
-    def update_stop_training(self, epoch, num_epoch):
+    def update_stopping_criteria(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
                           self.scheduler.optimizer.param_groups])
         self.writer.add_scalars({"learning rate": np.log10(current_lr)},
