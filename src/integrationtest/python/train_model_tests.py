@@ -2,6 +2,8 @@
 
 import os
 
+import torch
+
 import fake_data as fkdata
 
 from ptcap.data.config_parser import YamlConfig
@@ -18,9 +20,24 @@ def check_saved_files(checkpoint_path, files_list):
             raise FileNotFoundError
 
 
-def simulate_training(config_path):
+def integration_test(cuda=False):
+    checkpoints = []
+
+    # Run models and get their checkpoint folders
+    for config_path in CONFIG_PATH:
+        checkpoint_folder = simulate_training(config_path, cuda)
+        checkpoints.append(checkpoint_folder)
+
+    # Clean up the checkpoint folders
+    for checkpoint_folder in checkpoints:
+        fkdata.remove_dir(checkpoint_folder)
+
+
+def simulate_training(config_path, cuda):
     # Read config file for training a model from scratch
     config_obj = YamlConfig(config_path)
+
+    config_obj.config_dict["device"]["gpus"] = [0] if cuda else None
 
     # Parse the model's checkpoint
     checkpoint_folder = os.path.join(
@@ -50,16 +67,10 @@ if __name__ == '__main__':
 
     setup_fake_video_data()
 
-    checkpoints = []
+    integration_test()
 
-    # Run models and get their checkpoint folders
-    for config_path in CONFIG_PATH:
-        checkpoint_folder = simulate_training(config_path)
-        checkpoints.append(checkpoint_folder)
-
-    # Clean up the checkpoint folders
-    for checkpoint_folder in checkpoints:
-        fkdata.remove_dir(checkpoint_folder)
+    if torch.cuda.is_available():
+        integration_test(True)
 
     # Clean up fake data
     fkdata.remove_dir(fkdata.TMP_DIR)
