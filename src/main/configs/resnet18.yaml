@@ -70,3 +70,8 @@ logging:
   verbose: True
   tensorboard_frequency: 1000
 
+preprocess:
+  crop_size: [48, 224, 224]
+  scale: 64.
+  input_resize: [250, 250]
+
