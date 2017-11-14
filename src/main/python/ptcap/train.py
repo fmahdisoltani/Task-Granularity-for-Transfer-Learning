@@ -66,6 +66,10 @@ def train_model(config_obj, relative_path=""):
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
 
+    # Preprocess
+    crop_size = config_obj.get("preprocess", "crop_size")
+    scale = config_obj.get("preprocess", "scale")
+
     seed_code(1, gpus)
 
     # Load Json annotation files
@@ -83,14 +87,14 @@ def train_model(config_obj, relative_path=""):
     else:
         tokenizer.build_dictionaries(training_parser.get_captions())
 
-    preprocessor = Compose([prep.RandomCrop([24, 96, 96]),
-                            prep.PadVideo([24, 96, 96]),
-                            prep.Float32Converter(),
+    preprocessor = Compose([prep.RandomCrop(crop_size),
+                            prep.PadVideo(crop_size),
+                            prep.Float32Converter(scale),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([24, 96, 96]),
-                                prep.PadVideo([24, 96, 96]),
-                                prep.Float32Converter(),
+    val_preprocessor = Compose([CenterCropper(crop_size),
+                                prep.PadVideo(crop_size),
+                                prep.Float32Converter(scale),
                                 prep.PytorchTransposer()])
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
