@@ -57,6 +57,11 @@ def train_model(config_obj, relative_path=""):
     criteria = config_obj.get("criteria", "score")
     videos_folder = config_obj.get("paths", "videos_folder")
 
+    # Preprocess
+    crop_size = config_obj.get("preprocess", "crop_size")
+    scale = config_obj.get("preprocess", "scale")
+    input_resize = config_obj.get("preprocess", "input_resize")
+
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
@@ -73,27 +78,27 @@ def train_model(config_obj, relative_path=""):
 
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = Compose([prep.RandomCrop([48, 96, 96]),
-                            prep.PadVideo([48, 96, 96]),
-                            prep.Float32Converter(64.),
+    preprocessor = Compose([prep.RandomCrop(crop_size),
+                            prep.PadVideo(crop_size),
+                            prep.Float32Converter(scale),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([48, 96, 96]),
-                                prep.PadVideo([48, 96, 96]),
-                                prep.Float32Converter(64.),
+    val_preprocessor = Compose([CenterCropper(crop_size),
+                                prep.PadVideo(crop_size),
+                                prep.Float32Converter(scale),
                                 prep.PytorchTransposer()])
 
     training_set = GulpVideoDataset(annotation_parser=training_parser,
                                     tokenizer=tokenizer,
                                     preprocess=preprocessor,
-                                    gulp_dir=videos_folder,)
-                                    # size=[128, 128])
+                                    gulp_dir=videos_folder,
+                                    size=input_resize)
 
     validation_set = GulpVideoDataset(annotation_parser=validation_parser,
                                       tokenizer=tokenizer,
                                       preprocess=val_preprocessor,
-                                      gulp_dir=videos_folder,)
-                                      # size=[128, 128])
+                                      gulp_dir=videos_folder,
+                                      size=input_resize)
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
