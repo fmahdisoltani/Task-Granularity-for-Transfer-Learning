@@ -1,16 +1,16 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/videos_gulp/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_lbl_step2_lr=0.0001_w=1/
+  checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/clapnet_lbl_step2_lr=0.0001_w=1/
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171004.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171004.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171004.json.gz
 
 
 
 pretrained:
-  pretrained_folder:  /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_lbl/
+  pretrained_folder:
   pretrained_file: model_2.latest
 
 device:
@@ -24,7 +24,7 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint,
+  encoder_kwargs: {pretrained_path: /home/fmahdisoltani/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint,
                    freeze: False}
   decoder: CoupledLSTMDecoder
   decoder_args:
