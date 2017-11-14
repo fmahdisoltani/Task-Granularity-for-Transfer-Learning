@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 from torch import nn
 from torch.autograd import Variable
@@ -40,11 +41,12 @@ class DecoderBase(nn.Module):
         """
 
         #c0 = self.mapping(features).features.unsqueeze(0).expand(2, 4,1024)
-        augmented_features = self.mapping(features).unsqueeze(0)
-        expansion_size = self.mapping(features).size()
+
+
+        augmented_features = features.unsqueeze(0)
+        expansion_size = features.size()
         c0 = h0 = augmented_features.expand(self.num_lstm_layers, *expansion_size)
-        #h0 = self.mapping(features).unsqueeze(0)
-        # h0 = c0
+
         return h0.contiguous() , c0.contiguous()
 
     def forward(self, features, captions, use_teacher_forcing=False):
@@ -68,6 +70,7 @@ class DecoderBase(nn.Module):
         else:
             # Without teacher forcing: use its own predictions as the next input
             probs = self.predict(features, captions, num_step)
+
 
         return probs
 
@@ -142,7 +145,7 @@ class LSTMDecoder(DecoderBase):
         return probs, lstm_hidden
 
 
-class CoupledLSTMDecoder(Decoder):
+class CoupledLSTMDecoder(DecoderBase):
 
     def __init__(self,  *args, **kwargs):
 
@@ -154,10 +157,12 @@ class CoupledLSTMDecoder(Decoder):
                             batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
+        relued_features = F.relu(self.mapping(features))
+        pooled_features = relued_features.mean(dim=1)
         if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features)
+            lstm_hidden = self.init_hidden(pooled_features)
         embedded_captions = self.embedding(captions)
-        lstm_input = self.prepare_lstm_input(embedded_captions, features)
+        lstm_input = self.prepare_lstm_input(embedded_captions, pooled_features)
 
         self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)

@@ -100,6 +100,7 @@ def train_model(config_obj, relative_path=""):
                                       gulp_dir=videos_folder,
                                       size=input_resize)
 
+
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
 
