@@ -71,7 +71,7 @@ def train_model(config_obj, relative_path=""):
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
 
-        #tokenizer.build_dictionaries(training_parser.get_captions())
+    #tokenizer.build_dictionaries(training_parser.get_captions())
     preprocessor = Compose([prep.RandomCrop([48, 96, 96]),
                             prep.PadVideo([48, 96, 96]),
                             prep.Float32Converter(64.),

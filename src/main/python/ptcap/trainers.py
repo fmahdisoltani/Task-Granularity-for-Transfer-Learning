@@ -1,3 +1,5 @@
+import time
+
 import torch
 
 from collections import namedtuple
@@ -46,6 +48,8 @@ class Trainer(object):
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
 
+        # start_time = time.time()
+
         epoch = 0
         stop_training = False
 
@@ -87,6 +91,10 @@ class Trainer(object):
             stop_training = self.update_stop_training(epoch, max_num_epochs)
 
         self.logger.on_train_end(self.scheduler.best)
+
+        # end_time = time.time()
+        #
+        # print("Total time {}".format(end_time - start_time))
 
     def get_trainer_state(self):
         return {
@@ -140,6 +148,7 @@ class Trainer(object):
             self.model.train()
         else:
             self.model.eval()
+
         
         ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
         scores = ScoresOperator(self.get_function_dict())
