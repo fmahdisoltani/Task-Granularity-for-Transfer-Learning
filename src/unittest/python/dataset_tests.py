@@ -78,3 +78,15 @@ class TestNumpyDataset(TestVideoDataset):
         dataset = NumpyVideoDataset(self.annotation_parser, self.tokenizer)
         video = dataset._get_video(0)
         self.assertEqual(video.shape, (11, 237, 237, 3))
+
+
+class TestGulpVideoDataset(TestVideoDataset):
+    NUMPY_VIDEO = {"arr_0": np.random.rand(11, 237, 237, 3)}
+
+    @mock.patch('glob.glob', return_value=[0])
+    @mock.patch('numpy.load', return_value=NUMPY_VIDEO)
+    def test_getvideo(self, mock_np, mock_glob):
+        dataset = NumpyVideoDataset(self.annotation_parser, self.tokenizer)
+        video = dataset._get_video(0)
+        self.assertEqual(video.shape, (11, 237, 237, 3))
+
