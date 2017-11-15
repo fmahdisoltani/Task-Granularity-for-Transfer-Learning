@@ -29,6 +29,7 @@ class DecoderBase(nn.Module):
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
+        # for resnet use 512
         self.mapping = nn.Linear(1024, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
         self.num_step = num_step
