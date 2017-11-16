@@ -12,7 +12,7 @@ class VideoDataset(Dataset):
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
-        self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
+        self.video_ids = [id for id in annotation_parser.get_video_ids()]
         self.captions = annotation_parser.get_captions()
         self.preprocess = preprocess
 
