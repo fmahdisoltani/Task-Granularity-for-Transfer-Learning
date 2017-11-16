@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 
@@ -93,7 +95,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             epoch += 1
-            stop_training = self.update_stop_training(epoch, max_num_epochs)
+            stop_training = self.update_stopping_criteria(epoch, max_num_epochs)
 
         self.logger.on_train_end(self.scheduler.best)
 
@@ -105,11 +107,14 @@ class Trainer(object):
             "score": self.score,
         }
 
-    def update_stop_training(self, epoch, num_epoch):
+    def update_stopping_criteria(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
                           self.scheduler.optimizer.param_groups])
+        self.writer.add_scalars({"learning rate": np.log10(current_lr)},
+                                global_step=epoch, is_training=True)
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
+        eps = 0.01 * min_lr
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
@@ -117,7 +122,7 @@ class Trainer(object):
                                     (epoch, num_epoch))
             return True
 
-        elif current_lr <= min_lr:
+        elif current_lr <= (min_lr + eps):
             self.logger.log_message("Learning rate is equal to the minimum "
                                     "learning rate ({:.4})", (min_lr,))
             return True
