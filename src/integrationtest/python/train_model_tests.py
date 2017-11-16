@@ -20,7 +20,7 @@ def check_saved_files(checkpoint_path, files_list):
             raise FileNotFoundError
 
 
-def integration_test(cuda=False):
+def test_on_device(cuda=False):
     checkpoints = []
 
     # Run models and get their checkpoint folders
@@ -67,10 +67,10 @@ if __name__ == '__main__':
 
     setup_fake_video_data()
 
-    integration_test()
+    test_on_device(cuda=False)
 
     if torch.cuda.is_available():
-        integration_test(True)
+        test_on_device(cuda=True)
 
     # Clean up fake data
     fkdata.remove_dir(fkdata.TMP_DIR)
