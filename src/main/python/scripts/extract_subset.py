@@ -11,9 +11,10 @@ TARGET_LABELS = [
 
 def create_subset_json(path, target_classes, num_samples=None):
     """
-    This method extracts "num_samples" samples using a json annotation file
-    where each sample belong to one of the classes in target_classes.
-    If num_samples is None, it extracts all the samples in target_classes.
+    This method extracts a total of "num_samples" samples using a json
+    annotation file where each sample belong to one of the classes in
+    target_classes. If num_samples is None, it extracts all the samples in
+    target_classes.
     """
 
     if num_samples:
@@ -34,7 +35,8 @@ def create_subset_json(path, target_classes, num_samples=None):
 
 def create_subset_json_balanced(path, target_classes, num_samples=None):
     """
-    This method extracts "num_samples" samples using a json annotation file
+    This method extracts at most "num_samples" samples from each target class
+    using a json annotation file
     where each sample belong to one of the classes in target_classes.
     If num_samples is None, it extracts all the samples in target_classes.
     """
@@ -50,7 +52,9 @@ def create_subset_json_balanced(path, target_classes, num_samples=None):
     all_samples = open_json(path)
 
     for sample in all_samples:
-        if finished_classes == num_classes: break
+        if finished_classes == num_classes:
+            print("All target classes have {} samples".format(num_samples))
+            break
         if sample["template"] in target_classes:
             if population_dict[sample["template"]] < num_samples:
                 new_json.append(sample)
