@@ -55,11 +55,12 @@ def create_subset_json_balanced(path, target_classes, num_samples=None):
         if finished_classes == num_classes:
             print("All target classes have {} samples".format(num_samples))
             break
-        if sample["template"] in target_classes:
-            if population_dict[sample["template"]] < num_samples:
+        template_of_sample = sample["template"]
+        if template_of_sample in target_classes:
+            if population_dict[template_of_sample] < num_samples:
                 new_json.append(sample)
-                population_dict[sample["template"]] += 1
-                if population_dict[sample["template"]] == num_samples:
+                population_dict[template_of_sample] += 1
+                if population_dict[template_of_sample] == num_samples:
                     finished_classes += 1
 
                     # print(sample["template"])
