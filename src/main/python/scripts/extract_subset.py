@@ -63,8 +63,8 @@ def create_subset_json_balanced(path, target_classes, num_samples=None):
                 if population_dict[template_of_sample] == num_samples:
                     finished_classes += 1
 
-                    # print(sample["template"])
-                    # print(population_dict[sample["template"]])
+                    print(sample["template"])
+                    print(population_dict[sample["template"]])
 
     print(len(new_json))
 
