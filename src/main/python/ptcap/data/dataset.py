@@ -1,21 +1,23 @@
 import numpy as np
 
+import cv2
 import glob
 from PIL import Image
 
 from torch.utils.data import Dataset
+from gulpio import GulpDirectory
 
 
 class VideoDataset(Dataset):
-
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
+        self.video_ids = [id for id in annotation_parser.get_video_ids()]
         self.captions = annotation_parser.get_captions()
         self.preprocess = preprocess
 
     def __len__(self):
-        return len(self.video_paths)
+        return len(self.video_ids)
 
     def __getitem__(self, index):
         """
@@ -50,7 +52,8 @@ class JpegVideoDataset(VideoDataset):
     as one extra-parameter.
     """
 
-    def __init__(self, size=[128,128], resample=Image.BICUBIC, *args, **kwargs):
+    def __init__(self, size=[128, 128], resample=Image.BICUBIC, *args,
+                 **kwargs):
         super(JpegVideoDataset, self).__init__(*args, **kwargs)
         self.size = size
         self.resample = resample
@@ -76,3 +79,18 @@ class NumpyVideoDataset(VideoDataset):
         path = glob.glob(dirname + "/*.npz")[0]
         video = np.load(path)["arr_0"]
         return video
+
+
+class GulpVideoDataset(VideoDataset):
+    def __init__(self, gulp_dir, size=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # instantiate the GulpDirectory
+        self.gulp_dir = GulpDirectory(gulp_dir)
+        self.size = tuple(size) if size else None
+
+    def _get_video(self, index):
+        frames, _ = self.gulp_dir[self.video_ids[index]]
+        if self.size:
+            frames = [cv2.resize(f, self.size) for f in frames]
+        return np.array([np.array(f) for f in frames])

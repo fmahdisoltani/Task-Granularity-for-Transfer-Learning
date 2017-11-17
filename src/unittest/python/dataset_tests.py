@@ -7,7 +7,8 @@ from PIL import Image
 
 from ptcap.data.annotation_parser import JsonParser
 from ptcap.data.dataset import VideoDataset
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset,
+                                GulpVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 
 class TestVideoDataset(unittest.TestCase):
@@ -78,3 +79,28 @@ class TestNumpyDataset(TestVideoDataset):
         dataset = NumpyVideoDataset(self.annotation_parser, self.tokenizer)
         video = dataset._get_video(0)
         self.assertEqual(video.shape, (11, 237, 237, 3))
+
+
+class TestGulpVideoDataset(TestVideoDataset):
+    GULP_VIDEO = np.random.rand(11, 237, 237, 3)
+    GULP_FRAMES = [frame for frame in GULP_VIDEO]
+    META_DICT = 0
+
+    @mock.patch('gulpio.GulpDirectory.__getitem__',
+                return_value=(GULP_FRAMES, META_DICT))
+    def test_getvideo(self, mock_gulp):
+        dataset = GulpVideoDataset('',
+                                   annotation_parser=self.annotation_parser,
+                                   tokenizer=self.tokenizer)
+        video = dataset._get_video(0)
+        self.assertEqual(video.shape, (11, 237, 237, 3))
+        self.assertTrue(np.all(video==self.GULP_VIDEO))
+
+    @mock.patch('gulpio.GulpDirectory.__getitem__',
+                return_value=(GULP_FRAMES, META_DICT))
+    def test_getvideo_with_size(self, mock_gulp):
+        dataset = GulpVideoDataset('', size=[16, 16],
+                                   annotation_parser=self.annotation_parser,
+                                   tokenizer=self.tokenizer)
+        video = dataset._get_video(0)
+        self.assertEqual(video.shape, (11, 16, 16, 3))

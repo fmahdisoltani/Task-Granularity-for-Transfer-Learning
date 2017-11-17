@@ -23,7 +23,7 @@ class AnnotationParser(object):
                 for name in files]
 
     def get_video_ids(self):
-        return [id for id in self.annotations["id"]]
+        return [str(id) for id in self.annotations["id"]]
 
     def get_captions(self, caption_type=None):
 
@@ -34,7 +34,7 @@ class AnnotationParser(object):
     def get_captions_from_tmp_and_lbl(self):
         return self.get_captions("template") + self.get_captions("label")
 
-
+      
 class JsonParser(AnnotationParser):
 
     @classmethod
