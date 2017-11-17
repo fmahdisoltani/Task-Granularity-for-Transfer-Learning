@@ -1,10 +1,8 @@
 import torch
 from .encoders import Encoder
-from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
-from rtorchn.core.networks import BiJesterNetII
+from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet, 
+                                   BiJesterNetII, InflatedResNet18)
 from .encoders import Encoder
-from rtorchn.core.networks.resnets import InflatedResNet18
-
 
 class PretrainedEncoder(Encoder):
     def __init__(self, encoder, encoder_args, pretrained_path=None,
@@ -69,6 +67,28 @@ class JesterEncoder(PretrainedEncoder):
         return features.mean(dim=1)
 
 
+class BIJesterEncoder(PretrainedEncoder):
+
+    """
+    Hardcoded encoder for using BIJesterNet from 20bn_rtorchn
+    num_classes = 174 means this class expects the "supermodel" version.
+    Encoder output size in this version is 1024
+    """
+
+    def __init__(self, pretrained_path=None, freeze=False):
+        encoder_output_size = 1024
+        num_classes = 178
+        encoder_args = (num_classes, encoder_output_size)
+        super(BIJesterEncoder, self).__init__(encoder=BiJesterNetII,
+                                              encoder_args=encoder_args,
+                                              pretrained_path=pretrained_path,
+                                              freeze=freeze)
+
+    def forward(self, video_batch):
+        features = self.encoder.extract_features(video_batch)
+        return features.mean(dim=1)
+      
+      
 class Resnet18Encoder(PretrainedEncoder):
     def __init__(self, pretrained_path=None, freeze=False, ):
         num_classes = 1363
