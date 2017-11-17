@@ -26,7 +26,7 @@ def set_properties(project):
     project.depends_on('rtorchn', url=('git+ssh://git@github.com/TwentyBN/'
                                        '20bn-rtorchn.git'))
 
-    project.depends_on('tensorboard-pytorch')
+    project.depends_on('tensorboardX', url=('git+https://github.com/lanpa/tensorboard-pytorch'))
     project.depends_on('testfixtures')
     project.depends_on('torchy', url='git+ssh://git@github.com/'
                                      'TwentyBN/Torchy.git')
