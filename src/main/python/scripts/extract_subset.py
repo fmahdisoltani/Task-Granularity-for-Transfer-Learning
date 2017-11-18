@@ -33,12 +33,44 @@ def create_subset_json(path, target_classes, num_samples=None):
     return new_json
 
 
-def create_subset_json_balanced(path, target_classes, num_samples=None):
+def create_subset_json_balanced2(path, target_classes, num_samples=None):
 
     return [item for sublist in [[x for x in open_json(path) if x == t][:num_samples]
                                  for t in [sample for sample in json if
                       sample['template'] in target_classes]] for item in sublist]
 
+def create_subset_json_balanced(path, target_classes, num_samples=None):
+    """
+    This method extracts "num_samples" samples using a json annotation file
+    where each sample belong to one of the classes in target_classes.
+    If num_samples is None, it extracts all the samples in target_classes.
+    """
+
+    num_classes = len(target_classes)
+    if num_samples:
+        assert (num_samples > 0)
+    assert (num_classes > 1)
+
+    population_dict = {k: 0 for k in target_classes}
+    finished_classes = 0
+    new_json = []
+    all_samples = open_json(path)
+
+    for sample in all_samples:
+        if finished_classes == num_classes: break
+        if sample["template"] in target_classes:
+            if population_dict[sample["template"]] < num_samples:
+                new_json.append(sample)
+                population_dict[sample["template"]] += 1
+                if population_dict[sample["template"]] == num_samples:
+                    finished_classes += 1
+
+                    # print(sample["template"])
+                    # print(population_dict[sample["template"]])
+
+    print(len(new_json))
+
+    return new_json
 
 def open_json(path):
     if path.endswith("gz"):
