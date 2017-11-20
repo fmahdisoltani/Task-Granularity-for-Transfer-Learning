@@ -11,10 +11,11 @@ pretrained:
   pretrained_file: model.best
 
 device:
+  synchronize_gpu: True
   gpus:
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 0, pin_memory: False}
+  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
