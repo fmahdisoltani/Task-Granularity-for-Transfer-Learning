@@ -24,15 +24,17 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = checkpointer
 
-        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
-                                                  folder, filename)
-
-        self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model if self.gpus is None else (
+        self.model = model if self.gpus is None else (
             DataParallelWrapper(model, device_ids=self.gpus).cuda(
                 self.gpus[0]))
         self.loss_function = loss_function if self.gpus is None else (
             loss_function.cuda(self.gpus[0]))
+
+        init_state = self.checkpointer.load_model(self.model,
+                                                  scheduler.optimizer,
+                                                  folder, filename)
+
+        self.num_epochs, self.model, scheduler.optimizer = init_state
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
@@ -222,7 +224,6 @@ class Trainer(object):
 class DataParallelWrapper(nn.DataParallel):
     def __init__(self, model, device_ids):
         super().__init__(model, device_ids=device_ids)
-        self.gpus = model.gpus
 
     @property
     def activations(self):
