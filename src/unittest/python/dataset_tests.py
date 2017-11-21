@@ -89,9 +89,10 @@ class TestGulpVideoDataset(TestVideoDataset):
     @mock.patch('gulpio.GulpDirectory.__getitem__',
                 return_value=(GULP_FRAMES, META_DICT))
     def test_getvideo(self, mock_gulp):
-        dataset = GulpVideoDataset('',
-                                   annotation_parser=self.annotation_parser,
-                                   tokenizer=self.tokenizer)
+        dataset = GulpVideoDataset(
+                                   self.annotation_parser,
+                                   self.tokenizer,
+                                    '')
         video = dataset._get_video(0)
         self.assertEqual(video.shape, (11, 237, 237, 3))
         self.assertTrue(np.all(video==self.GULP_VIDEO))
@@ -99,8 +100,8 @@ class TestGulpVideoDataset(TestVideoDataset):
     @mock.patch('gulpio.GulpDirectory.__getitem__',
                 return_value=(GULP_FRAMES, META_DICT))
     def test_getvideo_with_size(self, mock_gulp):
-        dataset = GulpVideoDataset('', size=[16, 16],
-                                   annotation_parser=self.annotation_parser,
-                                   tokenizer=self.tokenizer)
+        dataset = GulpVideoDataset(self.annotation_parser,
+                                   self.tokenizer, '', size=[16, 16],
+                                   )
         video = dataset._get_video(0)
         self.assertEqual(video.shape, (11, 16, 16, 3))
