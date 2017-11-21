@@ -35,7 +35,7 @@ def simulate_training(config_path):
     # Check checkpoint folder
     check_saved_files(checkpoint_folder, ["config.yaml", "model.best",
                                                "model.latest",
-                                               "tokenizer_dicts_backup"])
+                                               "tokenizer_dicts"])
     return checkpoint_folder
 
 
