@@ -85,9 +85,9 @@ def train_model(config_obj, relative_path=""):
         tokenizer.load_dictionaries(pretrained_folder)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        # tokenizer.build_dictionaries(training_parser.get_captions())
-        tokenizer.build_dictionaries(
-            training_parser.get_captions_from_tmp_and_lbl())
+        tokenizer.build_dictionaries(training_parser.get_captions())
+        # tokenizer.build_dictionaries(
+        #     training_parser.get_captions_from_tmp_and_lbl())
 
 
 
