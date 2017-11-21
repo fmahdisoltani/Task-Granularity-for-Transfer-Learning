@@ -12,11 +12,7 @@ class VideoDataset(Dataset):
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
-<<<<<<< HEAD
         self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
-=======
-        self.video_ids = [id for id in annotation_parser.get_video_ids()]
->>>>>>> master
         self.captions = annotation_parser.get_captions()
         self.preprocess = preprocess
 
@@ -83,11 +79,7 @@ class NumpyVideoDataset(VideoDataset):
         path = glob.glob(dirname + "/*.npz")[0]
         video = np.load(path)["arr_0"]
         return video
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> master
 
 class GulpVideoDataset(VideoDataset):
     def __init__(self, gulp_dir, size=None, *args, **kwargs):
@@ -98,15 +90,8 @@ class GulpVideoDataset(VideoDataset):
         self.size = tuple(size) if size else None
 
     def _get_video(self, index):
-<<<<<<< HEAD
 
         frames, _ = self.gulp_dir[self.video_ids[index]]
         if self.size:
             frames = [cv2.resize(f, self.size) for f in frames]
         return np.array([np.array(f) for f in frames])
-=======
-        frames, _ = self.gulp_dir[self.video_ids[index]]
-        if self.size:
-            frames = [cv2.resize(f, self.size) for f in frames]
-        return np.array([np.array(f) for f in frames])
->>>>>>> master
