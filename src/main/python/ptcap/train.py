@@ -72,7 +72,6 @@ def train_model(config_obj, relative_path=""):
     # Preprocess
     crop_size = config_obj.get("preprocess", "crop_size")
     scale = config_obj.get("preprocess", "scale")
-    input_size = config_obj.get("preprocess", "input_size")
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
@@ -109,12 +108,12 @@ def train_model(config_obj, relative_path=""):
 
     training_set = getattr(ptcap.data.dataset,
                            config_obj.get("dataset", "training_set", "type"))(
-        training_parser, tokenizer, preprocessor,
+        training_parser, tokenizer, preprocess=preprocessor,
         **config_obj.get("dataset", "training_set", "kwargs"))
 
     validation_set = getattr(ptcap.data.dataset,
                              config_obj.get("dataset", "validation_set", "type"))(
-        validation_parser, tokenizer, val_preprocessor,
+        validation_parser, tokenizer, preprocess=val_preprocessor,
         **config_obj.get("dataset", "validation_set", "kwargs"))
 
 
