@@ -15,6 +15,8 @@ from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           caption_accuracy, first_token_accuracy, fscore,
                           gmeasure, loss_to_numpy, token_accuracy)
 
+from ptcap.utils import DataParallelWrapper
+
 
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
