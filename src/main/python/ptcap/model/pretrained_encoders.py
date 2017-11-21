@@ -31,9 +31,9 @@ class FCEncoder(PretrainedEncoder):
     def __init__(self, pretrained_path=None, freeze=False):
         # Hardcoded encoder for using FullyConvolutionalNet from 20bn_rtorchn
 
-        # it thinks it's getting num_features, but it's not. what is happening
-        # is equivalent to FullyConvolutionalNet(..,
-        #                                     num_features=encoder_output_size)
+        # it thinks it's getting encoder_output_size, but it's not. what is
+        # happening is equivalent to FullyConvolutionalNet(..,
+        #                               encoder_output_size=encoder_output_size)
 
         encoder_output_size = 256
         num_classes = 178
