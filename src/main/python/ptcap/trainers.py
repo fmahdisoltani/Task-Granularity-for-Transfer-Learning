@@ -1,10 +1,8 @@
-import numpy as np
-
-import torch
-import torch.nn as nn
-
 from collections import namedtuple
 
+import numpy as np
+import torch
+import torch.nn as nn
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
@@ -14,6 +12,7 @@ from torch.autograd import Variable
 from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           caption_accuracy, first_token_accuracy, fscore,
                           gmeasure, loss_to_numpy, token_accuracy)
+from ptcap.utils import DataParallelWrapper
 
 
 class Trainer(object):
@@ -154,6 +153,11 @@ class Trainer(object):
   
         # Log at the beginning of epoch
         self.logger.on_epoch_begin(epoch + 1)
+
+        if is_training:
+            self.model.train()
+        else:
+            self.model.eval()
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
@@ -171,7 +175,9 @@ class Trainer(object):
                                                 Variable(captions),
                                                 Variable(input_captions))
             if self.gpus:
+                videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0], async=True)
+                input_captions = input_captions.cuda(self.gpus[0])
 
             probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
