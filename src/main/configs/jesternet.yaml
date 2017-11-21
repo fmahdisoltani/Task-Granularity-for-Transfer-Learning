@@ -1,15 +1,13 @@
 paths:
-  videos_folder: &vidpath /data-ssd/videos_gulp/
-
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff_cont/
+  videos_folder: &vidpath /data/20bn-somethingsomething/videos_npz
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_supermodel_freeze2/
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff/
-
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_supermodel_freeze/
   pretrained_file: model.latest
 
 device:
@@ -17,14 +15,13 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 16, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: FCEncoder
+  encoder: JesterEncoderP
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
-                   freeze: False}
+  encoder_kwargs: {pretrained_path: , freeze: True}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -36,38 +33,37 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.001}
+  kwargs: {lr: 0.01}
 
 scheduler:
   type: ReduceLROnPlateau
   kwargs: {factor: 0.1,
-           min_lr: 1.0e-8,
+           min_lr: 1e-8,
            optimizer: *optimizer,
            patience: 3,
-           threshold: 1.0e-4}
+           threshold: 1e-4}
 
 training:
   num_epochs: 200
-  clip_grad:
+  clip_grad: 1
   teacher_force: True
   verbose: False
 
 validation:
-  frequency: 1
+  frequency: 5
   teacher_force: False
   verbose: True
 
 criteria:
-  score: accuracy
-  higher_is_better: True
+  score: loss
+  higher_is_better: False
 
 targets:
   caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 1}
+  kwargs: {user_maxlen: 10}
 
 logging:
   verbose: True
-  tensorboard_frequency: 1000
-
+  tensorboard_frequency: 1
