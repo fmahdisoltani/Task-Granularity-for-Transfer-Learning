@@ -1,0 +1,72 @@
+paths:
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething/videos_gulp/
+
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/resnet18_cutoff_10_unfrozen_lbl/
+
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171004.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171004.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171004.json.gz
+
+pretrained:
+  pretrained_folder:
+  pretrained_file: model.latest
+
+device:
+  synchronize_gpu: &sync True
+  gpus: &gpus [0]
+
+dataloaders:
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+
+model:
+  type: EncoderDecoder
+  encoder: Resnet18Encoder
+  encoder_args:
+  encoder_kwargs: {pretrained_path: /data/checkpoints/super_inflated_resnet_v2/model.checkpoint,
+                   freeze: False}
+  decoder: LSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 512,
+                   num_lstm_layers: 1}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.001}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1.0e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1.0e-4}
+
+training:
+  num_epochs: 200
+  clip_grad:
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 1
+  teacher_force: True
+  verbose: True
+
+criteria:
+  score: caption_accuracy
+  higher_is_better: True
+
+targets:
+  caption_type: label
+
+tokenizer:
+  kwargs: {user_maxlen: 13, cutoff: 10}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1000
+
