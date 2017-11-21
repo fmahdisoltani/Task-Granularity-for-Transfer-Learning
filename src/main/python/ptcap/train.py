@@ -69,6 +69,11 @@ def train_model(config_obj, relative_path=""):
 
     seed_code(1, gpus)
 
+    # Preprocess
+    crop_size = config_obj.get("preprocess", "crop_size")
+    scale = config_obj.get("preprocess", "scale")
+    input_size = config_obj.get("preprocess", "input_size")
+
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
@@ -92,14 +97,14 @@ def train_model(config_obj, relative_path=""):
 
 
 
-    preprocessor = Compose([prep.RandomCrop([24, 96, 96]),
-                            prep.PadVideo([24, 96, 96]),
-                            prep.Float32Converter(64.),
+    preprocessor = Compose([prep.RandomCrop(crop_size),
+                            prep.PadVideo(crop_size),
+                            prep.Float32Converter(scale),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([24, 96, 96]),
-                                prep.PadVideo([24, 96, 96]),
-                                prep.Float32Converter(64.),
+    val_preprocessor = Compose([CenterCropper(crop_size),
+                                prep.PadVideo(crop_size),
+                                prep.Float32Converter(scale),
                                 prep.PytorchTransposer()])
 
     training_set = getattr(ptcap.data.dataset,

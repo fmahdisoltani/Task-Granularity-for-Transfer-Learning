@@ -76,3 +76,8 @@ dataset:
   validation_set:
     type: NumpyVideoDataset
     kwargs: {}
+
+preprocess:
+  crop_size: [24, 96, 96]
+  scale: 64.
+  input_size: [96, 96]
