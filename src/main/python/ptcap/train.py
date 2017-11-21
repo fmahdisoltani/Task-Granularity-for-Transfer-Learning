@@ -73,8 +73,8 @@ def train_model(config_obj, relative_path=""):
     training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
 
-    validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   videos_folder), caption_type=caption_type)
+    # validation_parser = JsonParser(validation_path, os.path.join(relative_path,
+    #                                videos_folder), caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    config_obj.get("paths", "videos_folder")),
                                    caption_type=caption_type)
@@ -111,7 +111,7 @@ def train_model(config_obj, relative_path=""):
         **training_set_kwargs)
 
     validation_set_kwargs = config_obj.get("dataset", "validation_set", "kwargs")
-    validation_set_kwargs["annotation_parser"] = training_parser
+    validation_set_kwargs["annotation_parser"] = validation_parser
     validation_set_kwargs["tokenizer"] = tokenizer
     validation_set_kwargs["preprocess"] = val_preprocessor
 
