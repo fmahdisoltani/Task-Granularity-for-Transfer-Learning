@@ -1,10 +1,8 @@
-import numpy as np
-
-import torch
-import torch.nn as nn
-
 from collections import namedtuple
 
+import numpy as np
+import torch
+import torch.nn as nn
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
@@ -14,7 +12,6 @@ from torch.autograd import Variable
 from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           caption_accuracy, first_token_accuracy, fscore,
                           gmeasure, loss_to_numpy, token_accuracy)
-
 from ptcap.utils import DataParallelWrapper
 
 
