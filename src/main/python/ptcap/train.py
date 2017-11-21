@@ -122,14 +122,14 @@ def train_model(config_obj, relative_path=""):
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                     tokenizer=tokenizer,
-                                    preprocess=preprocessor,
-                                    gulp_dir=videos_folder, )
+                                    preprocess=preprocessor,)
+                                    #gulp_dir=videos_folder, )
                                     # size=[128, 128])
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
                                       tokenizer=tokenizer,
-                                      preprocess=val_preprocessor,
-                                      gulp_dir=videos_folder, )
+                                      preprocess=val_preprocessor,)
+                                      # gulp_dir=videos_folder, )
                                       # size=[128, 128])
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
