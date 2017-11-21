@@ -1,4 +1,7 @@
+import numpy as np
+
 import torch
+import torch.nn as nn
 
 from collections import namedtuple
 
@@ -8,8 +11,9 @@ from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
+                          caption_accuracy, first_token_accuracy, fscore,
+                          gmeasure, loss_to_numpy, token_accuracy)
 
 
 class Trainer(object):
@@ -20,15 +24,17 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = checkpointer
 
-        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
-                                                  folder, filename)
-
-        self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model if self.gpus is None else (
-            torch.nn.parallel.DataParallel(model, device_ids=self.gpus).cuda(
+        self.model = model if self.gpus is None else (
+            DataParallelWrapper(model, device_ids=self.gpus).cuda(
                 self.gpus[0]))
         self.loss_function = loss_function if self.gpus is None else (
             loss_function.cuda(self.gpus[0]))
+
+        init_state = self.checkpointer.load_model(self.model,
+                                                  scheduler.optimizer,
+                                                  folder, filename)
+
+        self.num_epochs, self.model, scheduler.optimizer = init_state
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
@@ -89,7 +95,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             epoch += 1
-            stop_training = self.update_stop_training(epoch, max_num_epochs)
+            stop_training = self.update_stopping_criteria(epoch, max_num_epochs)
 
         self.logger.on_train_end(self.scheduler.best)
 
@@ -101,11 +107,14 @@ class Trainer(object):
             "score": self.score,
         }
 
-    def update_stop_training(self, epoch, num_epoch):
+    def update_stopping_criteria(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
                           self.scheduler.optimizer.param_groups])
+        self.writer.add_scalars({"learning rate": np.log10(current_lr)},
+                                global_step=epoch, is_training=True)
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
+        eps = 0.01 * min_lr
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
@@ -113,7 +122,7 @@ class Trainer(object):
                                     (epoch, num_epoch))
             return True
 
-        elif current_lr <= min_lr:
+        elif current_lr <= (min_lr + eps):
             self.logger.log_message("Learning rate is equal to the minimum "
                                     "learning rate ({:.4})", (min_lr,))
             return True
@@ -122,20 +131,21 @@ class Trainer(object):
 
     def get_scoring_functions(self):
 
-        function_dict = []
+        scoring_functions = []
 
-        function_dict.append(loss_to_numpy)
-        function_dict.append(token_accuracy)
-        function_dict.append(first_token_accuracy)
-        function_dict.append(caption_accuracy)
-        function_dict.append(self.multiscore_adapter)
+        scoring_functions.append(loss_to_numpy)
+        scoring_functions.append(token_accuracy)
+        scoring_functions.append(first_token_accuracy)
+        scoring_functions.append(caption_accuracy)
+        scoring_functions.append(self.multiscore_adapter)
+        scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
-        return function_dict
+        return scoring_functions
 
-    def get_input_captions(self, captions, is_training):
+    def get_input_captions(self, captions, use_teacher_forcing):
         batch_size = captions.size(0)
         input_captions = torch.LongTensor(batch_size, 1).zero_()
-        if is_training:
+        if use_teacher_forcing:
             input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
         return input_captions
 
@@ -154,7 +164,8 @@ class Trainer(object):
                              captions) in enumerate(dataloader):
 
             self.logger.on_batch_begin()
-            input_captions = self.get_input_captions(captions, is_training)
+            input_captions = self.get_input_captions(captions,
+                                                     use_teacher_forcing)
 
             videos, captions, input_captions = (Variable(videos),
                                                 Variable(captions),
@@ -208,3 +219,12 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+
+class DataParallelWrapper(nn.DataParallel):
+    def __init__(self, model, device_ids):
+        super().__init__(model, device_ids=device_ids)
+
+    @property
+    def activations(self):
+        return self.module.activations

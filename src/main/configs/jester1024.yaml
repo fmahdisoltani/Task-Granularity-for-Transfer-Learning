@@ -1,0 +1,73 @@
+paths:
+  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
+
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/tessssssst/
+
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
+
+
+
+pretrained:
+  pretrained_folder:
+  pretrained_file: model.best
+
+device:
+  synchronize_gpu: &sync True
+  gpus: &gpus [0,1]
+
+dataloaders:
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
+
+model:
+  type: EncoderDecoder
+  encoder: BIJesterEncoder
+  encoder_args:
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint,
+                   freeze: False}
+  decoder: LSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 1024,
+                   num_lstm_layers: 2}
+
+loss:
+  type: SequenceCrossEntropy
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.0001}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1.0e-8,
+           optimizer: *optimizer,
+           patience: 3,
+           threshold: 1.0e-4}
+
+training:
+  num_epochs: 200
+  clip_grad:
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 1
+  teacher_force: True
+  verbose: True
+
+criteria:
+  score: caption_accuracy
+  higher_is_better: True
+
+targets:
+  caption_type: template
+
+tokenizer:
+  kwargs: {user_maxlen: 13, cutoff: 5}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1000

@@ -22,10 +22,19 @@ class AnnotationParser(object):
         return [os.path.join(self.video_root, name.split("/")[0])
                 for name in files]
 
-    def get_captions(self):
-        return [p for p in self.annotations[self.caption_type]]
+    def get_video_ids(self):
+        return [str(id) for id in self.annotations["id"]]
 
+    def get_captions(self, caption_type=None):
 
+        if caption_type is None:
+            caption_type = self.caption_type
+        return [p for p in self.annotations[caption_type]]
+
+    def get_captions_from_tmp_and_lbl(self):
+        return self.get_captions("template") + self.get_captions("label")
+
+      
 class JsonParser(AnnotationParser):
 
     @classmethod
