@@ -68,3 +68,17 @@ tokenizer:
 logging:
   verbose: True
   tensorboard_frequency: 1
+
+dataset:
+  training_set:
+    type: NumpyVideoDataset
+    kwargs: {}
+
+  validation_set:
+    type: NumpyVideoDataset
+    kwargs: {}
+
+preprocess:
+  crop_size: [24, 96, 96]
+  scale: 64.
+  input_size: [96, 96]
