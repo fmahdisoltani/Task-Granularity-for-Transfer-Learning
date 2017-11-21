@@ -109,12 +109,12 @@ def train_model(config_obj, relative_path=""):
 
     training_set = getattr(ptcap.data.dataset,
                            config_obj.get("dataset", "training_set", "type"))(
-        training_parser, tokenizer, preprocessor,
+        training_parser, tokenizer, preprocess=preprocessor,
         **config_obj.get("dataset", "training_set", "kwargs"))
 
     validation_set = getattr(ptcap.data.dataset,
                              config_obj.get("dataset", "validation_set", "type"))(
-        validation_parser, tokenizer, val_preprocessor,
+        validation_parser, tokenizer, preprocess=val_preprocessor,
         **config_obj.get("dataset", "validation_set", "kwargs"))
 
 

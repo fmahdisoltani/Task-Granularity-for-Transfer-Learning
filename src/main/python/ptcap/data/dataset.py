@@ -71,9 +71,6 @@ class NumpyVideoDataset(VideoDataset):
     Load video saved in a NPZ file.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(NumpyVideoDataset, self).__init__(*args, **kwargs)
-
     def _get_video(self, index):
         dirname = self.video_paths[index]
         path = glob.glob(dirname + "/*.npz")[0]
@@ -82,8 +79,8 @@ class NumpyVideoDataset(VideoDataset):
 
 
 class GulpVideoDataset(VideoDataset):
-    def __init__(self, gulp_dir, size=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, annotation_parser, tokenizer, gulp_dir, preprocess=None, size=None):
+        super().__init__( annotation_parser, tokenizer, preprocess=preprocess)
 
         # instantiate the GulpDirectory
         self.gulp_dir = GulpDirectory(gulp_dir)
