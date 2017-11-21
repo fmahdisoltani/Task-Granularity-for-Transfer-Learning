@@ -121,6 +121,7 @@ class LSTMDecoder(DecoderBase):
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
 
+
         c0 = self.mapping(features).unsqueeze(0)
 
         h0 = self.mapping(features).unsqueeze(0)
