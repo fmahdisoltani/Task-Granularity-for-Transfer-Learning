@@ -17,7 +17,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step):
+                 num_lstm_layers, vocab_size, num_step=13):
 
         super().__init__()
 

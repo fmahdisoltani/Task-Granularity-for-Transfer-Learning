@@ -19,6 +19,9 @@ class Trainer(object):
         self.gpus = gpus
         self.checkpointer = checkpointer
 
+
+        #model = DataParallelWrapper(model, device_ids=gpus).cuda(gpus[0])
+
         init_state = self.checkpointer.load_model(model, scheduler.optimizer,
                                                   folder, filename)
 
