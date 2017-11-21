@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 
 class CustomLogger(object):
@@ -29,6 +30,8 @@ class CustomLogger(object):
         fh = logging.FileHandler(self.outputs_path)
         fh.setLevel(logging.CRITICAL)
         self.outputs_logger.addHandler(fh)
+
+        self.start_time = None
 
     def on_epoch_begin(self, epoch_counter):
         self.epoch_counter = epoch_counter
@@ -62,11 +65,13 @@ class CustomLogger(object):
                                  format(folder, filename))
 
     def on_train_begin(self):
-        pass
+        self.start_time = time.time()
 
     def on_train_end(self, best_score):
+        end_time = time.time()
         self.logger.info("\nTraining complete!!!")
         self.logger.info("\nBest model has a score of {:.4}".format(best_score))
+        print("program took {}".format(end_time - self.start_time))
 
     def log_captions_and_predictions(self, captions, predictions):
 

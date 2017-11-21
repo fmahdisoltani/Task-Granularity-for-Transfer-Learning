@@ -11,23 +11,21 @@ pretrained:
   pretrained_file:
 
 device:
-  synchronize_gpu: True
   gpus:
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 2, num_workers: 0, pin_memory: False}
 
 model:
   type: EncoderDecoder
   encoder: CNN3dLSTMEncoder
   encoder_args:
   encoder_kwargs: {encoder_output_size: &enc_out_size 25}
-  decoder: LSTMDecoder
+  decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 25,
                    hidden_size: *enc_out_size,
                    num_lstm_layers: 1}
-
 
 loss:
   type: SequenceCrossEntropy
@@ -56,8 +54,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: METEOR
+  higher_is_better: True
 
 targets:
   caption_type: template

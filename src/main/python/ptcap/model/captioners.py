@@ -29,12 +29,9 @@ class RtorchnCaptioner(Captioner):
 
 class EncoderDecoder(Captioner):
     def __init__(self, encoder, decoder, encoder_args=None, encoder_kwargs=None,
-                 decoder_args=None, decoder_kwargs=None, gpus=None):
+                 decoder_args=None, decoder_kwargs=None):
 
-        print("gpus: {}".format(gpus))
         super(EncoderDecoder, self).__init__()
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
         encoder_args = encoder_args or ()
         encoder_kwargs = encoder_kwargs or {}
         decoder_args = decoder_args or ()
@@ -58,16 +55,16 @@ class EncoderDecoder(Captioner):
                                 **self.decoder.activations)
 
 
-# class CNN3dLSTM(EncoderDecoder):
-#     def __init__(self, encoder_output_size=256, embedding_size=31,
-#                  vocab_size=33, num_hidden_lstm=71, go_token=0, gpus=None):
-# 
-#         decoder_args = (embedding_size, encoder_output_size,
-#                         vocab_size, num_hidden_lstm, go_token, gpus)
-# 
-#         encoder_args = (encoder_output_size, gpus)
-# 
-#         super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
-#                                         encoder_args=encoder_args,
-#                                         decoder_args=decoder_args,
-#                                         gpus=gpus)
+
+class CNN3dLSTM(EncoderDecoder):
+    def __init__(self, encoder_output_size=128, embedding_size=31,
+                 vocab_size=33, num_hidden_lstm=71, go_token=0):
+
+        decoder_args = (embedding_size, encoder_output_size,
+                        vocab_size, num_hidden_lstm, go_token)
+
+        encoder_args = (encoder_output_size)
+
+        super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
+                                        encoder_args=encoder_args,
+                                        decoder_args=decoder_args)

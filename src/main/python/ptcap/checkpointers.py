@@ -17,11 +17,10 @@ class Checkpointer(object):
 
     def set_best_score(self, score=None, epoch=-1):
         if score is not None:
-            better_higher_score = (score > self.best_score and
-                                   self.higher_is_better)
-            better_lower_score = (score < self.best_score and not
-                                   self.higher_is_better)
-            if better_higher_score or better_lower_score:
+            update = score > self.best_score if self.higher_is_better \
+                else score < self.best_score
+
+            if update:
                 self.best_score = score
                 self.best_epoch = epoch
                 return True
@@ -39,7 +38,8 @@ class Checkpointer(object):
             init_epoch = checkpoint["epoch"]
             model.load_state_dict(checkpoint["model"])
             self.set_best_score(checkpoint["score"])
-            #optimizer.load_state_dict(checkpoint["optimizer"])
+            # TODO: fix below
+            # optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
         else:

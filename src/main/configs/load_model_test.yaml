@@ -11,18 +11,17 @@ pretrained:
   pretrained_file: model.best
 
 device:
-  synchronize_gpu: True
   gpus:
 
 dataloaders:
-  kwargs: {batch_size: 2, num_workers: 16, pin_memory: False}
+  kwargs: {batch_size: 2, num_workers: 0, pin_memory: False}
 
 model:
   type: EncoderDecoder
   encoder: CNN3dLSTMEncoder
   encoder_args:
   encoder_kwargs: {encoder_output_size: &enc_out_size 25}
-  decoder: LSTMDecoder
+  decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 25,
                    hidden_size: *enc_out_size,
@@ -42,7 +41,8 @@ scheduler:
            min_lr: 1.0e-8,
            optimizer: *optimizer,
            patience: 3,
-           threshold: 1.0e-4}
+           threshold: 1.0e-4,
+           verbose: True}
 
 training:
   num_epochs: 2
@@ -56,8 +56,8 @@ validation:
   verbose: True
 
 criteria:
-  score: loss
-  higher_is_better: False
+  score: METEOR
+  higher_is_better: True
 
 targets:
   caption_type: template

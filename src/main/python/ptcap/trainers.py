@@ -1,12 +1,17 @@
-import torch
-
 from collections import namedtuple
-from collections import OrderedDict
 
+import numpy as np
+import torch
+import torch.nn as nn
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, caption_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
+                          caption_accuracy, first_token_accuracy, fscore,
+                          gmeasure, loss_to_numpy, token_accuracy)
 from ptcap.utils import DataParallelWrapper
 
 
@@ -15,11 +20,17 @@ class Trainer(object):
                  writer, checkpointer, folder=None, filename=None,
                  gpus=None, clip_grad=None):
 
-        self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
 
-        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
+        self.model = model if self.gpus is None else (
+            DataParallelWrapper(model, device_ids=self.gpus).cuda(
+                self.gpus[0]))
+        self.loss_function = loss_function if self.gpus is None else (
+            loss_function.cuda(self.gpus[0]))
+
+        init_state = self.checkpointer.load_model(self.model,
+                                                  scheduler.optimizer,
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
@@ -30,21 +41,28 @@ class Trainer(object):
             loss_function.cuda(gpus[0])
         )
 
+
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
 
-        self.tensorboard_frequency = 1
-        self.logger = logger
-        self.logger.on_train_init(folder, filename)
 
+        self.logger = logger
+
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+            self.tokenizer)
+
+        self.logger.on_train_init(folder, filename)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
               verbose_valid=False):
+
+        self.logger.on_train_begin()
 
         epoch = 0
         stop_training = False
@@ -84,7 +102,7 @@ class Trainer(object):
                                              filename="train_loss")
 
             epoch += 1
-            stop_training = self.update_stop_training(epoch, max_num_epochs)
+            stop_training = self.update_stopping_criteria(epoch, max_num_epochs)
 
         self.logger.on_train_end(self.scheduler.best)
 
@@ -96,11 +114,14 @@ class Trainer(object):
             "score": self.score,
         }
 
-    def update_stop_training(self, epoch, num_epoch):
+    def update_stopping_criteria(self, epoch, num_epoch):
         current_lr = max([param_group['lr'] for param_group in
                           self.scheduler.optimizer.param_groups])
+        self.writer.add_scalars({"learning rate": np.log10(current_lr)},
+                                global_step=epoch, is_training=True)
         # Assuming all parameters have the same minimum learning rate
         min_lr = max([lr for lr in self.scheduler.min_lrs])
+        eps = 0.01 * min_lr
 
         # Check if the maximum number of epochs has been reached
         if num_epoch is not None and epoch >= num_epoch:
@@ -108,22 +129,32 @@ class Trainer(object):
                                     (epoch, num_epoch))
             return True
 
-        elif current_lr <= min_lr:
+        elif current_lr <= (min_lr + eps):
             self.logger.log_message("Learning rate is equal to the minimum "
                                     "learning rate ({:.4})", (min_lr,))
             return True
 
         return False
 
-    def get_function_dict(self):
+    def get_scoring_functions(self):
 
-        function_dict = OrderedDict()
-        function_dict["loss"] = loss_to_numpy
-        function_dict["accuracy"] = token_accuracy
-        function_dict["first_accuracy"] = first_token_accuracy
-        function_dict["caption_accuracy"] = caption_accuracy
+        scoring_functions = []
 
-        return function_dict
+        scoring_functions.append(loss_to_numpy)
+        scoring_functions.append(token_accuracy)
+        scoring_functions.append(first_token_accuracy)
+        scoring_functions.append(caption_accuracy)
+        scoring_functions.append(self.multiscore_adapter)
+        scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
+
+        return scoring_functions
+
+    def get_input_captions(self, captions, use_teacher_forcing):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if use_teacher_forcing:
+            input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
+        return input_captions
 
     def get_input_captions(self, captions, use_teacher_forcing):
         batch_size = captions.size(0)
@@ -134,17 +165,24 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
-        self.logger.on_epoch_begin(epoch)
+
+        # Log at the beginning of epoch
+        self.logger.on_epoch_begin(epoch + 1)
 
         if is_training:
             self.model.train()
         else:
             self.model.eval()
-        
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions")
-        scores = ScoresOperator(self.get_function_dict())
 
-        for sample_counter, (videos, _, captions) in enumerate(dataloader):
+
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
+                                             "predictions")
+
+        scores = ScoresOperator(self.get_scoring_functions())
+
+        for sample_counter, (videos, string_captions,
+                             captions) in enumerate(dataloader):
+
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
@@ -152,9 +190,10 @@ class Trainer(object):
             videos, captions, input_captions = (Variable(videos),
                                                 Variable(captions),
                                                 Variable(input_captions))
-            if self.use_cuda:
+
+            if self.gpus:
                 videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
+                captions = captions.cuda(self.gpus[0], async=True)
                 input_captions = input_captions.cuda(self.gpus[0])
 
             probs = self.model((videos, input_captions), use_teacher_forcing)
@@ -182,7 +221,8 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions)
+            batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
@@ -202,3 +242,12 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+
+class DataParallelWrapper(nn.DataParallel):
+    def __init__(self, model, device_ids):
+        super().__init__(model, device_ids=device_ids)
+
+    @property
+    def activations(self):
+        return self.module.activations
