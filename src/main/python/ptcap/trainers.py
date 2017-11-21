@@ -156,6 +156,11 @@ class Trainer(object):
   
         # Log at the beginning of epoch
         self.logger.on_epoch_begin(epoch + 1)
+
+        if is_training:
+            self.model.train()
+        else:
+            self.model.eval()
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
@@ -173,7 +178,9 @@ class Trainer(object):
                                                 Variable(captions),
                                                 Variable(input_captions))
             if self.gpus:
+                videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0], async=True)
+                input_captions = input_captions.cuda(self.gpus[0])
 
             probs = self.model((videos, input_captions), use_teacher_forcing)
             loss = self.loss_function(probs, captions)
