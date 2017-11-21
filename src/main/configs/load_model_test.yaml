@@ -68,3 +68,12 @@ tokenizer:
 logging:
   verbose: True
   tensorboard_frequency: 1
+
+dataset:
+  training_set:
+    type: NumpyVideoDataset
+    kwargs: {}
+
+  validation_set:
+    type: NumpyVideoDataset
+    kwargs: {}
