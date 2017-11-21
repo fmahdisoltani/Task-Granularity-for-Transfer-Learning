@@ -15,7 +15,7 @@ from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.data.dataset import (JpegVideoDataset, NumpyVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
@@ -65,13 +65,16 @@ def train_model(config_obj, relative_path=""):
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
+    videos_folder = config_obj.get("paths", "videos_folder")
 
     seed_code(1, gpus)
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 config_obj.get("paths", "videos_folder")),
-                                 caption_type=caption_type)
+                                 videos_folder), caption_type=caption_type)
+
+    validation_parser = JsonParser(validation_path, os.path.join(relative_path,
+                                   videos_folder), caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    config_obj.get("paths", "videos_folder")),
                                    caption_type=caption_type)
@@ -80,26 +83,33 @@ def train_model(config_obj, relative_path=""):
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
         tokenizer.load_dictionaries(pretrained_folder)
+        print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        tokenizer.build_dictionaries(training_parser.get_captions())
+        # tokenizer.build_dictionaries(training_parser.get_captions())
+        tokenizer.build_dictionaries(
+            training_parser.get_captions_from_tmp_and_lbl())
 
-    preprocessor = Compose([prep.RandomCrop([24, 96, 96]),
-                            prep.PadVideo([24, 96, 96]),
-                            prep.Float32Converter(),
+    preprocessor = Compose([prep.RandomCrop([48, 96, 96]),
+                            prep.PadVideo([48, 96, 96]),
+                            prep.Float32Converter(64.),
                             prep.PytorchTransposer()])
 
-    val_preprocessor = Compose([CenterCropper([24, 96, 96]),
-                                prep.PadVideo([24, 96, 96]),
-                                prep.Float32Converter(),
+    val_preprocessor = Compose([CenterCropper([48, 96, 96]),
+                                prep.PadVideo([48, 96, 96]),
+                                prep.Float32Converter(64.),
                                 prep.PytorchTransposer()])
 
-    training_set = NumpyVideoDataset(annotation_parser=training_parser,
-                                     tokenizer=tokenizer,
-                                     preprocess=preprocessor)
+    training_set = GulpVideoDataset(annotation_parser=training_parser,
+                                    tokenizer=tokenizer,
+                                    preprocess=preprocessor,
+                                    gulp_dir=videos_folder, )
+                                    # size=[128, 128])
 
-    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-                                       tokenizer=tokenizer,
-                                       preprocess=val_preprocessor)
+    validation_set = GulpVideoDataset(annotation_parser=validation_parser,
+                                      tokenizer=tokenizer,
+                                      preprocess=val_preprocessor,
+                                      gulp_dir=videos_folder, )
+                                      # size=[128, 128])
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
