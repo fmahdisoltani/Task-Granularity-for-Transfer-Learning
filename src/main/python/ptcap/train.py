@@ -15,7 +15,7 @@ from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser
-from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset, NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
@@ -102,35 +102,35 @@ def train_model(config_obj, relative_path=""):
                                 prep.Float32Converter(64.),
                                 prep.PytorchTransposer()])
 
-    training_set_kwargs = config_obj.get("dataset", "training_set", "kwargs")
-    training_set_kwargs["annotation_parser"] = training_parser
-    training_set_kwargs["tokenizer"] = tokenizer
-    training_set_kwargs["preprocess"] = preprocessor
-    training_set = getattr(ptcap.data.dataset,
-                           config_obj.get("dataset",  "training_set", "type"))(
-        **training_set_kwargs)
-
-    validation_set_kwargs = config_obj.get("dataset", "validation_set", "kwargs")
-    validation_set_kwargs["annotation_parser"] = validation_parser
-    validation_set_kwargs["tokenizer"] = tokenizer
-    validation_set_kwargs["preprocess"] = val_preprocessor
-
-    validation_set = getattr(ptcap.data.dataset,
-                           config_obj.get("dataset",  "validation_set", "type"))(
-        **validation_set_kwargs)
-
-
-    # training_set = GulpVideoDataset(annotation_parser=training_parser,
-    #                                 tokenizer=tokenizer,
-    #                                 preprocess=preprocessor,
-    #                                 gulp_dir=videos_folder, )
-    #                                 # size=[128, 128])
+    # training_set_kwargs = config_obj.get("dataset", "training_set", "kwargs")
+    # training_set_kwargs["annotation_parser"] = training_parser
+    # training_set_kwargs["tokenizer"] = tokenizer
+    # training_set_kwargs["preprocess"] = preprocessor
+    # training_set = getattr(ptcap.data.dataset,
+    #                        config_obj.get("dataset",  "training_set", "type"))(
+    #     **training_set_kwargs)
     #
-    # validation_set = GulpVideoDataset(annotation_parser=validation_parser,
-    #                                   tokenizer=tokenizer,
-    #                                   preprocess=val_preprocessor,
-    #                                   gulp_dir=videos_folder, )
-    #                                   # size=[128, 128])
+    # validation_set_kwargs = config_obj.get("dataset", "validation_set", "kwargs")
+    # validation_set_kwargs["annotation_parser"] = validation_parser
+    # validation_set_kwargs["tokenizer"] = tokenizer
+    # validation_set_kwargs["preprocess"] = val_preprocessor
+    #
+    # validation_set = getattr(ptcap.data.dataset,
+    #                        config_obj.get("dataset",  "validation_set", "type"))(
+    #     **validation_set_kwargs)
+
+
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+                                    tokenizer=tokenizer,
+                                    preprocess=preprocessor,
+                                    gulp_dir=videos_folder, )
+                                    # size=[128, 128])
+
+    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+                                      tokenizer=tokenizer,
+                                      preprocess=val_preprocessor,
+                                      gulp_dir=videos_folder, )
+                                      # size=[128, 128])
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
