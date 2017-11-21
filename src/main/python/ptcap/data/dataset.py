@@ -12,7 +12,7 @@ class VideoDataset(Dataset):
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
-        self.video_ids = [id for id in annotation_parser.get_video_ids()]
+        self.video_ids = annotation_parser.get_video_ids()
         self.captions = annotation_parser.get_captions()
         self.preprocess = preprocess
 
@@ -71,9 +71,6 @@ class NumpyVideoDataset(VideoDataset):
     Load video saved in a NPZ file.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(NumpyVideoDataset, self).__init__(*args, **kwargs)
-
     def _get_video(self, index):
         dirname = self.video_paths[index]
         path = glob.glob(dirname + "/*.npz")[0]
@@ -82,14 +79,17 @@ class NumpyVideoDataset(VideoDataset):
 
 
 class GulpVideoDataset(VideoDataset):
-    def __init__(self, gulp_dir, size=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,  annotation_parser, tokenizer, gulp_dir, preprocess=None,
+                 size=None):
+        super().__init__(annotation_parser, tokenizer, preprocess=preprocess)
 
         # instantiate the GulpDirectory
         self.gulp_dir = GulpDirectory(gulp_dir)
         self.size = tuple(size) if size else None
 
     def _get_video(self, index):
+        print ("*"*100)
+        print(self.video_ids[index])
         frames, _ = self.gulp_dir[self.video_ids[index]]
         if self.size:
             frames = [cv2.resize(f, self.size) for f in frames]
