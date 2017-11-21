@@ -112,6 +112,7 @@ class LSTMDecoder(Decoder):
 
             output_probs.append(probs)
             # Greedy decoding
+
             _, preds = torch.max(probs, dim=2)
 
             lstm_input = preds
