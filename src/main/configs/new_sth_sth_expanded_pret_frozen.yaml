@@ -1,13 +1,15 @@
 paths:
   videos_folder: &vidpath /data-ssd/videos_gulp/
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/subset_sth_fc_unfrozen/
 
-  train_annot:  /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_train_20170929.json.gz
-  validation_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_validation_20170929.json.gz
-  test_annot: /home/farzaneh/PycharmProjects/pytorch-captioning/src/main/python/scripts/subset_test_20170929.json.gz
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff_cont/
+
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
-  pretrained_folder:
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ckp_new_sth_exp_unfrozen_gulp_cutoff/
+
   pretrained_file: model.latest
 
 device:
@@ -15,19 +17,14 @@ device:
   gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 10, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder2: FCEncoder
+  encoder: FCEncoder
   encoder_args:
-  encoder_kwargs2: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/fully_conv_net_on_smtsmt_20170627/model.checkpoint,
                    freeze: False}
-
-  encoder: CNN3dLSTMEncoder
-  encoder_kwargs: {encoder_output_size: 256, gpus: *gpus}
-
-
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -56,7 +53,7 @@ training:
   verbose: False
 
 validation:
-  frequency: 100
+  frequency: 1
   teacher_force: False
   verbose: True
 
@@ -65,10 +62,10 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: template
+  caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 2}
+  kwargs: {user_maxlen: 13, cutoff: 1}
 
 logging:
   verbose: True

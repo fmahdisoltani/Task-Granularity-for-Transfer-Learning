@@ -1,11 +1,11 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-jester/videos_gulp/
+  videos_folder: &vidpath /data-ssd/videos_gulp/
 
-  checkpoint_folder: /home/fmahdisoltani/pytorch-captioning/results/gestures/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/jester1024_cutoff_10_unfrozen_lbl/
 
-  train_annot: &train_annot /data/20bn-jester/json/train_20171031.json.gz
-  validation_annot: /data/20bn-jester/json/validation_20171031.json.gz
-  test_annot: /data/20bn-jester/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20170929.json.gz
+  validation_annot: /data/20bn-somethingsomething/json/validation_20170929.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20170929.json.gz
 
 pretrained:
   pretrained_folder:
@@ -13,16 +13,17 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0, 1, 2, 3]
+  gpus: &gpus [0]
 
 dataloaders:
-  kwargs: {batch_size: 32, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
-  encoder: CNN3dLSTMEncoder
+  encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024}
+  encoder_kwargs: {pretrained_path: ,
+                   freeze: False}
   decoder: LSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -34,7 +35,7 @@ loss:
 
 optimizer:
   type: &optimizer Adam
-  kwargs: {lr: 0.0001}
+  kwargs: {lr: 0.001}
 
 scheduler:
   type: ReduceLROnPlateau
@@ -56,15 +57,16 @@ validation:
   verbose: True
 
 criteria:
-  score: caption_accuracy
+  score: accuracy
   higher_is_better: True
 
 targets:
   caption_type: label
 
 tokenizer:
-  kwargs: {user_maxlen: 13, cutoff: 10}
+  kwargs: {user_maxlen: 13, cutoff: 300}
 
 logging:
   verbose: True
   tensorboard_frequency: 1000
+
