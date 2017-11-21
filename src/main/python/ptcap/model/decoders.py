@@ -122,6 +122,7 @@ class LSTMDecoder(DecoderBase):
         """
 
         c0 = self.mapping(features).unsqueeze(0)
+
         h0 = self.mapping(features).unsqueeze(0)
         return h0, c0
 
