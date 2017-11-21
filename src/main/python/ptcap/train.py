@@ -117,7 +117,7 @@ def train_model(config_obj, relative_path=""):
 
     validation_set = getattr(ptcap.data.dataset,
                            config_obj.get("dataset",  "validation_set", "type"))(
-        **training_set_kwargs)
+        **validation_set_kwargs)
 
 
     # training_set = GulpVideoDataset(annotation_parser=training_parser,
