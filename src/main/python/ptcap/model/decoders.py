@@ -35,10 +35,14 @@ class DecoderBase(nn.Module):
         Hidden states of the LSTM are initialized with features.
         c0 and h0 should have the shape of 1 * batch_size * hidden_size
         """
+        # c0 = self.mapping(features).features.unsqueeze(0).expand(2, 4,1024)
 
-        c0 = features.unsqueeze(0)
-        h0 = features.unsqueeze(0)
-        return h0, c0
+        augmented_features = features.unsqueeze(0)
+        expansion_size = features.size()
+        c0 = h0 = augmented_features.expand(self.num_lstm_layers,
+                                            *expansion_size)
+
+        return h0.contiguous(), c0.contiguous()
 
     def forward(self, features, captions, use_teacher_forcing=False):
         """
