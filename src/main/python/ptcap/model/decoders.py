@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 from torch import nn
 
@@ -26,6 +27,8 @@ class DecoderBase(nn.Module):
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
+
+        # self.mapping = nn.Linear(1024, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
 
         self.activations = self.register_forward_hooks()
@@ -108,10 +111,16 @@ class LSTMDecoder(DecoderBase):
         self.lstm = nn.LSTM(self.embedding_size, self.hidden_size,
                             self.num_lstm_layers, batch_first=True)
 
+        self.activations = self.register_forward_hooks()
+
+
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
+
+        self.lstm.flatten_parameters()
+
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
@@ -133,10 +142,19 @@ class CoupledLSTMDecoder(DecoderBase):
                             batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
+        print("*" * 100)
+        print(len(features))
+        print(features.size())
+        self.mapping = nn.Linear(features.size()[1], self.hidden_size)
+        print(self.mapping)
+        print(features.size())
+        print("R"*100)
+        relued_features = F.relu(self.mapping(features))
+        pooled_features = relued_features.mean(dim=1)
         if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(features)
+            lstm_hidden = self.init_hidden(pooled_features)
         embedded_captions = self.embedding(captions)
-        lstm_input = self.prepare_lstm_input(embedded_captions, features)
+        lstm_input = self.prepare_lstm_input(embedded_captions, pooled_features)
 
         self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
