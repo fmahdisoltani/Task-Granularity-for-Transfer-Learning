@@ -1,9 +1,8 @@
 import torch
 from .encoders import Encoder
-from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
-from rtorchn.core.networks import BiJesterNetII
+from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet, 
+                                   BiJesterNetII, InflatedResNet18)
 from .encoders import Encoder
-
 
 class PretrainedEncoder(Encoder):
     def __init__(self, encoder, encoder_args, pretrained_path=None,
@@ -81,6 +80,20 @@ class BIJesterEncoder(PretrainedEncoder):
         num_classes = 178
         encoder_args = (num_classes, encoder_output_size)
         super(BIJesterEncoder, self).__init__(encoder=BiJesterNetII,
+                                              encoder_args=encoder_args,
+                                              pretrained_path=pretrained_path,
+                                              freeze=freeze)
+
+    def forward(self, video_batch):
+        features = self.encoder.extract_features(video_batch)
+        return features.mean(dim=1)
+      
+      
+class Resnet18Encoder(PretrainedEncoder):
+    def __init__(self, pretrained_path=None, freeze=False, ):
+        num_classes = 1363
+        encoder_args = (num_classes,)
+        super(Resnet18Encoder, self).__init__(encoder=InflatedResNet18,
                                               encoder_args=encoder_args,
                                               pretrained_path=pretrained_path,
                                               freeze=freeze)
