@@ -16,28 +16,28 @@ class TestDimensions(unittest.TestCase):
         self.batch_size = 2
         self.vocab_size = 5
         self.caption_len = 4
-        self.num_features = 7
+        self.encoder_output_size = 7
         self.arguments = {
-            "FullyConnectedEncoder": (((3, 10, 96, 96), self.num_features), {}),
-            "CNN3dEncoder": ((self.num_features,), {}),
-            "CNN3dLSTMEncoder": ((self.num_features,), {}),
-            "PretrainedEncoder": ((encoders.CNN3dLSTMEncoder, (self.num_features,),
+            "FullyConnectedEncoder": (((3, 10, 96, 96), self.encoder_output_size), {}),
+            "CNN3dEncoder": ((self.encoder_output_size,), {}),
+            "CNN3dLSTMEncoder": ((self.encoder_output_size,), {}),
+            "PretrainedEncoder": ((encoders.CNN3dLSTMEncoder, (self.encoder_output_size,),
                                    ), {}),
 
             "FullyConnectedMapper": ((4, 10), {}),
-            "DecoderBase": ((17, self.num_features, 1, self.vocab_size,
+            "DecoderBase": ((17, self.encoder_output_size, 1, self.vocab_size,
                              self.caption_len), {}),
-            "LSTMDecoder": ((17, self.num_features, 1, self.vocab_size,
+            "LSTMDecoder": ((17, self.encoder_output_size, 1, self.vocab_size,
                              self.caption_len), {}),
-            "CoupledLSTMDecoder": ((17, self.num_features, 1, self.vocab_size,
-                             self.caption_len), {}),
+            "CoupledLSTMDecoder": ((17, self.encoder_output_size, 1, self.vocab_size,
+                                    self.caption_len), {}),
 
             "RtorchnCaptioner": ((self.vocab_size,), {}),
             "EncoderDecoder": (
                 (encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder),
-                {"encoder_kwargs": {"encoder_output_size":  self.num_features},
+                {"encoder_kwargs": {"encoder_output_size":  self.encoder_output_size},
                  "decoder_kwargs": {"embedding_size": 17,
-                                    "encoder_output_size":self.num_features,
+                                    "encoder_output_size":self.encoder_output_size,
                                     "hidden_size": 11,
                                     "vocab_size": self.vocab_size,
                                     "num_lstm_layers": 1,
@@ -61,7 +61,7 @@ class TestDimensions(unittest.TestCase):
                 print(encoder_class)
                 print(encoded.size())
                 self.assertEqual(encoded.size()[0], self.batch_size)
-                self.assertEqual(encoded.size()[2], self.num_features)
+                self.assertEqual(encoded.size()[2], self.encoder_output_size)
                 self.assertEqual(len(encoded.size()), 3)
 
     def test_mappers(self):
@@ -82,7 +82,7 @@ class TestDimensions(unittest.TestCase):
     def test_decoders(self):
         decoder_classes = decoders.Decoder.__subclasses__()
         init_state_batch = Variable(
-            torch.zeros(self.batch_size, self.num_features))
+            torch.zeros(self.batch_size, self.encoder_output_size))
         teacher_batch = Variable(
             torch.zeros(self.batch_size, self.caption_len).long())
         for decoder_class in decoder_classes:

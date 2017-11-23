@@ -24,8 +24,9 @@ class Encoder(nn.Module):
 #         return self.linear(video_batch.view(batch_size, -1))
 
 
+
 class CNN3dEncoder(Encoder):
-    def __init__(self, num_features=128):
+    def __init__(self, encoder_output_size=128):
         super(CNN3dEncoder, self).__init__()
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
@@ -45,7 +46,7 @@ class CNN3dEncoder(Encoder):
                                 stride=1, padding=(1, 0, 0))
         self.conv5 = CNN3dLayer(128, 128, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
-        self.conv6 = CNN3dLayer(128, num_features, (3, 3, 3), nn.ReLU(),
+        self.conv6 = CNN3dLayer(128, encoder_output_size, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
@@ -67,7 +68,7 @@ class CNN3dEncoder(Encoder):
         h = self.conv5(h)
         h = self.conv6(h)
 
-        h = self.pool4(h)  # batch_size * num_features * num_step * w * h
+        h = self.pool4(h)  # batch_size * encoder_output_size * num_step * w * h
 
         # h = h.mean(2)
         print("%"*100)
@@ -110,13 +111,13 @@ class CNN3dEncoder(Encoder):
 class CNN3dLSTMEncoder(Encoder):
     def __init__(self, encoder_output_size=128):
         """
-        num_features: defines the output size of the encoder
+        encoder_output_size: defines the output size of the encoder
         """
 
         super(CNN3dLSTMEncoder, self).__init__()
 
         self.num_layers = 1
-        self.num_features = encoder_output_size
+        self.encoder_output_size = encoder_output_size
 
         self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
@@ -140,7 +141,8 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
-        self.lstm = nn.LSTM(input_size=128, hidden_size=self.num_features,
+        self.lstm = nn.LSTM(input_size=128,
+                            hidden_size=self.encoder_output_size,
                             num_layers=self.num_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
@@ -163,7 +165,7 @@ class CNN3dLSTMEncoder(Encoder):
         h = self.pool4(h)
 
         h = h.view(h.size()[0:3])
-        h = h.permute(0, 2, 1)  # batch_size * num_step * num_features
+        h = h.permute(0, 2, 1)  # batch_size * num_step * encoder_output_size
 
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)
