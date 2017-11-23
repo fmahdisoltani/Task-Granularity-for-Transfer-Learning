@@ -88,8 +88,8 @@ class GulpVideoDataset(VideoDataset):
         self.size = tuple(size) if size else None
 
     def _get_video(self, index):
-        print ("*"*100)
-        print(self.video_ids[index])
+        # print ("*"*100)
+        # print(self.video_ids[index])
         frames, _ = self.gulp_dir[self.video_ids[index]]
         if self.size:
             frames = [cv2.resize(f, self.size) for f in frames]
