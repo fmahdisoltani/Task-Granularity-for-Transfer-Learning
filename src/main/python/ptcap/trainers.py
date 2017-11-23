@@ -70,6 +70,34 @@ class Trainer(object):
                 )
 
                 # remember best loss and save checkpoint
+                self.score = valid_average_scores["average_" + criteria]
+
+                self.scheduler.step(self.score)
+
+                state_dict = self.get_trainer_state()
+
+                self.checkpointer.save_best(state_dict)
+                self.checkpointer.save_value_csv([epoch, self.score],
+                                                 filename="valid_loss")
+
+
+            self.num_epochs += 1
+            train_average_scores = self.run_epoch(train_dataloader,
+                                                  epoch, is_training=True,
+                           use_teacher_forcing=teacher_force_train,
+                           verbose=verbose_train)
+
+            train_avg_loss = train_average_scores["average_loss"]
+
+            # we need a first round of evaluation without any training
+            if epoch % frequency_valid == 0:
+                valid_average_scores = self.run_epoch(
+                    valid_dataloader, epoch, is_training=False,
+                    use_teacher_forcing=teacher_force_valid,
+                    verbose=verbose_valid
+                )
+
+                # remember best loss and save checkpoint
                 self.score = valid_average_scores["avg_" + criteria]
 
                 self.scheduler.step(self.score)

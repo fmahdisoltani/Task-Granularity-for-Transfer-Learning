@@ -53,7 +53,7 @@ training:
 validation:
   frequency: 1
   teacher_force: True
-  verbose: True
+   verbose: True
 
 criteria:
   score: accuracy
@@ -68,4 +68,3 @@ tokenizer:
 logging:
   verbose: True
   tensorboard_frequency: 1000
-
