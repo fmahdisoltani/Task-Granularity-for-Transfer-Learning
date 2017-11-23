@@ -14,6 +14,7 @@ class VideoDataset(Dataset):
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = annotation_parser.get_video_ids()
         self.captions = annotation_parser.get_captions()
+        self.labels = annotation_parser.get_labels()
         self.preprocess = preprocess
 
     def __len__(self):
