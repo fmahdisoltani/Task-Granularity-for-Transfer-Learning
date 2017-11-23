@@ -15,7 +15,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step):
+                 num_lstm_layers, vocab_size, num_step,encoder_output_size=25):
 
         super().__init__()
 
@@ -23,12 +23,13 @@ class DecoderBase(nn.Module):
         self.hidden_size = hidden_size
         self.num_lstm_layers = num_lstm_layers
         self.num_step = num_step
+        self.encoder_output_size = encoder_output_size
 
         # Embed each token in vocab to a 128 dimensional vector
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
 
-        # self.mapping = nn.Linear(1024, hidden_size)
+        self.mapping = nn.Linear(self.encoder_output_size, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
 
         self.activations = self.register_forward_hooks()
@@ -61,12 +62,20 @@ class DecoderBase(nn.Module):
             sequence.
         """
 
+        # self.mapping = nn.Linear(features.size()[1], self.hidden_size)
+        print(self.mapping)
+        print(features.size())
+        print("R" * 100)
+        relued_features = F.relu(self.mapping(features))
+        pooled_features = relued_features.mean(dim=1)
+
+
         if use_teacher_forcing:
-            probs, _ = self.apply_lstm(features, captions)
+            probs, _ = self.apply_lstm(pooled_features, captions)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, captions, self.num_step)
+            probs = self.predict(pooled_features, captions, self.num_step)
 
         return probs
 
@@ -145,16 +154,11 @@ class CoupledLSTMDecoder(DecoderBase):
         print("*" * 100)
         print(len(features))
         print(features.size())
-        self.mapping = nn.Linear(features.size()[1], self.hidden_size)
-        print(self.mapping)
-        print(features.size())
-        print("R"*100)
-        relued_features = F.relu(self.mapping(features))
-        pooled_features = relued_features.mean(dim=1)
+        #
         if lstm_hidden is None:
-            lstm_hidden = self.init_hidden(pooled_features)
+            lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
-        lstm_input = self.prepare_lstm_input(embedded_captions, pooled_features)
+        lstm_input = self.prepare_lstm_input(embedded_captions, features)
 
         self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
