@@ -34,20 +34,12 @@ class Trainer(object):
                                                   folder, filename)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model if self.gpus is None else(
-            DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
-        )
-        self.loss_function = loss_function if self.gpus is None else(
-            loss_function.cuda(gpus[0])
-        )
-
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
         self.scheduler = scheduler
         self.score = self.scheduler.best
         self.writer = writer
-
 
         self.logger = logger
 
@@ -153,13 +145,6 @@ class Trainer(object):
         batch_size = captions.size(0)
         input_captions = torch.LongTensor(batch_size, 1).zero_()
         if use_teacher_forcing:
-            input_captions = torch.cat([input_captions, captions[:,:-1]], 1)
-        return input_captions
-
-    def get_input_captions(self, captions, use_teacher_forcing):
-        batch_size = captions.size(0)
-        input_captions = torch.LongTensor(batch_size, 1).zero_()
-        if use_teacher_forcing:
             input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
         return input_captions
 
@@ -173,7 +158,6 @@ class Trainer(object):
             self.model.train()
         else:
             self.model.eval()
-
 
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                              "predictions")
@@ -190,7 +174,6 @@ class Trainer(object):
             videos, captions, input_captions = (Variable(videos),
                                                 Variable(captions),
                                                 Variable(input_captions))
-
             if self.gpus:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0], async=True)
@@ -209,9 +192,9 @@ class Trainer(object):
                     torch.nn.utils.clip_grad_norm(self.model.parameters(),
                                                   self.clip_grad)
 
-                # self.writer.add_activations(self.model, global_step)
-                # self.writer.add_state_dict(self.model, global_step)
-                # self.writer.add_gradients(self.model, global_step)
+                self.writer.add_activations(self.model, global_step)
+                self.writer.add_state_dict(self.model, global_step)
+                self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
 
