@@ -137,6 +137,14 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.activations = self.register_forward_hooks()
 
+    def init_hidden(self, batch_size):
+        h0 = Variable(torch.zeros(1, batch_size, self.num_features))
+        c0 = Variable(torch.zeros(1, batch_size, self.num_features))
+        if self.use_cuda:
+            h0 = h0.cuda(self.gpus[0])
+            c0 = c0.cuda(self.gpus[0])
+        return (h0, c0)
+
     def forward(self, videos):
         # Video encoding
 
