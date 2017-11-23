@@ -24,7 +24,8 @@ model:
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 25,
-                   hidden_size: *enc_out_size,
+                   encoder_output_size: *enc_out_size,
+                   hidden_size: 13,
                    num_lstm_layers: 1}
 
 
