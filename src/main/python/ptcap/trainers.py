@@ -10,8 +10,9 @@ from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
 from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
-                          caption_accuracy, first_token_accuracy, fscore,
-                          gmeasure, loss_to_numpy, token_accuracy)
+                          caption_accuracy, classif_accuracy,
+                          first_token_accuracy, fscore, gmeasure, loss_to_numpy,
+                          token_accuracy)
 from ptcap.utils import DataParallelWrapper
 
 
