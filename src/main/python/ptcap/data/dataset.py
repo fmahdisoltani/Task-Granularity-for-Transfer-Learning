@@ -12,7 +12,7 @@ class VideoDataset(Dataset):
     def __init__(self, annotation_parser, tokenizer, preprocess=None):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
-        self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
+        self.video_ids = annotation_parser.get_video_ids()
         self.captions = annotation_parser.get_captions()
         self.preprocess = preprocess
 
@@ -79,8 +79,10 @@ class NumpyVideoDataset(VideoDataset):
 
 
 class GulpVideoDataset(VideoDataset):
-    def __init__(self, annotation_parser, tokenizer, gulp_dir, preprocess=None, size=None):
-        super().__init__( annotation_parser, tokenizer, preprocess=preprocess)
+
+    def __init__(self,  annotation_parser, tokenizer, gulp_dir, preprocess=None,
+                 size=None):
+        super().__init__(annotation_parser, tokenizer, preprocess=preprocess)
 
         # instantiate the GulpDirectory
         self.gulp_dir = GulpDirectory(gulp_dir)

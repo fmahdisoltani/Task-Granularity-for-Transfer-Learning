@@ -75,11 +75,11 @@ logging:
 dataset:
   training_set:
     type: GulpVideoDataset
-    kwargs: {gulp_dir: *vidpath }
+    kwargs: {gulp_dir: *vidpath, size: [128, 128]}
 
   validation_set:
     type: GulpVideoDataset
-    kwargs: {gulp_dir: *vidpath}
+    kwargs: {gulp_dir: *vidpath, size: [128, 128]}
 
 preprocess:
   crop_size: [24, 96, 96]

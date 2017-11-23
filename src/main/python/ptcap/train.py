@@ -72,7 +72,6 @@ def train_model(config_obj, relative_path=""):
     # Preprocess
     crop_size = config_obj.get("preprocess", "crop_size")
     scale = config_obj.get("preprocess", "scale")
-    input_size = config_obj.get("preprocess", "input_size")
 
     # Load Json annotation files
     training_parser = JsonParser(training_path, os.path.join(relative_path,
