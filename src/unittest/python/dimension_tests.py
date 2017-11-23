@@ -37,7 +37,8 @@ class TestDimensions(unittest.TestCase):
                 (encoders.CNN3dLSTMEncoder, decoders.LSTMDecoder),
                 {"encoder_kwargs": {"encoder_output_size":  self.num_features},
                  "decoder_kwargs": {"embedding_size": 17,
-                                    "hidden_size": self.num_features,
+                                    "encoder_output_size":self.num_features,
+                                    "hidden_size": 11,
                                     "vocab_size": self.vocab_size,
                                     "num_lstm_layers": 1,
                                     "num_step": self.caption_len}}),
@@ -56,9 +57,12 @@ class TestDimensions(unittest.TestCase):
                 encoder = encoder_class(*args, **kwargs)
                 encoded = encoder(video_batch)
 
+                print("&"*100)
+                print(encoder_class)
+                print(encoded.size())
                 self.assertEqual(encoded.size()[0], self.batch_size)
-                self.assertEqual(encoded.size()[1], self.num_features)
-                self.assertEqual(len(encoded.size()), 2)
+                self.assertEqual(encoded.size()[2], self.num_features)
+                self.assertEqual(len(encoded.size()), 3)
 
     def test_mappers(self):
         mapper_classes = mappers.Mapper.__subclasses__()
