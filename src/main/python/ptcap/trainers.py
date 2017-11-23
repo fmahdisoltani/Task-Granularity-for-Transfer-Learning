@@ -22,11 +22,8 @@ class Trainer(object):
 
         #model = DataParallelWrapper(model, device_ids=gpus).cuda(gpus[0])
 
-        init_state = self.checkpointer.load_model(model, scheduler.optimizer,
-                                                  folder, filename)
 
-        self.num_epochs, self.model, scheduler.optimizer = init_state
-        self.model = self.model if self.gpus is None else(
+        self.model = model if self.gpus is None else(
             DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
         )
         self.loss_function = loss_function if self.gpus is None else(
@@ -34,6 +31,11 @@ class Trainer(object):
         )
         self.classif_loss_function = classif_loss_function if self.gpus is None\
             else(classif_loss_function.cuda(gpus[0]))
+
+        init_state = self.checkpointer.load_model(self.model, scheduler.optimizer,
+                                                  folder, filename)
+
+        self.num_epochs, self.model, scheduler.optimizer = init_state
 
         self.clip_grad = clip_grad
         self.tokenizer = tokenizer
