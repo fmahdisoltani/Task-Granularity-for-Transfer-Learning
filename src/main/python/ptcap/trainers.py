@@ -19,7 +19,7 @@ from ptcap.utils import DataParallelWrapper
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
-                 gpus=None, clip_grad=None, classif_loss_function=None):
+                 gpus=None, clip_grad=None, classif_loss_function=None, do_classif=False):
 
         self.gpus = gpus
         self.checkpointer = checkpointer
@@ -32,6 +32,8 @@ class Trainer(object):
 
         self.classif_loss_function = classif_loss_function if self.gpus is None else (
             classif_loss_function.cuda(self.gpus[0]))
+
+        self.do_classif = do_classif
 
 
         init_state = self.checkpointer.load_model(self.model,
@@ -141,7 +143,8 @@ class Trainer(object):
         scoring_functions.append(token_accuracy)
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
-        scoring_functions.append(classif_accuracy)
+        if self.do_classif:
+            scoring_functions.append(classif_accuracy)
         scoring_functions.append(self.multiscore_adapter)
         scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
@@ -164,38 +167,60 @@ class Trainer(object):
             self.model.train()
         else:
             self.model.eval()
-      
+
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
+                                             "predictions")
+        if self.do_classif:
+            ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
                                "predictions classif_targets classif_probs")
 
         scores = ScoresOperator(self.get_scoring_functions())
 
-        for sample_counter, (videos, string_captions,
-                             captions, classif_targets) in enumerate(dataloader):
+        for sample_counter, item in enumerate(dataloader):
+
+            if self.do_classif:
+                (videos, string_captions,
+                 captions, classif_targets) = item
+                classif_targets = Variable(classif_targets)
+
+            else:
+                (videos, string_captions,
+                 captions) = item
 
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
 
-            videos, captions, input_captions, classif_targets = (Variable(videos),
+            videos, captions, input_captions = (Variable(videos),
                                                 Variable(captions),
-                                                Variable(input_captions),
-                                                Variable(classif_targets))
+                                                Variable(input_captions)
+                                               )
             if self.gpus:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0], async=True)
                 input_captions = input_captions.cuda(self.gpus[0])
-                classif_targets = classif_targets.cuda(self.gpus[0])
+                if self.do_classif:
+                    classif_targets = classif_targets.cuda(self.gpus[0])
+
+            model_output = self.model((videos, input_captions), use_teacher_forcing)
+
+            if self.do_classif:
+                probs, classif_probs = model_output
+
+            else:
+                probs = model_output
 
 
-            probs, classif_probs =\
-                self.model((videos, input_captions), use_teacher_forcing)
-
-            classif_loss = self.classif_loss_function(classif_probs,
-                                                      classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
-            loss = classif_loss + captioning_loss
+            loss = captioning_loss
+
+            if self.do_classif:
+                classif_loss = self.classif_loss_function(classif_probs,
+                                                          classif_targets)
+                loss = captioning_loss + classif_loss
+
+
 
             global_step = len(dataloader) * epoch + sample_counter
 
@@ -219,10 +244,15 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            classif_targets = classif_targets.cpu()
-            classif_probs = classif_probs.cpu()
-
             batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions)
+
+
+            if self.do_classif:
+                classif_targets = classif_targets.cpu()
+                classif_probs = classif_probs.cpu()
+
+                batch_outputs = ScoreAttr(loss, string_captions, captions,
                                       predictions, classif_targets, classif_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,
