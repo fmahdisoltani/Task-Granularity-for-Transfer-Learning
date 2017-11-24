@@ -19,7 +19,7 @@ from ptcap.utils import DataParallelWrapper
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
-                 gpus=None, clip_grad=None):
+                 gpus=None, clip_grad=None, classif_loss_function=None):
 
         self.gpus = gpus
         self.checkpointer = checkpointer
@@ -29,6 +29,10 @@ class Trainer(object):
                 self.gpus[0]))
         self.loss_function = loss_function if self.gpus is None else (
             loss_function.cuda(self.gpus[0]))
+
+        self.classif_loss_function = classif_loss_function if self.gpus is None else (
+            classif_loss_function.cuda(self.gpus[0]))
+
 
         init_state = self.checkpointer.load_model(self.model,
                                                   scheduler.optimizer,
@@ -53,7 +57,7 @@ class Trainer(object):
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
               teacher_force_valid=False, verbose_train=False,
-              verbose_valid=False):
+              verbose_valid=False, ):
 
         self.logger.on_train_begin()
 
@@ -137,6 +141,7 @@ class Trainer(object):
         scoring_functions.append(token_accuracy)
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
+        scoring_functions.append(classif_accuracy)
         scoring_functions.append(self.multiscore_adapter)
         scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
@@ -161,27 +166,36 @@ class Trainer(object):
             self.model.eval()
       
         ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions "
-                                             "predictions")
+                               "predictions classif_targets classif_probs")
 
         scores = ScoresOperator(self.get_scoring_functions())
 
         for sample_counter, (videos, string_captions,
-                             captions) in enumerate(dataloader):
+                             captions, classif_targets) in enumerate(dataloader):
 
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
 
-            videos, captions, input_captions = (Variable(videos),
+            videos, captions, input_captions, classif_targets = (Variable(videos),
                                                 Variable(captions),
-                                                Variable(input_captions))
+                                                Variable(input_captions),
+                                                Variable(classif_targets))
             if self.gpus:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0], async=True)
                 input_captions = input_captions.cuda(self.gpus[0])
+                classif_targets = classif_targets.cuda(self.gpus[0])
 
-            probs = self.model((videos, input_captions), use_teacher_forcing)
-            loss = self.loss_function(probs, captions)
+
+            probs, classif_probs =\
+                self.model((videos, input_captions), use_teacher_forcing)
+
+            classif_loss = self.classif_loss_function(classif_probs,
+                                                      classif_targets)
+            captioning_loss = self.loss_function(probs, captions)
+
+            loss = classif_loss + captioning_loss
 
             global_step = len(dataloader) * epoch + sample_counter
 
@@ -205,8 +219,11 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
+            classif_targets = classif_targets.cpu()
+            classif_probs = classif_probs.cpu()
+
             batch_outputs = ScoreAttr(loss, string_captions, captions,
-                                      predictions)
+                                      predictions, classif_targets, classif_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)
