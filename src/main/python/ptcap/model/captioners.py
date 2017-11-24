@@ -42,10 +42,14 @@ class EncoderDecoder(Captioner):
         self.activations = {}
         self.register_forward_hook(self.merge_activations)
 
-    def forward(self, video_batch, use_teacher_forcing):
+    def forward(self, video_batch, use_teacher_forcing, do_classif=False):
         videos, captions = video_batch
         features = self.encoder(videos)
         probs = self.decoder(features, captions, use_teacher_forcing)
+        if do_classif:
+            classif_probs = self.encoder.encoder.predict_from_features(features)
+            return probs, classif_probs
+
 
         return probs
 

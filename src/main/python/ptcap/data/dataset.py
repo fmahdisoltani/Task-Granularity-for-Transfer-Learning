@@ -9,12 +9,14 @@ from gulpio import GulpDirectory
 
 
 class VideoDataset(Dataset):
-    def __init__(self, annotation_parser, tokenizer, preprocess=None):
+    def __init__(self, annotation_parser, tokenizer, preprocess=None, do_classif=False):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = annotation_parser.get_video_ids()
         self.captions = annotation_parser.get_captions()
-        self.labels = annotation_parser.get_labels()
+        self.do_classif = do_classif
+        if do_classif:
+            self.labels = annotation_parser.get_labels()
         self.preprocess = preprocess
 
     def __len__(self):
@@ -30,7 +32,13 @@ class VideoDataset(Dataset):
         if self.preprocess is not None:
             video = self.preprocess(video)
         tokenized_caption = self._get_tokenized_caption(index)
+        if self.do_classif:
+            return video, self.captions[index], np.array(tokenized_caption), \
+                   self.labels[index]
+
         return video, self.captions[index], np.array(tokenized_caption)
+
+
 
     def _get_video(self, index):
         pass
