@@ -15,7 +15,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step,encoder_output_size):
+                 num_lstm_layers, vocab_size, num_step, encoder_output_size):
 
         super().__init__()
 
@@ -29,8 +29,7 @@ class DecoderBase(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
 
-        self.mapping_c = nn.Linear(self.encoder_output_size, hidden_size)
-        self.mapping_h = nn.Linear(self.encoder_output_size, hidden_size)
+        self.mapping = nn.Linear(self.encoder_output_size, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
 
         self.activations = self.register_forward_hooks()
