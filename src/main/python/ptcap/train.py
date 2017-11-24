@@ -78,8 +78,6 @@ def train_model(config_obj, relative_path=""):
     training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
 
-    # validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-    #                                videos_folder), caption_type=caption_type)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    config_obj.get("paths", "videos_folder")),
                                    caption_type=caption_type)
@@ -93,9 +91,6 @@ def train_model(config_obj, relative_path=""):
         # tokenizer.build_dictionaries(training_parser.get_captions())
         tokenizer.build_dictionaries(
             training_parser.get_captions_from_tmp_and_lbl())
-
-
-
 
     preprocessor = Compose([prep.RandomCrop(crop_size),
                             prep.PadVideo(crop_size),
@@ -116,19 +111,6 @@ def train_model(config_obj, relative_path=""):
                              config_obj.get("dataset", "validation_set", "type"))(
         validation_parser, tokenizer, preprocess=val_preprocessor,
         **config_obj.get("dataset", "validation_set", "kwargs"))
-
-
-    # training_set = NumpyVideoDataset(annotation_parser=training_parser,
-    #                                 tokenizer=tokenizer,
-    #                                 preprocess=preprocessor,)
-    #                                 #gulp_dir=videos_folder, )
-    #                                 # size=[128, 128])
-    #
-    # validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-    #                                   tokenizer=tokenizer,
-    #                                   preprocess=val_preprocessor,)
-    #                                   # gulp_dir=videos_folder, )
-    #                                   # size=[128, 128])
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))

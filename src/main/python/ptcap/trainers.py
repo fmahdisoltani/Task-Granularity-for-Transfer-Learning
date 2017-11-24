@@ -1,13 +1,14 @@
-from collections import namedtuple
-
 import numpy as np
 import torch
 import torch.nn as nn
+from collections import namedtuple
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
+
+
 
 from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           caption_accuracy, classif_accuracy,

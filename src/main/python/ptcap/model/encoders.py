@@ -13,18 +13,6 @@ class Encoder(nn.Module):
         raise NotImplementedError
 
 
-# class FullyConnectedEncoder(Encoder):
-#     def __init__(self, video_dims, num_features):
-#         super(FullyConnectedEncoder, self).__init__()
-#         C, T, W, H = video_dims
-#         self.linear = nn.Linear(C * T * W * H, num_features)
-#
-#     def forward(self, video_batch):
-#         batch_size = video_batch.size()[0]
-#         return self.linear(video_batch.view(batch_size, -1))
-
-
-
 class CNN3dEncoder(Encoder):
     def __init__(self, encoder_output_size=128):
         super(CNN3dEncoder, self).__init__()
@@ -71,15 +59,8 @@ class CNN3dEncoder(Encoder):
         h = self.pool4(h)  # batch_size * encoder_output_size * num_step * w * h
 
         # h = h.mean(2)
-        print("%"*100)
-        print(h.size()[0:3])
-        print("$" * 100)
         h = h.view(h.size()[0:3])
-        print(h.size())
-        print("P"*100)
-
         h = h.permute(0, 2, 1)
-        print(h.size())
 
         return h
 
