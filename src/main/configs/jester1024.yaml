@@ -51,7 +51,7 @@ scheduler:
 training:
   num_epochs: 200
   clip_grad:
-  teacher_force: Fa
+  teacher_force: False
   verbose: False
 
 validation:
