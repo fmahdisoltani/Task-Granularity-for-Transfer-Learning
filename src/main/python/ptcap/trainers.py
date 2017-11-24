@@ -8,7 +8,8 @@ from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
-
+W_CLASSIF = 0
+W_CAP = 1
 
 from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           caption_accuracy, classif_accuracy,
@@ -20,7 +21,7 @@ from ptcap.utils import DataParallelWrapper
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
-                 gpus=None, clip_grad=None, classif_loss_function=None, do_classif=False):
+                 gpus=None, clip_grad=None, classif_loss_function=None, do_classif=True):
 
         self.gpus = gpus
         self.checkpointer = checkpointer
@@ -219,9 +220,7 @@ class Trainer(object):
             if self.do_classif:
                 classif_loss = self.classif_loss_function(classif_probs,
                                                           classif_targets)
-                loss = captioning_loss + classif_loss
-
-
+                loss = W_CAP * captioning_loss + W_CLASSIF * classif_loss
 
             global_step = len(dataloader) * epoch + sample_counter
 
@@ -245,7 +244,8 @@ class Trainer(object):
             captions = captions.cpu()
             predictions = predictions.cpu()
 
-            batch_outputs = ScoreAttr(loss, string_captions, captions,
+            if not self.do_classif:
+                batch_outputs = ScoreAttr(loss, string_captions, captions,
                                       predictions)
 
 
@@ -255,6 +255,7 @@ class Trainer(object):
 
                 batch_outputs = ScoreAttr(loss, string_captions, captions,
                                       predictions, classif_targets, classif_probs)
+
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)

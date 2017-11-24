@@ -9,7 +9,7 @@ from gulpio import GulpDirectory
 
 
 class VideoDataset(Dataset):
-    def __init__(self, annotation_parser, tokenizer, preprocess=None, do_classif=False):
+    def __init__(self, annotation_parser, tokenizer, preprocess=None, do_classif=True):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = annotation_parser.get_video_ids()
