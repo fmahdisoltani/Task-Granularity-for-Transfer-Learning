@@ -15,7 +15,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step,encoder_output_size=25):
+                 num_lstm_layers, vocab_size, num_step,encoder_output_size):
 
         super().__init__()
 
@@ -29,7 +29,8 @@ class DecoderBase(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
 
-        self.mapping = nn.Linear(self.encoder_output_size, hidden_size)
+        self.mapping_c = nn.Linear(self.encoder_output_size, hidden_size)
+        self.mapping_h = nn.Linear(self.encoder_output_size, hidden_size)
         self.logsoftmax = nn.LogSoftmax()
 
         self.activations = self.register_forward_hooks()
@@ -65,7 +66,6 @@ class DecoderBase(nn.Module):
         # self.mapping = nn.Linear(features.size()[1], self.hidden_size)
         relued_features = F.relu(self.mapping(features))
         pooled_features = relued_features.mean(dim=1)
-
 
         if use_teacher_forcing:
             probs, _ = self.apply_lstm(pooled_features, captions)
@@ -118,7 +118,6 @@ class LSTMDecoder(DecoderBase):
                             self.num_lstm_layers, batch_first=True)
 
         self.activations = self.register_forward_hooks()
-
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
         if lstm_hidden is None:

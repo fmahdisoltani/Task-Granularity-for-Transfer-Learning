@@ -58,7 +58,6 @@ class CNN3dEncoder(Encoder):
 
         h = self.pool4(h)  # batch_size * encoder_output_size * num_step * w * h
 
-        # h = h.mean(2)
         h = h.view(h.size()[0:3])
         h = h.permute(0, 2, 1)
 
@@ -150,8 +149,6 @@ class CNN3dLSTMEncoder(Encoder):
 
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)
-
-        h_mean = torch.mean(lstm_outputs, dim=1)
 
         return lstm_outputs
 
