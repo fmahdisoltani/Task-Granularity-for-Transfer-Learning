@@ -63,9 +63,6 @@ class DecoderBase(nn.Module):
         """
 
         # self.mapping = nn.Linear(features.size()[1], self.hidden_size)
-        print(self.mapping)
-        print(features.size())
-        print("R" * 100)
         relued_features = F.relu(self.mapping(features))
         pooled_features = relued_features.mean(dim=1)
 
@@ -151,10 +148,7 @@ class CoupledLSTMDecoder(DecoderBase):
                             batch_first=True)
 
     def apply_lstm(self, features, captions, lstm_hidden=None):
-        print("*" * 100)
-        print(len(features))
-        print(features.size())
-        #
+
         if lstm_hidden is None:
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
