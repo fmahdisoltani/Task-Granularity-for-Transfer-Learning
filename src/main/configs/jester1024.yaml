@@ -15,10 +15,10 @@ pretrained:
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0]
+  gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
