@@ -59,7 +59,7 @@ validation:
   verbose: True
 
 criteria:
-  score: classif_accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
