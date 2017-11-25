@@ -15,7 +15,8 @@ from ptcap.scores import (LCS, MultiScoreAdapter, ScoresOperator,
                           token_accuracy)
 from ptcap.utils import DataParallelWrapper
 
-
+W_CLASSIF = 0
+W_CAP =1
 class Trainer(object):
     def __init__(self, model, loss_function, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
@@ -48,9 +49,9 @@ class Trainer(object):
 
         self.logger = logger
 
-        self.multiscore_adapter = MultiScoreAdapter(
-            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
-            self.tokenizer)
+        #self.multiscore_adapter = MultiScoreAdapter(
+        #    MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
+        #    self.tokenizer)
 
         self.logger.on_train_init(folder, filename)
 
@@ -142,7 +143,7 @@ class Trainer(object):
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
         scoring_functions.append(classif_accuracy)
-        scoring_functions.append(self.multiscore_adapter)
+        #scoring_functions.append(self.multiscore_adapter)
         scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
         return scoring_functions
@@ -195,7 +196,7 @@ class Trainer(object):
                                                       classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
-            loss = classif_loss + captioning_loss
+            loss = W_CLASSIF* classif_loss + W_CAP * captioning_loss
 
             global_step = len(dataloader) * epoch + sample_counter
 

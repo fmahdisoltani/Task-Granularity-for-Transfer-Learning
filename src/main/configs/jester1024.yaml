@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/tessssssst/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_captioningw1_classifw0
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
