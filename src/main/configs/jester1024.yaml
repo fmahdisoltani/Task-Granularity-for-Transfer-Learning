@@ -1,16 +1,16 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_lbl_step3_lr001_w1_factor0.5
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_weighted_loss
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20171004.json.gz
+  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_lbl_step3_lr001_w1_factor0.7
+  pretrained_folder:
   pretrained_file: model.best
 
 device:
@@ -24,13 +24,13 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: ,
+  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint ,
                    freeze: False}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: 1024,
-                   num_lstm_layers: 1}
+                   num_lstm_layers: 2}
 
 loss:
   type: SequenceCrossEntropy
@@ -41,10 +41,10 @@ optimizer:
 
 scheduler:
   type: ReduceLROnPlateau
-  kwargs: {factor: 0.5,
+  kwargs: {factor: 0.1,
            min_lr: 1.0e-8,
            optimizer: *optimizer,
-           patience: 1,
+           patience: 2,
            threshold: 1.0e-4}
 
 training:

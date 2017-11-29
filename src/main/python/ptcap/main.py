@@ -21,6 +21,7 @@ from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
 from ptcap.trainers import Trainer
 from rtorchn.data.preprocessing import CenterCropper
+from ptcap.losses import *
 
 
 def train_model(config_obj, relative_path=""):
@@ -71,11 +72,10 @@ def train_model(config_obj, relative_path=""):
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
-        tokenizer.load_dictionaries(pretrained_folder)
-        print("Inside pretrained" , tokenizer.get_vocab_size())
+        token_freqs = tokenizer.load_dictionaries(pretrained_folder)
+        print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
-
+        token_freqs = tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
     preprocessor = Compose([prep.RandomCrop(crop_size),
@@ -132,6 +132,7 @@ def train_model(config_obj, relative_path=""):
         gpus=gpus)
 
     loss_function = getattr(ptcap.losses, loss_type)()
+    loss_function = WeightedSequenceCrossEntropy(token_freqs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
     params = filter(lambda p: p.requires_grad, model.parameters())

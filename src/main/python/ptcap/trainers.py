@@ -178,7 +178,7 @@ class Trainer(object):
             classif_loss = self.classif_loss_function(classif_probs, classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
-            loss = classif_loss + captioning_loss
+            loss = 0.01 * classif_loss + captioning_loss
 
             # print(">>>>>>>>>>>>>>>>>>> classif_loss: {}".format( classif_loss))
             # print(">>>>>>>>>>>>>>>>>>> captioning_loss: {}".format(captioning_loss))

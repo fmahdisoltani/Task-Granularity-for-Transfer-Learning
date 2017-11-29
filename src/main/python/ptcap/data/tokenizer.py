@@ -39,6 +39,7 @@ class Tokenizer(object):
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
+        tokens_freq = Counter(tokens)
         tokens = self.filter_tokens(tokens)
         all_tokens = extra_tokens + sorted(set(tokens))
         print("Number of different tokens: ", len(all_tokens))
@@ -46,6 +47,7 @@ class Tokenizer(object):
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
         print(self.caption_dict)
         print(self.inv_caption_dict)
+        return tokens_freq
 
     def tokenize(self, caption):
         tokenize_regex = re.compile("[^A-Z\s]")
@@ -98,6 +100,9 @@ class Tokenizer(object):
         with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
             (self.maxlen, self.caption_dict,
              self.inv_caption_dict) = pickle.load(f)
+            tokens = self.caption_dict.keys()
+            tokens_freq = Counter(tokens)
+            return tokens_freq
 
     def save_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:
