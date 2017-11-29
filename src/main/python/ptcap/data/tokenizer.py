@@ -102,7 +102,7 @@ class Tokenizer(object):
              self.inv_caption_dict) = pickle.load(f)
             tokens = self.caption_dict.keys()
             tokens_freq = Counter(tokens)
-            return tokens_freq
+        return tokens_freq
 
     def save_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:
