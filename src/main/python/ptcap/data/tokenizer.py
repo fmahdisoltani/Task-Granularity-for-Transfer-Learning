@@ -39,12 +39,15 @@ class Tokenizer(object):
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
-        tokens_freq = Counter(tokens)
+        backup_tokens = list(tokens )
         tokens = self.filter_tokens(tokens)
+
+        #backup_tokens = [bt for bt in backup_tokens if bt in tokens]+ 100*extra_tokens
         all_tokens = extra_tokens + sorted(set(tokens))
         print("Number of different tokens: ", len(all_tokens))
         self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
+        tokens_freq = Counter([self.caption_dict[t] for t in backup_tokens])
         print(self.caption_dict)
         print(self.inv_caption_dict)
         return tokens_freq
@@ -56,7 +59,7 @@ class Tokenizer(object):
 
     def filter_tokens(self, tokens):
         count = Counter(tokens)
-        return [token for token in count if count[token] > self.cutoff]
+        return [token for token in tokens if count[token] > self.cutoff]
 
     def encode_caption(self, caption):
 

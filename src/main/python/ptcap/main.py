@@ -131,7 +131,7 @@ def train_model(config_obj, relative_path=""):
         decoder_kwargs=decoder_kwargs,
         gpus=gpus)
 
-    loss_function = getattr(ptcap.losses, loss_type)()
+    # loss_function = getattr(ptcap.losses, loss_type)()
     loss_function = WeightedSequenceCrossEntropy(token_freqs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
