@@ -42,7 +42,7 @@ class Tokenizer(object):
         backup_tokens = list(tokens )
         tokens = self.filter_tokens(tokens)
 
-        #backup_tokens = [bt for bt in backup_tokens if bt in tokens]+ 100*extra_tokens
+        backup_tokens = [bt for bt in backup_tokens if bt in tokens]+ 100*extra_tokens
         all_tokens = extra_tokens + sorted(set(tokens))
         print("Number of different tokens: ", len(all_tokens))
         self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
@@ -59,7 +59,7 @@ class Tokenizer(object):
 
     def filter_tokens(self, tokens):
         count = Counter(tokens)
-        return [token for token in tokens if count[token] > self.cutoff]
+        return [token for token in count if count[token] > self.cutoff]
 
     def encode_caption(self, caption):
 
