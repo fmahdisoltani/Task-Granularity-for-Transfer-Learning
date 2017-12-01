@@ -132,7 +132,7 @@ def train_model(config_obj, relative_path=""):
         gpus=gpus)
 
     # loss_function = getattr(ptcap.losses, loss_type)()
-    loss_function = WeightedSequenceCrossEntropy(token_freqs)
+    loss_function = WeightedSequenceCrossEntropy(token_freqs=token_freqs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
     params = filter(lambda p: p.requires_grad, model.parameters())
