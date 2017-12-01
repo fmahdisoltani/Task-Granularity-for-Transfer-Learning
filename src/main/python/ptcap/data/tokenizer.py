@@ -32,23 +32,30 @@ class Tokenizer(object):
         """
 
         maxlen = np.max([len(caption.split()) for caption in captions]) + 1
-
         self.set_maxlen(maxlen)
 
         print("\nBuilding dictionary for captions...")
+        tokens = self.get_all_tokens_and_filter(captions)
+        unique_tokens = sorted(set(tokens))
+
+        print("Number of different tokens: ", len(unique_tokens))
+        self.caption_dict = {k: idx for idx, k in enumerate(unique_tokens)}
+        self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
+
+
+    def get_all_tokens_and_filter(self, captions):
         extra_tokens = [self.GO, self.END, self.UNK]
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
         tokens = self.filter_tokens(tokens)
+        return tokens + len(captions)*extra_tokens
 
-        all_tokens = extra_tokens + sorted(set(tokens))
-        print("Number of different tokens: ", len(all_tokens))
-        self.caption_dict = {k: idx for idx, k in enumerate(all_tokens)}
-        self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
-        tokens_freq = Counter([self.caption_dict[t] for t in tokens + 100000*extra_tokens])
-        print(self.caption_dict)
-        print(self.inv_caption_dict)
+
+    def get_token_freqs(self, captions):
+        tokens = self.get_all_tokens_and_filter(captions)
+        tokens_freq = Counter([self.caption_dict[t] for t in tokens])
         return tokens_freq
+
 
     def tokenize(self, caption):
         tokenize_regex = re.compile("[^A-Z\s]")
@@ -56,8 +63,8 @@ class Tokenizer(object):
             "", caption.upper()).split(" ") if x is not ""]
 
     def filter_tokens(self, tokens):
-        count = Counter(tokens)
-        return [token for token in tokens if count[token] > self.cutoff]
+        tokens_count = Counter(tokens)
+        return [tok for tok in tokens_count if tokens_count[tok] > self.cutoff]
 
     def encode_caption(self, caption):
 
@@ -98,12 +105,10 @@ class Tokenizer(object):
             self.maxlen = np.min([self.maxlen, maxlen])
 
     def load_dictionaries(self, path):
+        # TODO: save and load token_freqs if necessary
         with open(os.path.join(path, "tokenizer_dicts"), "rb") as f:
             (self.maxlen, self.caption_dict,
              self.inv_caption_dict) = pickle.load(f)
-            tokens = self.caption_dict.keys()
-            tokens_freq = Counter(tokens)
-        return tokens_freq
 
     def save_dictionaries(self, path):
         with open(os.path.join(path, "tokenizer_dicts"), "wb") as f:

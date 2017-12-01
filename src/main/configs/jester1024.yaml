@@ -1,13 +1,11 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_weighted_loss
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_tesssssst
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
-
-
 
 pretrained:
   pretrained_folder:
@@ -33,7 +31,10 @@ model:
                    num_lstm_layers: 2}
 
 loss:
-  type: SequenceCrossEntropy
+  type: WeightedSequenceCrossEntropy
+  balanced: True
+
+
 
 optimizer:
   type: &optimizer Adam

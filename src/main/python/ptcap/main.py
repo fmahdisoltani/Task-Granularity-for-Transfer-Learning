@@ -52,6 +52,7 @@ def train_model(config_obj, relative_path=""):
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
     loss_type = config_obj.get("loss", "type")
+    balanced_loss = config_obj.get("loss", "balanced")
     classif_loss_type = "CrossEntropy" #TODO: FIX reading from config file
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
@@ -72,10 +73,10 @@ def train_model(config_obj, relative_path=""):
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
-        token_freqs = tokenizer.load_dictionaries(pretrained_folder)
+        tokenizer.load_dictionaries(pretrained_folder)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        token_freqs = tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
+        tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
     preprocessor = Compose([prep.RandomCrop(crop_size),
@@ -132,7 +133,11 @@ def train_model(config_obj, relative_path=""):
         gpus=gpus)
 
     # loss_function = getattr(ptcap.losses, loss_type)()
-    loss_function = WeightedSequenceCrossEntropy(token_freqs=token_freqs)
+    loss_kwargs = {}
+    if balanced_loss:
+        loss_kwargs["token_freqs"]= tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
+    #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
+    loss_function = getattr(ptcap.losses, loss_type)(kwargs=loss_kwargs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
     params = filter(lambda p: p.requires_grad, model.parameters())

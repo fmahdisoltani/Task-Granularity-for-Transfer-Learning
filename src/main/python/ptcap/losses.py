@@ -18,14 +18,17 @@ class SequenceCrossEntropy(nn.Module):
     
 class WeightedSequenceCrossEntropy(nn.Module):
 
-    def __init__(self, loss=nn.NLLLoss, token_freqs=None):
+    def __init__(self, loss=nn.NLLLoss, kwargs=None):
         super().__init__()
         token_weights = None
-        if token_freqs:
+        if kwargs and kwargs["token_freqs"]:
+
+            token_freqs = kwargs["token_freqs"]
             token_weights = torch.from_numpy(np.array(
                 [1/np.log(token_freqs[i]) for i in token_freqs],
                 dtype=np.float32))
-        self.loss_function = loss(weight=token_weights)
+            print(token_weights)
+        self.loss_function = loss(token_weights)
 
     def forward(self, preds, target):
         batch_size, num_step, _ = preds.size()
