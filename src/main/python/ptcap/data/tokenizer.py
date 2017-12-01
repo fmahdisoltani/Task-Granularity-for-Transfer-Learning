@@ -48,7 +48,7 @@ class Tokenizer(object):
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
         tokens = self.filter_tokens(tokens)
-        return tokens + len(captions)*extra_tokens
+        return tokens + 10000*extra_tokens
 
 
     def get_token_freqs(self, captions):
@@ -64,7 +64,7 @@ class Tokenizer(object):
 
     def filter_tokens(self, tokens):
         tokens_count = Counter(tokens)
-        return [tok for tok in tokens_count if tokens_count[tok] > self.cutoff]
+        return [tok for tok in tokens if tokens_count[tok] > self.cutoff]
 
     def encode_caption(self, caption):
 
