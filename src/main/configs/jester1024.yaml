@@ -31,8 +31,12 @@ model:
                    num_lstm_layers: 2}
 
 loss:
-  type: WeightedSequenceCrossEntropy
+  caption_loss: SequenceCrossEntropy
   balanced: True
+  w_caption_loss: 0.99
+
+  classif_loss: CrossEntropy
+  w_classif_loss: 0.01
 
 
 

@@ -51,9 +51,11 @@ def train_model(config_obj, relative_path=""):
 
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
-    loss_type = config_obj.get("loss", "type")
+    caption_loss_type = config_obj.get("loss", "caption_loss")
     balanced_loss = config_obj.get("loss", "balanced")
-    classif_loss_type = "CrossEntropy" #TODO: FIX reading from config file
+    w_caption_loss = config_obj.get("loss", "w_caption_loss")
+    classif_loss_type = config_obj.get("loss", "classif_loss")
+    w_classif_loss = config_obj.get("loss", "w_classif_loss")
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
@@ -133,11 +135,11 @@ def train_model(config_obj, relative_path=""):
         gpus=gpus)
 
     # loss_function = getattr(ptcap.losses, loss_type)()
-    loss_kwargs = {}
+    caption_loss_kwargs = {}
     if balanced_loss:
-        loss_kwargs["token_freqs"]= tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
+        caption_loss_kwargs["token_freqs"]= tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
     #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
-    loss_function = getattr(ptcap.losses, loss_type)(kwargs=loss_kwargs)
+    caption_loss_function = getattr(ptcap.losses, caption_loss_type)(kwargs=caption_loss_kwargs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
     params = filter(lambda p: p.requires_grad, model.parameters())
@@ -162,10 +164,11 @@ def train_model(config_obj, relative_path=""):
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     # Trainer
-    trainer = Trainer(model, loss_function, scheduler, tokenizer, logger,
+    trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
                       writer, checkpointer, folder=pretrained_folder,
                       filename=pretrained_file, gpus=gpus, clip_grad=clip_grad,
-                      classif_loss_function=classif_loss_function)
+                      classif_loss_function=classif_loss_function, 
+                      w_classif_loss=w_classif_loss)
 
     # Train the Model
     trainer.train(dataloader, val_dataloader, criteria, num_epoch,

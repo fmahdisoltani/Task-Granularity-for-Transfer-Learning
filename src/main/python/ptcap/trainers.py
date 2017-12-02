@@ -12,9 +12,10 @@ from ptcap.utils import DataParallelWrapper
 
 
 class Trainer(object):
-    def __init__(self, model, loss_function, scheduler, tokenizer, logger,
+    def __init__(self, model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
                  writer, checkpointer, folder=None, filename=None,
-                 gpus=None, clip_grad=None, classif_loss_function=None):
+                 gpus=None, clip_grad=None, classif_loss_function=None,
+                 w_classif_loss=0):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
@@ -27,11 +28,13 @@ class Trainer(object):
         self.model = model if self.gpus is None else(
             DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
         )
-        self.loss_function = loss_function if self.gpus is None else(
-            loss_function.cuda(gpus[0])
+        self.loss_function = caption_loss_function if self.gpus is None else(
+            caption_loss_function.cuda(gpus[0])
         )
+        self.w_caption_loss = w_caption_loss
         self.classif_loss_function = classif_loss_function if self.gpus is None\
             else(classif_loss_function.cuda(gpus[0]))
+        self.w_classif_loss = w_classif_loss
 
         init_state = self.checkpointer.load_model(self.model, scheduler.optimizer,
                                                   folder, filename)
@@ -178,7 +181,7 @@ class Trainer(object):
             classif_loss = self.classif_loss_function(classif_probs, classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
-            loss = 0.01 * classif_loss + captioning_loss
+            loss = self.w_classif_loss * classif_loss + self.w_caption_loss * captioning_loss
 
             # print(">>>>>>>>>>>>>>>>>>> classif_loss: {}".format( classif_loss))
             # print(">>>>>>>>>>>>>>>>>>> captioning_loss: {}".format(captioning_loss))
