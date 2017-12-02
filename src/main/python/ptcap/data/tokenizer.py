@@ -20,6 +20,7 @@ class Tokenizer(object):
             user_maxlen: the maximum length of the captions set by the user.
         """
 
+        self.extra_tokens = ["<GO>", "<END>", "<UNK>"]
         self.maxlen = None if user_maxlen is None else user_maxlen
         self.cutoff = cutoff
         if captions:
@@ -42,18 +43,20 @@ class Tokenizer(object):
         self.caption_dict = {k: idx for idx, k in enumerate(unique_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
 
-
     def get_all_tokens_and_filter(self, captions):
-        extra_tokens = [self.GO, self.END, self.UNK]
+
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
         tokens = self.filter_tokens(tokens)
-        return tokens + 10000*extra_tokens
-
+        return tokens + self.extra_tokens
 
     def get_token_freqs(self, captions):
         tokens = self.get_all_tokens_and_filter(captions)
         tokens_freq = Counter([self.caption_dict[t] for t in tokens])
+        max_frequency = max(tokens_freq.values())
+        for extra_token in self.extra_tokens:
+            tokens_freq[self.caption_dict[extra_token]] = max_frequency
+
         return tokens_freq
 
 
