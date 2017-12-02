@@ -1,22 +1,9 @@
 from torch import nn
 import numpy as np
 import torch
-
+    
+    
 class SequenceCrossEntropy(nn.Module):
-
-    def __init__(self, loss=nn.NLLLoss):
-        super(SequenceCrossEntropy, self).__init__()
-        self.loss_function = loss()
-
-    def forward(self, preds, target):
-        batch_size, num_step, _ = preds.size()
-        loss = 0.
-        for t in range(num_step):
-            loss += self.loss_function(preds[:, t], target[:, t])
-        return loss / num_step
-    
-    
-class WeightedSequenceCrossEntropy(nn.Module):
 
     def __init__(self, loss=nn.NLLLoss, kwargs=None):
         super().__init__()
