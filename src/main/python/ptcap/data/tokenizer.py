@@ -36,28 +36,44 @@ class Tokenizer(object):
         self.set_maxlen(maxlen)
 
         print("\nBuilding dictionary for captions...")
-        tokens = self.get_all_tokens_and_filter(captions)
-        unique_tokens = sorted(set(tokens))
+        tokens = self.get_all_tokens(captions)
+        tokens = self.filter_tokens(tokens)
+        unique_tokens = sorted(set(tokens)) + self.extra_tokens
 
-        print("Number of different tokens: ", len(unique_tokens))
         self.caption_dict = {k: idx for idx, k in enumerate(unique_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
 
-    def get_all_tokens_and_filter(self, captions):
+        print("Number of different tokens: ", len(unique_tokens))
+
+    def get_all_tokens(self, captions):
 
         tokens = [self.tokenize(p) for p in captions]
         tokens = [item for sublist in tokens for item in sublist]
-        tokens = self.filter_tokens(tokens)
-        return tokens + self.extra_tokens
+        return tokens
 
     def get_token_freqs(self, captions):
-        tokens = self.get_all_tokens_and_filter(captions)
+        tokens = self.get_all_tokens(captions)
+        unk_freq = self.get_weight_for_unk(Counter(tokens))
+        tokens = self.filter_tokens(tokens)
         tokens_freq = Counter([self.caption_dict[t] for t in tokens])
         max_frequency = max(tokens_freq.values())
         for extra_token in self.extra_tokens:
             tokens_freq[self.caption_dict[extra_token]] = max_frequency
 
+        tokens_freq[self.caption_dict[self.UNK]] = unk_freq
+
+
         return tokens_freq
+
+    def get_weight_for_unk(self, tokens_freq):
+        unk_freq = 0
+        for token in tokens_freq:
+
+            unk_freq += \
+                tokens_freq[token] if tokens_freq[token] < self.cutoff else 0
+        print("unk freq is {}".format(unk_freq))
+
+        return unk_freq
 
 
     def tokenize(self, caption):
