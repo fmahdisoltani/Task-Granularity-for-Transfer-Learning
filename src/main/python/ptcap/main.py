@@ -67,7 +67,6 @@ def train_model(config_obj, relative_path=""):
     input_resize = config_obj.get("preprocess", "input_resize")
 
     # Load Json annotation files
-    caption_type = "mixed"
     object_list = ["bottle"]
     training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
@@ -80,7 +79,7 @@ def train_model(config_obj, relative_path=""):
         tokenizer.load_dictionaries(pretrained_folder)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        tokenizer.build_dictionaries(training_parser.get_captions())
+        tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
     preprocessor = Compose([prep.RandomCrop(crop_size),

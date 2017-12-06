@@ -33,7 +33,7 @@ class AnnotationParser(object):
         if caption_type is None:
             caption_type = self.caption_type
 
-        if caption_type == "mixed":
+        if self.object_list:
             inds_to_keep_lbl = self.get_samples_by_objects(self.object_list)
             inds_to_keep_tmp= [i for i in range(len(self.annotations))
                                      if i not in inds_to_keep_lbl]
