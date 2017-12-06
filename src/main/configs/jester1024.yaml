@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_tesssssst2
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_tesssssst
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
@@ -32,7 +32,7 @@ model:
 
 loss:
   caption_loss: SequenceCrossEntropy
-  balanced: False
+  balanced: True
   w_caption_loss: 0.99
 
   classif_loss: CrossEntropy
@@ -56,7 +56,7 @@ training:
   num_epochs: 200
   clip_grad:
   teacher_force: True
-  verbose: True
+  verbose: False
 
 validation:
   frequency: 1
