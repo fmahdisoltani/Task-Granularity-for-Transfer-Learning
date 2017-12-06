@@ -34,7 +34,7 @@ class AnnotationParser(object):
             caption_type = self.caption_type
 
         if caption_type == "mixed":
-            inds_to_keep_lbl = self.get_sample_by_objects(self.object_list)
+            inds_to_keep_lbl = self.get_samples_by_objects(self.object_list)
             inds_to_keep_tmp= [i for i in range(len(self.annotations))
                                      if i not in inds_to_keep_lbl]
             m = [p for p in self.annotations["label"][inds_to_keep_lbl]]
@@ -57,7 +57,13 @@ class AnnotationParser(object):
         class_dict = {k: idx for idx, k in enumerate(all_templates)}
         return [class_dict[p] for p in self.annotations["template"]]
     
-    def get_sample_by_objects(self, objects):
+    def get_samples_by_objects(self, objects):
+        """
+        :arg objects: list of objects of interest. e.g. ["bottle", "box"]
+        :return: all samples in the dataset which contain at least one object
+        from the specified list
+        """
+
         inds_to_keep = ([i for (i, elem) in
                          enumerate(self.annotations["placeholders"])
                          if len(set(objects).intersection(elem)) > 0])
@@ -65,9 +71,8 @@ class AnnotationParser(object):
         
     def filter_annotations(self, objects):
         """
-        Args:
-            objects: list of objects that determines which samples to keep
-        Returns: a subset of data where at least one of the objects are present.
+        :arg objects: list of objects that determines which samples to keep
+        :return a subset of data where at least one of the objects are present.
         """
 
         inds_to_keep = self.get_samples_by_objects(objects)
@@ -75,7 +80,7 @@ class AnnotationParser(object):
         for field in self.annotations:
             filtered_annotations[field] = self.annotations[field][inds_to_keep]
 
-        self.annotations = filtered_annotations
+        return filtered_annotations
 
 
 class JsonParser(AnnotationParser):
