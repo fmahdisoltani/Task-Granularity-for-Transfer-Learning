@@ -69,9 +69,11 @@ def train_model(config_obj, relative_path=""):
     # Load Json annotation files
     object_list = ["bottle"]
     training_parser = JsonParser(training_path, os.path.join(relative_path,
-                                 videos_folder), caption_type=caption_type)
+                                 videos_folder), caption_type=caption_type,
+                                 object_list=object_list)
     validation_parser = JsonParser(validation_path, os.path.join(relative_path,
-                                   videos_folder), caption_type=caption_type)
+                                   videos_folder), caption_type=caption_type,
+                                   object_list=object_list)
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))

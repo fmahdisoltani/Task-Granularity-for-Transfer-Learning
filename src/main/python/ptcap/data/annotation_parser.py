@@ -35,14 +35,14 @@ class AnnotationParser(object):
 
         if self.object_list:
             inds_to_keep_lbl = self.get_samples_by_objects(self.object_list)
-            inds_to_keep_tmp= [i for i in range(len(self.annotations))
-                                     if i not in inds_to_keep_lbl]
-            m = [p for p in self.annotations["label"][inds_to_keep_lbl]]
-
-            print(len(m))
-            print("*" * 100)
-            captions = [p for p in self.annotations["label"][inds_to_keep_lbl]]\
-             + [q for q in self.annotations["template"][inds_to_keep_tmp]]
+            
+            captions = []
+            for i in range(len(self.annotations)):
+                if i in inds_to_keep_lbl:
+                    captions.append(self.annotations["label"][i])
+                else:
+                    captions.append(self.annotations["template"][i])
+                    
         else:
             captions = [p for p in self.annotations[caption_type]]
 
