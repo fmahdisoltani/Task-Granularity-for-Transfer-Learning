@@ -38,7 +38,7 @@ class Tokenizer(object):
         print("\nBuilding dictionary for captions...")
         tokens = self.get_all_tokens(captions)
         tokens = self.filter_tokens(tokens)
-        unique_tokens = sorted(set(tokens)) + self.extra_tokens
+        unique_tokens = self.extra_tokens + sorted(set(tokens))
 
         self.caption_dict = {k: idx for idx, k in enumerate(unique_tokens)}
         self.inv_caption_dict = {idx: k for k, idx in self.caption_dict.items()}
