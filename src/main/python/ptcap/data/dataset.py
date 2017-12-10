@@ -10,13 +10,31 @@ from gulpio import GulpDirectory
 
 class VideoDataset(Dataset):
 
-    def __init__(self, annotation_parser, tokenizer, preprocess=None):
+    def __init__(self, annotation_parser, tokenizer, preprocess=None,
+                 remove_unk=True):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
         self.captions = annotation_parser.get_captions()
+
+        #tokenize and filter captions
+        self.tokenized_captions = \
+            [self.tokenizer.encode_caption(c) for c in self.captions]
+
         self.labels = annotation_parser.get_labels()
         self.preprocess = preprocess
+        if remove_unk:
+            # filter out all the samples that have unk in their captions
+            unk_ind = self.tokenizer.caption_dict[self.tokenizer.UNK]
+            inds_to_keep = ([i for (i,c) in enumerate(self.tokenized_captions)
+                            if unk_ind not in c])
+            #TODO: use map =list(map(lambda idx: self.video_paths[idx], inds_to_keep))
+            self.video_paths = list(map(lambda idx: self.video_paths[idx], inds_to_keep))
+            self.video_ids = list(map(lambda idx: self.video_ids[idx], inds_to_keep))
+            self.captions = [c for (i,c) in enumerate(self.captions) if i in inds_to_keep]
+            self.tokenized_captions = [c for (i,c) in enumerate(self.tokenized_captions) if i in inds_to_keep]
+            self.labels = [c for (i,c) in enumerate(self.labels) if i in inds_to_keep]
+          
 
     def __len__(self):
         return len(self.video_ids)
@@ -30,8 +48,9 @@ class VideoDataset(Dataset):
         video = self._try_get_video(index)
         if self.preprocess is not None:
             video = self.preprocess(video)
-        tokenized_caption = self._get_tokenized_caption(index)
-        return video, self.captions[index], np.array(tokenized_caption), self.labels[index]
+        # tokenized_caption = self._get_tokenized_caption(index)
+        return (video, self.captions[index],
+               np.array(self.tokenized_captions[index]), self.labels[index])
 
     def _get_video(self, index):
         pass
