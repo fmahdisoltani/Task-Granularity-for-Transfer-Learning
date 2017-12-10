@@ -9,11 +9,11 @@ from rtorchn.core.networks.resnets import InflatedResNet18
 import torch.nn.functional as F
 
 
-class PretrainedEncoder(Encoder):
+class ExternalEncoder(Encoder):
     def __init__(self, encoder, encoder_args, pretrained_path=None,
                  checkpoint_key=None, freeze=False):
 
-        super(PretrainedEncoder, self).__init__()
+        super(ExternalEncoder, self).__init__()
         self.encoder = encoder(*encoder_args)
 
         for param in self.encoder.parameters():
@@ -31,7 +31,7 @@ class PretrainedEncoder(Encoder):
         return self.encoder(video_batch)
 
 
-class FCEncoder(PretrainedEncoder):
+class FCEncoder(ExternalEncoder):
     def __init__(self, pretrained_path=None, freeze=False):
         # Hardcoded encoder for using FullyConvolutionalNet from 20bn_rtorchn
 
@@ -52,7 +52,7 @@ class FCEncoder(PretrainedEncoder):
         return features.mean(dim=1)
 
 
-class JesterEncoder(PretrainedEncoder):
+class JesterEncoder(ExternalEncoder):
     """
         Hardcoded encoder for using JesterNet from 20bn_rtorchn
         num_classes = 329 means this class expects the "supermodel" version.
@@ -72,7 +72,7 @@ class JesterEncoder(PretrainedEncoder):
         return features.mean(dim=1)
 
 
-class BIJesterEncoder(PretrainedEncoder):
+class BIJesterEncoder(ExternalEncoder):
 
     """
             Hardcoded encoder for using BIJesterNet from 20bn_rtorchn
@@ -98,7 +98,7 @@ class BIJesterEncoder(PretrainedEncoder):
         return features
 
 
-class Resnet18Encoder(PretrainedEncoder):
+class Resnet18Encoder(ExternalEncoder):
     def __init__(self, pretrained_path=None, freeze=False, ):
         num_classes = 1363
         encoder_args = (num_classes,)
