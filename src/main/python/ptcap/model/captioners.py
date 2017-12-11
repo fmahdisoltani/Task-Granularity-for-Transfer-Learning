@@ -48,7 +48,8 @@ class EncoderDecoder(Captioner):
 
         self.num_classes = 178
         self.logsoftmax = nn.LogSoftmax()
-        self.classif_layer = nn.Linear(1024, self.num_classes)
+        self.classif_layer = \
+            nn.Linear(self.encoder.encoder_output_size, self.num_classes)
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
