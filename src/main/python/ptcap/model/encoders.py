@@ -113,9 +113,14 @@ class C3dLSTMEncoder(Encoder):
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         
-        self.logsoftmax = nn.LogSoftmax() 
+        # self.logsoftmax = nn.LogSoftmax()
+        # self.classif_layer = nn.Linear(1024, self.num_classes)
         self.relu = nn.ReLU()
         self.fc = (nn.Linear(self.num_features, 1024))
+
+        self.num_classes = 178
+        self.classif_layer = nn.Linear(1024, self.num_classes)
+
         self.dropout = nn.Dropout(p=0.5)
 
         self.conv1 = CNN3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
@@ -189,11 +194,11 @@ class C3dLSTMEncoder(Encoder):
 
         return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48 * 1024
 
-    def predict_from_features(self, features):
-        probs = self.logsoftmax(features)
-        if probs.ndimension() == 3:
-            probs = probs.mean(dim=1)
-        return probs
+    # def predict_from_features(self, features):
+    #     probs = self.logsoftmax(features)
+    #     if probs.ndimension() == 3:
+    #         probs = probs.mean(dim=1)
+    #     return probs
 
     def register_forward_hooks(self):
         master_dict = {}

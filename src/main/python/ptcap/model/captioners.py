@@ -46,11 +46,15 @@ class EncoderDecoder(Captioner):
         self.activations = {}
         self.register_forward_hook(self.merge_activations)
 
+        self.num_classes = 178
+        self.logsoftmax = nn.LogSoftmax()
+        self.classif_layer = nn.Linear(1024, self.num_classes)
+
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder.extract_features(videos)
 
-        classif_probs = self.encoder.predict_from_features(features)
+        classif_probs = self.predict_from_encoder_features(features)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
         return probs, classif_probs
@@ -58,6 +62,13 @@ class EncoderDecoder(Captioner):
     def merge_activations(self, module, input_tensor, output_tensor):
         self.activations = dict(self.encoder.activations,
                                 **self.decoder.activations)
+        
+    def predict_from_encoder_features(self, features):
+        probs = self.logsoftmax(self.classif_layer(features))
+        if probs.ndimension() == 3:
+            probs = probs.mean(dim=1)
+            
+        return probs
 
 
 # class CNN3dLSTM(EncoderDecoder):
