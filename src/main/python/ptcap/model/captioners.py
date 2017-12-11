@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
-from ptcap.model.encoders import (CNN3dEncoder, CNN3dLSTMEncoder)
+from ptcap.model.encoders import (CNN3dEncoder, C3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
 
 
@@ -48,9 +48,9 @@ class EncoderDecoder(Captioner):
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
-        features = self.encoder(videos)
+        features = self.encoder.extract_features(videos)
 
-        classif_probs = self.encoder.encoder.predict_from_features(features)
+        classif_probs = self.encoder.predict_from_features(features)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
         return probs, classif_probs

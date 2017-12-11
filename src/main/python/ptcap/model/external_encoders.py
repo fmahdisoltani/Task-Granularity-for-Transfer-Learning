@@ -30,6 +30,9 @@ class ExternalEncoder(Encoder):
     def forward(self, video_batch):
         return self.encoder(video_batch)
 
+    def predict_from_features(self, features):
+        return self.encoder.predict_from_features(features)
+
 
 class FCEncoder(ExternalEncoder):
     def __init__(self, pretrained_path=None, freeze=False):
@@ -93,7 +96,7 @@ class BIJesterEncoder(ExternalEncoder):
                                               pretrained_path=pretrained_path,
                                               freeze=freeze)
 
-    def forward(self, video_batch):
+    def extract_features(self, video_batch):
         features = self.encoder.extract_features(video_batch)
         return features
 
