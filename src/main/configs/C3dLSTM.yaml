@@ -20,10 +20,9 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: BIJesterEncoder
+  encoder: C3dLSTMEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint ,
-                   freeze: False}
+  encoder_kwargs: {encoder_output_size: 1024}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
