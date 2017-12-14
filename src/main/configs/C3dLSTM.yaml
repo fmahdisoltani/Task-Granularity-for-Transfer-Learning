@@ -22,7 +22,7 @@ model:
   type: EncoderDecoder
   encoder: C3dLSTMEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024}
+  encoder_kwargs: {encoder_output_size: 512}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
