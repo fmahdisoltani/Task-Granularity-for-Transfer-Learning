@@ -84,10 +84,10 @@ class BIJesterEncoder(ExternalEncoder):
     """
 
     def __init__(self, pretrained_path=None, freeze=False):
-        encoder_output_size = 1024
+        self.encoder_output_size = 1024
         relu_output_size = 1024
         num_classes = 178
-        encoder_args = (num_classes, encoder_output_size)
+        encoder_args = (num_classes, self.encoder_output_size)
 
         # FC layer on top of features
 
