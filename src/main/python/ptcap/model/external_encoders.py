@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
-from rtorchn.core.networks import BiJesterNetII
+from rtorchn.core.networks import BiJesterNetII, JesterNetBase
 from .encoders import Encoder
 from rtorchn.core.networks.resnets import InflatedResNet18
 
@@ -85,20 +85,31 @@ class BIJesterEncoder(ExternalEncoder):
 
     def __init__(self, pretrained_path=None, freeze=False):
         self.encoder_output_size = 1024
-        relu_output_size = 1024
         num_classes = 178
-        encoder_args = (num_classes, self.encoder_output_size)
+        kernel_base = 32
+        bidirectional = True
+        encoder_args = (num_classes, int(self.encoder_output_size/2), kernel_base,
+                        bidirectional)
 
         # FC layer on top of features
 
-        super(BIJesterEncoder, self).__init__(encoder=BiJesterNetII,
-                                              encoder_args=encoder_args,
-                                              pretrained_path=pretrained_path,
-                                              freeze=freeze)
+        super().__init__(encoder=JesterNetBase,
+                         encoder_args=encoder_args,
+                         pretrained_path=pretrained_path,
+                         freeze=freeze)
+
+        self.relu = nn.ReLU()
+        self.fc = nn.Linear(int(self.encoder_output_size/2), self.encoder_output_size)
+
+        # self.num_classes = 178
+        # self.classif_layer = nn.Linear(1024, self.num_classes)
+
+        self.dropout = nn.Dropout(p=0.5)
 
     def extract_features(self, video_batch):
+
         features = self.encoder.extract_features(video_batch)
-        return features
+        return self.dropout(self.relu(self.fc(features)))
 
 
 class Resnet18Encoder(ExternalEncoder):
