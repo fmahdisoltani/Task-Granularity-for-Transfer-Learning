@@ -20,9 +20,9 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: C3dLSTMEncoder
+  encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024}
+  encoder_kwargs:
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -67,7 +67,7 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}

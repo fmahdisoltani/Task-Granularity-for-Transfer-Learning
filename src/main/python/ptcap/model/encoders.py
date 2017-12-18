@@ -109,13 +109,18 @@ class C3dLSTMEncoder(Encoder):
         super().__init__()
 
         self.num_layers = 1
-        self.num_features = encoder_output_size
+        self.encoder_output_size = encoder_output_size
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         
-        self.logsoftmax = nn.LogSoftmax() 
+        # self.logsoftmax = nn.LogSoftmax()
+        # self.classif_layer = nn.Linear(1024, self.num_classes)
         self.relu = nn.ReLU()
-        self.fc = (nn.Linear(self.num_features, 1024))
+        self.fc = nn.Linear(self.encoder_output_size, 2* encoder_output_size)
+
+        #self.num_classes = 178
+        #self.classif_layer = nn.Linear(1024, self.num_classes)
+
         self.dropout = nn.Dropout(p=0.5)
 
         self.conv1 = CNN3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
@@ -141,7 +146,7 @@ class C3dLSTMEncoder(Encoder):
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
         lstm_hidden_size = int(
-            self.num_features / 2) if bidirectional else self.num_features
+            self.encoder_output_size / 2) if bidirectional else self.encoder_output_size
 
 
         self.lstm = nn.LSTM(input_size=8*out_ch, hidden_size=lstm_hidden_size,
@@ -153,8 +158,8 @@ class C3dLSTMEncoder(Encoder):
         self.activations = self.register_forward_hooks()
 
     def init_hidden(self, batch_size):
-        h0 = Variable(torch.zeros(1, batch_size, self.num_features))
-        c0 = Variable(torch.zeros(1, batch_size, self.num_features))
+        h0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
+        c0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
         if self.use_cuda:
             h0 = h0.cuda(self.gpus[0])
             c0 = c0.cuda(self.gpus[0])
@@ -189,11 +194,11 @@ class C3dLSTMEncoder(Encoder):
 
         return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48 * 1024
 
-    def predict_from_features(self, features):
-        probs = self.logsoftmax(features)
-        if probs.ndimension() == 3:
-            probs = probs.mean(dim=1)
-        return probs
+    # def predict_from_features(self, features):
+    #     probs = self.logsoftmax(features)
+    #     if probs.ndimension() == 3:
+    #         probs = probs.mean(dim=1)
+    #     return probs
 
     def register_forward_hooks(self):
         master_dict = {}
