@@ -67,7 +67,7 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}
