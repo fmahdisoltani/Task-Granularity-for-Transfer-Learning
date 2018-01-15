@@ -117,7 +117,7 @@ class C3dLSTMEncoder(Encoder):
 
         # h_mean = torch.mean(lstm_outputs, dim=1)
 
-        return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48 * 1024
+        return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48* 1024
 
     # def predict_from_features(self, features):
     #     probs = self.logsoftmax(features)
@@ -153,15 +153,15 @@ class C3dLSTMEncoder(Encoder):
 
 
 class C3dEncoder(Encoder):
-    def __init__(self, num_features=128, gpus=None):
+    def __init__(self, encoder_output_size=29, gpus=None, out_ch=32):
         super(C3dEncoder, self).__init__()
 
-        self.conv1 = CNN3dLayer(3, 16, (3, 3, 3), nn.ReLU(),
+        self.conv1 = CNN3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
-        self.conv2 = CNN3dLayer(16, 32, (3, 3, 3), nn.ReLU(),
+        self.conv2 = CNN3dLayer(out_ch, 2 * out_ch, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
-        self.conv3 = CNN3dLayer(32, 64, (3, 3, 3), nn.ReLU(),
-                                stride=1, padding=1)
+        self.conv3 = CNN3dLayer(2 * out_ch, 4 * out_ch, (3, 3, 3),
+                                nn.ReLU(), stride=1, padding=1)
 
         self.pool1 = nn.MaxPool3d((1, 2, 2))
 
@@ -169,12 +169,12 @@ class C3dEncoder(Encoder):
 
         self.pool3 = nn.MaxPool3d((1, 2, 2))
 
-        self.conv4 = CNN3dLayer(64, 128, (3, 3, 3), nn.ReLU(),
+        self.conv4 = CNN3dLayer(4 * out_ch, 8 * out_ch, (3, 3, 3),
+                                nn.ReLU(), stride=1, padding=(1, 0, 0))
+        self.conv5 = CNN3dLayer(8 * out_ch, 8 * out_ch, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=(1, 0, 0))
-        self.conv5 = CNN3dLayer(128, 128, (3, 3, 3), nn.ReLU(),
-                                stride=1, padding=(1, 0, 0))
-        self.conv6 = CNN3dLayer(128, num_features, (3, 3, 3), nn.ReLU(),
-                                stride=1, padding=(1, 0, 0))
+        self.conv6 = CNN3dLayer(8 * out_ch, 8 * out_ch, (3, 3, 3),
+                                nn.ReLU(), stride=1, padding=(1, 0, 0))
 
         self.pool4 = nn.MaxPool3d((1, 6, 6))
 
