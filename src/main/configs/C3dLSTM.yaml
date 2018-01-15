@@ -20,9 +20,9 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: BIJesterEncoder
+  encoder: C3dLSTMEncoder
   encoder_args:
-  encoder_kwargs:
+  encoder_kwargs: {encoder_output_size: 512}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
