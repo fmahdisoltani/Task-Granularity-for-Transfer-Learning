@@ -4,32 +4,33 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.model.encoders import Encoder, C2dEncoder, C3dEncoder
-from ptcap.tensorboardY import forward_hook_closure
+from ptcap.model.encoders import Encoder
+from ptcap.model.feature_extractors import C2dFeatureExtractor, C3dFeatureExtractor
 
 
 class TwoStreamEncoder(Encoder):
-    def __init__(self, encoder_output_size=52, c3d_output_size=256, gpus=None, bidirectional=True):
+    def __init__(self, encoder_output_size=52, c3d_output_size=53, c2d_output_size=256,
+                 rnn_output_size=512, bidirectional=True):
         super().__init__()
-        self.encoder_output_size = 1024
-        self.c3d_encoder = C3dEncoder()
-        self.c2d_encoder = C2dEncoder()
+        self.encoder_output_size = encoder_output_size
+        self.c3d_feature_extractor = C3dFeatureExtractor()
+        self.c2d_feature_extractor = C2dFeatureExtractor()
 
-        lstm_hidden_size = int(
-           256 if bidirectional else 512)
+        lstm_hidden_size = int(rnn_output_size/2 if
+                               bidirectional else rnn_output_size)
 
-        self.lstm = nn.LSTM(input_size=256, hidden_size=lstm_hidden_size,
-                            num_layers=1, batch_first=True,
-                            bidirectional=True) # TODO: FIX for bidir=True
+        self.lstm = nn.LSTM(input_size=c3d_output_size,
+                            hidden_size=lstm_hidden_size, num_layers=1,
+                            batch_first=True, bidirectional=True)
         self.relu = nn.ReLU()
-        self.fc = (nn.Linear(512, 1024))
+        self.fc = (nn.Linear(rnn_output_size, self.encoder_output_size))
         self.dropout = nn.Dropout(p=0.5)
 
         self.activations = {}
 
     def extract_features(self, videos):
         # Video encoding
-        c3d_features = self.c3d_encoder.extract_features(videos) #8*48*128
+        c3d_features = self.c3d_feature_extractor.extract_features(videos) #8*48*128
         #c2d_features = self.c2d_encoder.extract_features(videos) #8*48*256
         h = c3d_features
         # h = torch.cat((c3d_features, c2d_features), 2) #8*48*384
