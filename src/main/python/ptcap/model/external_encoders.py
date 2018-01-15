@@ -4,7 +4,7 @@ from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import BiJesterNetII
 from .encoders import Encoder
-from rtorchn.core.networks.resnets import InflatedResNet18
+#from rtorchn.core.networks.resnets import InflatedResNet18
 
 import torch.nn.functional as F
 

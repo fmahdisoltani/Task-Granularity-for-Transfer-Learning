@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
-from ptcap.model.encoders import Encoder, C2dEncoder, C3dLSTMEncoder
+from ptcap.model.encoders import Encoder, C2dEncoder, C3dEncoder
 from ptcap.tensorboardY import forward_hook_closure
 
 
@@ -12,19 +12,29 @@ class TwoStreamEncoder(Encoder):
     def __init__(self, encoder_output_size=52, num_features=128, gpus=None):
         super().__init__()
         self.encoder_output_size = encoder_output_size
-        self.c3d_encoder = C3dLSTMEncoder()
+        self.c3d_encoder = C3dEncoder()
         self.c2d_encoder = C2dEncoder()
+        lstm_hidden_size = self.encoder_output_size
 
-        #self.activations = self.register_forward_hooks()
+        self.lstm = nn.LSTM(input_size=384, hidden_size=lstm_hidden_size,
+                            num_layers=1, batch_first=True,
+                            bidirectional=True)
+
+        self.activations = {}
+
 
     def extract_features(self, videos):
         # Video encoding
-        c3d_features = self.c3d_encoder.extract_features(videos)
-        c2d_features = self.c2d_encoder.extract_features(videos)
-        h = c3d_features +c2d_features
-        return h
+        c3d_features = self.c3d_encoder.extract_features(videos) #8*48*128
+        c2d_features = self.c2d_encoder.extract_features(videos) #8*48*256
+        h = torch.cat((c3d_features, c2d_features), 2) #8*48*384
+        self.lstm.flatten_parameters()
+        lstm_outputs, _ = self.lstm(h)  #lstm_outputs: [8*48*1024]
 
-    def register_forward_hooks(self):
+
+        return lstm_outputs
+
+    #def register_forward_hooks(self):
         master_dict = {}
         self.conv1.register_forward_hook(
             forward_hook_closure(master_dict, "encoder_conv1"))

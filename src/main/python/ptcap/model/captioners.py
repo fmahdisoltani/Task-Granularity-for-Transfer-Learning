@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
-from ptcap.model.encoders import (CNN3dEncoder, C3dLSTMEncoder)
+from ptcap.model.encoders import (C3dEncoder, C3dLSTMEncoder)
 from ptcap.model.decoders import LSTMDecoder
 
 
@@ -43,7 +43,7 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
         self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
-        self.activations = {}
+        self.activations = {}#TODO: Fix activations
         self.register_forward_hook(self.merge_activations)
 
         self.num_classes = 178
