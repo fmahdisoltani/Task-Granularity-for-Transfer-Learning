@@ -18,7 +18,10 @@ class TwoStreamEncoder(Encoder):
 
         self.lstm = nn.LSTM(input_size=384, hidden_size=lstm_hidden_size,
                             num_layers=1, batch_first=True,
-                            bidirectional=True)
+                            bidirectional=False) # TODO: FIX for bidir= True
+        self.relu = nn.ReLU()
+        self.fc = (nn.Linear(self.encoder_output_size, self.encoder_output_size))
+        self.dropout = nn.Dropout(p=0.5)
 
         self.activations = {}
 
@@ -32,7 +35,7 @@ class TwoStreamEncoder(Encoder):
         lstm_outputs, _ = self.lstm(h)  #lstm_outputs: [8*48*1024]
 
 
-        return lstm_outputs
+        return self.dropout(self.relu(self.fc(lstm_outputs)))
 
     #def register_forward_hooks(self):
         master_dict = {}

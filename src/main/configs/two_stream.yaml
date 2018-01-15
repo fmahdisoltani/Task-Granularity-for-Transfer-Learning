@@ -22,7 +22,7 @@ model:
   type: EncoderDecoder
   encoder: TwoStreamEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 512}
+  encoder_kwargs: {encoder_output_size: 1024}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
