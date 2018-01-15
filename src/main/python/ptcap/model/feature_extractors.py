@@ -5,12 +5,11 @@ from torch.autograd import Variable
 
 from ptcap.model.encoders import Encoder
 from ptcap.model.layers import CNN3dLayer
-
 from ptcap.tensorboardY import forward_hook_closure
 
 
 class C3dFeatureExtractor(Encoder):
-    def __init__(self, encoder_output_size=29, gpus=None, out_ch=32):
+    def __init__(self, out_ch=32):
         super().__init__()
 
         self.conv1 = CNN3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
@@ -46,11 +45,11 @@ class C3dFeatureExtractor(Encoder):
         h = self.pool2(h)
 
         h = self.conv3(h)
-        h = self.pool3(h)#[8,64,48,12,12]
+        h = self.pool3(h)  # [8,64,48,12,12]
 
-        h = self.conv4(h)#[8,128,48,10,10]
-        h = self.conv5(h)#[8,128,48,8,8]
-        h = self.conv6(h)#[8,128,48,6,6]
+        h = self.conv4(h)  # [8,128,48,10,10]
+        h = self.conv5(h)  # [8,128,48,8,8]
+        h = self.conv6(h)  # [8,128,48,6,6]
 
         h = self.pool4(h)  # batch_size * num_features * num_step * w * h
 
@@ -154,8 +153,8 @@ class C2dFeatureExtractor(Encoder):
         h = self.conv6(h)  # 8*256 *48*6*6
         h = self.pool4(h)  # 8*256 *48*1*1
 
-        h = h.view(h.size()[0:3]) #[batch_size*num_feature*num_step](8*256*48)
-        h = h.permute(0, 2, 1)  #[batch_size*num_step*num_features]
+        h = h.view(h.size()[0:3])  # [batch_size*num_feature*num_step](8*256*48)
+        h = h.permute(0, 2, 1)  # [batch_size*num_step*num_features]
 
         return h  # 8* 48 * 256
 
