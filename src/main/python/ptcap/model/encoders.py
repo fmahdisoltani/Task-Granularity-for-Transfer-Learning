@@ -1,7 +1,4 @@
-import torch
 import torch.nn as nn
-
-from torch.autograd import Variable
 
 from ptcap.model.layers import CNN3dLayer
 from ptcap.tensorboardY import forward_hook_closure
@@ -26,14 +23,9 @@ class C3dLSTMEncoder(Encoder):
         self.encoder_output_size = encoder_output_size
         self.use_cuda = True if gpus else False
         self.gpus = gpus
-        
-        # self.logsoftmax = nn.LogSoftmax()
-        # self.classif_layer = nn.Linear(1024, self.num_classes)
+
         self.relu = nn.ReLU()
         self.fc = (nn.Linear(self.encoder_output_size, self.encoder_output_size))
-
-        #self.num_classes = 178
-        #self.classif_layer = nn.Linear(1024, self.num_classes)
 
         self.dropout = nn.Dropout(p=0.5)
 
@@ -62,22 +54,11 @@ class C3dLSTMEncoder(Encoder):
         lstm_hidden_size = int(
             self.encoder_output_size / 2) if bidirectional else self.encoder_output_size
 
-
         self.lstm = nn.LSTM(input_size=8*out_ch, hidden_size=lstm_hidden_size,
                             num_layers=self.num_layers, batch_first=True, 
                             bidirectional=True)
         
-        
-        
         self.activations = self.register_forward_hooks()
-
-    def init_hidden(self, batch_size):
-        h0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
-        c0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
-        if self.use_cuda:
-            h0 = h0.cuda(self.gpus[0])
-            c0 = c0.cuda(self.gpus[0])
-        return (h0, c0)
 
     def extract_features(self, videos):
         # videos: [batch_size*num_ch*len*w*h] (8*3*48*96*96)
@@ -103,10 +84,7 @@ class C3dLSTMEncoder(Encoder):
 
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h) #lstm_input:8*48*256 lstm_output:8*48*1024
-
-        # h_mean = torch.mean(lstm_outputs, dim=1)
-
-        return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48* 1024
+        return self.dropout(self.relu(self.fc(lstm_outputs)))  # [batch_size*num_step*num_features] (8*48*1024)
 
     def register_forward_hooks(self):
         master_dict = {}
