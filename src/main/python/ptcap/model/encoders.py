@@ -80,7 +80,7 @@ class C3dLSTMEncoder(Encoder):
         h = h.view(h.size()[0:3])  # [batch_size*num_feature*num_step](8*256*48)
         h = h.permute(0, 2, 1)  # [batch_size*num_step*num_features]
 
-        lstm_hidden = self.init_hidden(batch_size=h.size()[0])
+#           lstm_hidden = self.init_hidden(batch_size=h.size()[0])
 
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h) #lstm_input:8*48*256 lstm_output:8*48*1024

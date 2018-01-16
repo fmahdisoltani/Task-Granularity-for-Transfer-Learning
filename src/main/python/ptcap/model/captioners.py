@@ -65,11 +65,11 @@ class EncoderDecoder(Captioner):
                                 **self.decoder.activations)
         
     def predict_from_encoder_features(self, features):
-        pre_activation = self.classif_layer(features).permute(2,1,0)
+        pre_activation = self.classif_layer(features)#.permute(2,1,0)
         probs = self.logsoftmax(pre_activation)
-        probs = probs.permute(2,1,0)
+        #probs = probs.permute(2,1,0)
         if probs.ndimension() == 3:
-            probs = probs.mean(dim=1)
+            probs = probs.mean(dim=1) #probs: [8*48*178]
             
         return probs
 
