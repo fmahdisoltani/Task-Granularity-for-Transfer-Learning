@@ -22,8 +22,7 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint ,
-                   freeze: False}
+  encoder_kwargs: {pretrained_path: ,freeze: False}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -68,7 +67,7 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}
