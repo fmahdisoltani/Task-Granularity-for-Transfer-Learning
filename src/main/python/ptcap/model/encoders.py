@@ -41,7 +41,7 @@ class C3dLSTMEncoder(Encoder):
         # self.logsoftmax = nn.LogSoftmax()
         # self.classif_layer = nn.Linear(1024, self.num_classes)
         self.relu = nn.ReLU()
-        self.fc = (nn.Linear(self.encoder_output_size, 2* encoder_output_size))
+        self.fc = (nn.Linear(self.encoder_output_size, self.encoder_output_size))
 
         #self.num_classes = 178
         #self.classif_layer = nn.Linear(1024, self.num_classes)
