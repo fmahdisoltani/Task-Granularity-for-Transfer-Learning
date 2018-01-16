@@ -108,12 +108,6 @@ class C3dLSTMEncoder(Encoder):
 
         return self.dropout(self.relu(self.fc(lstm_outputs)))  # 8* 48* 1024
 
-    # def predict_from_features(self, features):
-    #     probs = self.logsoftmax(features)
-    #     if probs.ndimension() == 3:
-    #         probs = probs.mean(dim=1)
-    #     return probs
-
     def register_forward_hooks(self):
         master_dict = {}
         self.conv1.register_forward_hook(
