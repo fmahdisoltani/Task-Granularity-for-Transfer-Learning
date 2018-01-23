@@ -17,7 +17,7 @@ class Decoder(nn.Module):
 
 class DecoderBase(nn.Module):
     def __init__(self, embedding_size, hidden_size,
-                 num_lstm_layers, vocab_size, num_step=13):
+                 num_lstm_layers, vocab_size, num_step=13, fc_size=37):
 
         super().__init__()
 
@@ -30,7 +30,7 @@ class DecoderBase(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
         # for resnet use 512
-        self.mapping = nn.Linear(1024, hidden_size) #TODO: Fix this number
+        self.mapping = nn.Linear(fc_size, hidden_size) #TODO: Fix this number
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.num_step = num_step
 
