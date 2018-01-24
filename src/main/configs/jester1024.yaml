@@ -8,7 +8,7 @@ paths:
   test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
 
 pretrained:
-  pretrained_folder:
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/clapnet_classif0.01_caption1_step2
   pretrained_file: model.best
 
 device:
@@ -27,7 +27,8 @@ model:
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: 1024,
-                   num_lstm_layers: 2}
+                   num_lstm_layers: 2,
+                   fc_size: 1024}
 
 loss:
   caption_loss: SequenceCrossEntropy
