@@ -3,12 +3,11 @@ import torch.nn as nn
 
 from torch.autograd import Variable
 
-from ptcap.model.encoders import Encoder
 from ptcap.model.layers import CNN3dLayer
 from ptcap.tensorboardY import forward_hook_closure
 
 
-class C3dFeatureExtractor(Encoder):
+class C3dExtractor(nn.Module):
     def __init__(self, out_ch=32):
         super().__init__()
 
@@ -83,7 +82,7 @@ class C3dFeatureExtractor(Encoder):
         return master_dict
 
 
-class C2dFeatureExtractor(Encoder):
+class C2dExtractor(nn.Module):
     def __init__(self, encoder_output_size=52, gpus=None, out_ch=32,
                  bidirectional=True):
         """
@@ -91,17 +90,6 @@ class C2dFeatureExtractor(Encoder):
         """
 
         super().__init__()
-
-        self.num_layers = 1
-        self.encoder_output_size = encoder_output_size
-        self.use_cuda = True if gpus else False
-        self.gpus = gpus
-
-        self.relu = nn.ReLU()
-        self.fc = (
-        nn.Linear(self.encoder_output_size, 2 * encoder_output_size))
-
-        self.dropout = nn.Dropout(p=0.5)
 
         self.conv1 = CNN3dLayer(3, out_ch, (1, 3, 3), nn.ReLU(),
                                 stride=1, padding=(0, 1, 1))
@@ -128,13 +116,6 @@ class C2dFeatureExtractor(Encoder):
 
         #self.activations = self.register_forward_hooks()
 
-    def init_hidden(self, batch_size):
-        h0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
-        c0 = Variable(torch.zeros(1, batch_size, self.encoder_output_size))
-        if self.use_cuda:
-            h0 = h0.cuda(self.gpus[0])
-            c0 = c0.cuda(self.gpus[0])
-        return (h0, c0)
 
     def extract_features(self, videos):
         # videos: [batch_size*num_ch*len*w*h] (8*3*48*96*96)
