@@ -2,18 +2,21 @@ import torch
 import torch.nn as nn
 
 from ptcap.model.encoders import Encoder
-from ptcap.model.feature_extractors import C2dFeatureExtractor, C3dFeatureExtractor
+from ptcap.model.feature_extractors import C2dExtractor, C3dExtractor
 
 
 class TwoStreamEncoder(Encoder):
     def __init__(self, encoder_output_size=52, c3d_output_size=0,
-                 c2d_output_size=0, rnn_output_size=512, bidirectional=True):
+                 c2d_output_size=0, rnn_output_size=51, bidirectional=True):
         super().__init__()
         self.encoder_output_size = encoder_output_size
+        self.use_c3d = c3d_output_size > 0
         self.c3d_output_size = c3d_output_size
+        self.c3d_feature_extractor = C3dExtractor()
+
+        self.use_c2d = c2d_output_size > 0
         self.c2d_output_size = c2d_output_size
-        self.c3d_feature_extractor = C3dFeatureExtractor()
-        self.c2d_feature_extractor = C2dFeatureExtractor()
+        self.c2d_feature_extractor = C2dExtractor()
 
         lstm_hidden_size = int(rnn_output_size/2 if
                                bidirectional else rnn_output_size)
@@ -29,15 +32,14 @@ class TwoStreamEncoder(Encoder):
 
     def extract_features(self, videos):
         # Video encoding
-        c3d_features = self.c3d_feature_extractor.extract_features(videos)  # 8*48*128
-        c2d_features = self.c2d_feature_extractor.extract_features(videos)  # 8*48*256
-
-        if self.c3d_output_size and self.c2d_output_size:
-            h = torch.cat((c3d_features, c2d_features), 2)  # 8*48*384
-        elif self.c3d_output_size:
-            h = c3d_features
-        elif self.c2d_output_size:
-            h = c2d_features
+        cnn_features = []
+        if self.use_c2d:
+            c2d_features = self.c2d_extractor.extract_features(videos)
+            cnn_features.append(c2d_features)
+        if self.use_c3d:
+            c3d_features = self.c3d_extractor.extract_features(videos)
+            cnn_features.append(c3d_features)
+        h = torch.cat(cnn_features, 2)
 
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)  # lstm_outputs:[8*48*512]
