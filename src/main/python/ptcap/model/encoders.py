@@ -1,6 +1,7 @@
 import torch.nn as nn
 
 from ptcap.model.feature_extractors import C3dExtractor
+from ptcap.tensorboardY import forward_hook_closure
 
 
 class Encoder(nn.Module):
@@ -32,8 +33,8 @@ class C3dLSTMEncoder(Encoder):
                             num_layers=num_lstm_layers, batch_first=True,
                             bidirectional=bidirectional)
         
-        # self.activations = self.register_forward_hooks()
-        self.activations = {}  # TODO:FIX Tensorboard
+        self.activations = self.register_forward_hooks()
+        #self.activations = {}  # TODO:FIX Tensorboard
 
     def extract_features(self, videos):
         # videos: [batch_size*num_ch*len*w*h]
@@ -43,30 +44,12 @@ class C3dLSTMEncoder(Encoder):
         lstm_outputs, _ = self.lstm(c3d_features)
         return self.dropout(self.relu(self.fc(lstm_outputs)))  # [batch_size*num_step*num_features]
 
-    # def register_forward_hooks(self):
-    #     master_dict = {}
-    #     self.conv1.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv1"))
-    #     self.conv2.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv2"))
-    #     self.conv3.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv3"))
-    #     self.conv4.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv4"))
-    #     self.conv5.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv5"))
-    #     self.conv6.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_conv6"))
-    #     self.pool1.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_pool1"))
-    #     self.pool2.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_pool2"))
-    #     self.pool3.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_pool3"))
-    #     self.pool4.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_pool4"))
-    #     self.lstm.register_forward_hook(
-    #         forward_hook_closure(master_dict, "encoder_lstm", 0, True))
-    #     return master_dict
+    def register_forward_hooks(self):
+        master_dict = {}
+        self.c3d_extractor.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_c3d_extractor"))
+        self.lstm.register_forward_hook(
+            forward_hook_closure(master_dict, "encoder_lstm", 0, True))
+        return master_dict
 
 

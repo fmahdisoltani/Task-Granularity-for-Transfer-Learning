@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Tesssssst
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Jan_clapnet_templates_fextract_scratch
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
@@ -22,7 +22,7 @@ model:
   type: EncoderDecoder
   encoder: C3dLSTMEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024}
+  encoder_kwargs: {encoder_output_size: 1024, rnn_output_size: 1024}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
