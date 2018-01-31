@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Jan_two_stream_c3d_label
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Jan_two_stream_bijesterrc3d_label
 
   train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
   validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
@@ -20,9 +20,10 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: TwoStreamEncoder
+  encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {encoder_output_size: 1024,
+  encoder_kwargs:  {pretrained_path: , freeze: False}
+  encoder_kwargs_jj: {encoder_output_size: 1024,
                    rnn_output_size: 1024,
                    c2d_output_size: 0,
                    c3d_output_size: 256}
@@ -36,10 +37,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0.99
+  w_caption_loss: 0.9
 
   classif_loss: CrossEntropy
-  w_classif_loss: 0.01
+  w_classif_loss: 0.1
 
 
 
