@@ -93,3 +93,15 @@ class JsonParser(AnnotationParser):
         else:
             json = pd.read_json(path)
         return json
+
+
+class CSVParser(AnnotationParser):
+
+    @classmethod
+    def open_annotation(cls, path):
+        if path.endswith("gz"):
+            with gzip.open(path, "rb") as f:
+                csv = pd.read_csv(f.read().decode("utf-8"))
+        else:
+            csv = pd.read_csv(path)
+        return csv
