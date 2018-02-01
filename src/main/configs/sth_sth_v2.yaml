@@ -1,11 +1,12 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
+  videos_folder: &vidpath /data/20bn-something-something-v2-gulp/
 
   checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Tesssssst
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-something-something-v2/something-something-v2-train.csv
+  validation_annot: /data/20bn-something-something-v2/something-something-v2-validation.csv
+  test_annot: /data/20bn-something-something-v2/something-something-v2-validation.csv
+
 
 pretrained:
   pretrained_folder:
