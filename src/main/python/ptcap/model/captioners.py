@@ -47,7 +47,7 @@ class EncoderDecoder(Captioner):
         self.register_forward_hook(self.merge_activations)
 
         self.num_classes = 178
-        self.logsoftmax = nn.LogSoftmax()
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = \
             nn.Linear(self.encoder.encoder_output_size, self.num_classes)
 

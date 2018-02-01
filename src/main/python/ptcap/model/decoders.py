@@ -31,7 +31,7 @@ class DecoderBase(nn.Module):
         self.linear = nn.Linear(hidden_size, vocab_size)
         # for resnet use 512
         self.mapping = nn.Linear(1024, hidden_size)
-        self.logsoftmax = nn.LogSoftmax()
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.num_step = num_step
 
         self.activations = self.register_forward_hooks()
