@@ -19,7 +19,9 @@ class AnnotationParser(object):
         pass
 
     def get_captions_from_tmp_and_lbl(self):
-        return self.get_captions("template") + self.get_captions("label")    def get_labels(self):
+        return self.get_captions("template") + self.get_captions("label")
+
+    def get_labels(self):
         all_templates = sorted(set(self.annotations["template"]))
         print("Number of different classes: ", len(all_templates))
         class_dict = {k: idx for idx, k in enumerate(all_templates)}
