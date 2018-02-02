@@ -61,13 +61,13 @@ class EncoderDecoder(Captioner):
         return probs, classif_probs
 
     def merge_activations(self, module, input_tensor, output_tensor):
-        self.activations = dict(self.encoder.activations,
+        self.activations = dict(self.encoder.hh,
                                 **self.decoder.activations)
         
     def predict_from_encoder_features(self, features):
-        pre_activation = self.classif_layer(features).permute(2,1,0)
+        pre_activation = self.classif_layer(features)
         probs = self.logsoftmax(pre_activation)
-        probs = probs.permute(2,1,0)
+        #probs = probs.permute(2,1,0)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)
             
