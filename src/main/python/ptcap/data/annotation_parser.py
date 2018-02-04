@@ -130,9 +130,6 @@ class CSVParser(AnnotationParser):
 
 class V2Parser(JsonParser):
 
-    def get_captions_from_tmp_and_lbl(self):
-        return self.get_captions("template") + self.get_captions("caption")
-
     def get_video_ids(self):
 
         ids = [str(i)+".webm" for i in self.annotations["id"]]

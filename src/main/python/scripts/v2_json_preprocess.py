@@ -10,8 +10,9 @@ def json_process(path):
         placeholders = sample["placeholders"]
         for p in placeholders:
             find = template.find("[something]")
-            caption = template[:find]+p+template[find+len("[something]"):]
-        sample["caption"] = caption
+            label = template[:find]+p+template[find+len("[something]"):]
+        del sample["label"]
+        sample["label"] = label
         new_json.append(sample)
 
     return new_json
