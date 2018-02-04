@@ -9,12 +9,11 @@ import ptcap.model.captioners
 import ptcap.model.decoders as dec
 import ptcap.model as all_models
 
-from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.data.annotation_parser import JsonParser, CSVParser
+from ptcap.data.annotation_parser import JsonParser, V2Parser
 from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
@@ -49,7 +48,7 @@ def train_model(config_obj, relative_path=""):
     verbose_train = config_obj.get("training", "verbose")
     verbose_valid = config_obj.get("validation", "verbose")
     # annot_parser = config_obj.get("annot_type")
-    annot_type = "CSV"
+    annot_type = "v2"
 
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
@@ -69,16 +68,16 @@ def train_model(config_obj, relative_path=""):
     input_resize = config_obj.get("preprocess", "input_resize")
 
     # Load Json annotation files
-    if annot_type=="Json":
+    if annot_type=="json":
         training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
         validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    videos_folder), caption_type=caption_type)
-    elif annot_type=="CSV":
-        training_parser = CSVParser(training_path, os.path.join(relative_path,
+    elif annot_type=="v2":
+        training_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
                                      caption_type=caption_type)
-        validation_parser = CSVParser(validation_path,
+        validation_parser = V2Parser(validation_path,
                                        os.path.join(relative_path,
                                                     videos_folder),
                                        caption_type=caption_type)
