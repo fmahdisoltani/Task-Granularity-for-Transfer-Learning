@@ -61,7 +61,7 @@ class EncoderDecoder(Captioner):
         return probs, classif_probs
 
     def merge_activations(self, module, input_tensor, output_tensor):
-        self.activations = dict(self.encoder.hh,
+        self.activations = dict(self.encoder.activations,
                                 **self.decoder.activations)
         
     def predict_from_encoder_features(self, features):
