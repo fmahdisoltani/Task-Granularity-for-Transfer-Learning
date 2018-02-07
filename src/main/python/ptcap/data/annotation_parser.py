@@ -119,10 +119,7 @@ class CSVParser(AnnotationParser):
         if caption_type is None:
             caption_type = self.caption_type
 
-        caption_type == "template"
-
-
-        captions = [i for i in self.annotations["template"]]
+        captions = [i for i in self.annotations[caption_type]]
 
         return captions
 
