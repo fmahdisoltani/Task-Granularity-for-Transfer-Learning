@@ -1,11 +1,12 @@
 paths:
-  videos_folder: &vidpath /data-ssd/20bn-somethingsomething-2017-10-31/
+  videos_folder: &vidpath /data-ssd/v2-gulp-128/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Tesssssst
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_labels_classif1_cap0
 
-  train_annot: &train_annot /data/20bn-somethingsomething/json/train_20171031.json.gz
-  validation_annot: /data/20bn-somethingsomething/json/validation_20171031.json.gz
-  test_annot: /data/20bn-somethingsomething/json/test_20171031.json.gz
+  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
+  validation_annot: /data/20bn-something-something-v2/v2-validation.json
+  test_annot: /data/20bn-something-something-v2/v2-validation.json
+
 
 pretrained:
   pretrained_folder:
@@ -22,8 +23,7 @@ model:
   type: EncoderDecoder
   encoder: BIJesterEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/farzaneh/PycharmProjects/pretrained_nets/jester_net_on_smtsmt_20171031/model.checkpoint,
-                  freeze: False}
+  encoder_kwargs: {pretrained_path: , freeze: False}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -33,10 +33,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0.99
+  w_caption_loss: 0
 
   classif_loss: CrossEntropy
-  w_classif_loss: 0.01
+  w_classif_loss: 1
 
 
 
@@ -64,11 +64,11 @@ validation:
   verbose: True
 
 criteria:
-  score: caption_accuracy
+  score: classif_accuracy
   higher_is_better: True
 
 targets:
-  caption_type: template
+  caption_type: label
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}

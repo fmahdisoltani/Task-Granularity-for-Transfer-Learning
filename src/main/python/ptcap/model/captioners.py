@@ -47,7 +47,7 @@ class EncoderDecoder(Captioner):
         self.register_forward_hook(self.merge_activations)
 
         self.num_classes = 178
-        self.logsoftmax = nn.LogSoftmax()
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = \
             nn.Linear(2*self.encoder.encoder_output_size, self.num_classes)
 
@@ -65,9 +65,9 @@ class EncoderDecoder(Captioner):
                                 **self.decoder.activations)
         
     def predict_from_encoder_features(self, features):
-        pre_activation = self.classif_layer(features).permute(2,1,0)
+        pre_activation = self.classif_layer(features)
         probs = self.logsoftmax(pre_activation)
-        probs = probs.permute(2,1,0)
+        #probs = probs.permute(2,1,0)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)
             
