@@ -130,7 +130,7 @@ class CSVParser(AnnotationParser):
 
 
     def get_video_paths(self):
-        return [file for file in self.get_video_ids()]
+        return self.get_video_ids()
 
 class V2Parser(JsonParser):
 
