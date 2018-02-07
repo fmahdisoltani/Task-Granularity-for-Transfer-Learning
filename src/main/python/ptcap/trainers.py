@@ -6,8 +6,16 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+from ptcap.scores import (MultiScoreAdapter, ScoresOperator,
+                          caption_accuracy, first_token_accuracy,
+                          loss_to_numpy, token_accuracy)
+
+from collections import namedtuple
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
+
 from ptcap.utils import DataParallelWrapper
 
 
@@ -49,7 +57,10 @@ class Trainer(object):
 
         self.tensorboard_frequency = 1
         self.logger = logger
-        self.logger.on_train_init(folder, filename)
+        self.multiscore_adapter = MultiScoreAdapter(
+            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(),
+                        METEOR=Meteor()), self.tokenizer)
+                        self.logger.on_train_init(folder, filename)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,

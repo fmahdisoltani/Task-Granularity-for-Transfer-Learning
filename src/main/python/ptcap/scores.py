@@ -2,6 +2,11 @@ import torch
 
 from collections import OrderedDict
 
+from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.fudge.fudge import Fudge
+from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.metrics import MultiScorer
+from pycocoevalcap.rouge.rouge import Rouge
 
 def token_accuracy(outputs, num_tokens=None):
     return token_level_accuracy(outputs.captions, outputs.predictions,
@@ -92,3 +97,19 @@ class ScoresOperator(object):
                 / count)
             scores_dict[average_score] = self.scores_dict[average_score]
         return scores_dict
+
+
+class MultiScoreAdapter(object):
+    def __init__(self, multiscorer, tokenizer):
+        self.multiscorer = multiscorer
+        self.tokenizer = tokenizer
+
+    def __call__(self, score_attr):
+        return self.multiscore(score_attr)
+
+    def multiscore(self, outputs):
+        string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
+                              for str_pred in outputs.predictions]
+
+        return self.multiscorer.score(outputs.string_captions,
+                                      string_predictions)
