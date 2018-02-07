@@ -18,6 +18,13 @@ class AnnotationParser(object):
     def open_annotation(cls, path):
         pass
 
+    def get_video_paths(self):
+        return NotImplementedError
+    def get_video_ids(self):
+        return NotImplementedError
+    def get_captions(self):
+        return NotImplementedError
+
     def get_captions_from_tmp_and_lbl(self):
         return self.get_captions("template") + self.get_captions("label")
 
