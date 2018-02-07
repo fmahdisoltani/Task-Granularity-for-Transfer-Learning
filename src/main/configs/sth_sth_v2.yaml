@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-128/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_labels_classif0.5_cap0.5
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_labels_classif1_cap0
 
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
   validation_annot: /data/20bn-something-something-v2/v2-validation.json
@@ -33,10 +33,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0.5
+  w_caption_loss: 0
 
   classif_loss: CrossEntropy
-  w_classif_loss: 0.5
+  w_classif_loss: 1
 
 
 
@@ -64,11 +64,11 @@ validation:
   verbose: True
 
 criteria:
-  score: caption_accuracy
+  score: classif_accuracy
   higher_is_better: True
 
 targets:
-  caption_type: template
+  caption_type: label
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}
