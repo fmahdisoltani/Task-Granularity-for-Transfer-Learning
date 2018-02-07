@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
-from ptcap.scores import (MultiScoreAdapter, ScoresOperator,
+from ptcap.scores import (MultiScorerOperator, classif_accuracy,
                           caption_accuracy, first_token_accuracy,
                           loss_to_numpy, token_accuracy)
 
@@ -57,10 +57,9 @@ class Trainer(object):
 
         self.tensorboard_frequency = 1
         self.logger = logger
-        self.multiscore_adapter = MultiScoreAdapter(
-            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(),
-                        METEOR=Meteor()), self.tokenizer)
-                        self.logger.on_train_init(folder, filename)
+        self.multiscorer = MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(),
+                                       METEOR=Meteor())
+        self.logger.on_train_init(folder, filename)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
@@ -168,10 +167,10 @@ class Trainer(object):
         else:
             self.model.eval()
         
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions classif_targets classif_probs")
-        scores = ScoresOperator(self.get_function_dict())
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions predictions classif_targets classif_probs")
+        scores = MultiScorerOperator(self.get_function_dict(), self.multiscorer, self.tokenizer)
 
-        for sample_counter, (videos, _, captions, classif_targets) in enumerate(dataloader):
+        for sample_counter, (videos, string_captions, captions, classif_targets) in enumerate(dataloader):
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
@@ -223,7 +222,7 @@ class Trainer(object):
             classif_targets = classif_targets.cpu()
             classif_probs = classif_probs.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions,
+            batch_outputs = ScoreAttr(loss, string_captions, captions, predictions,
                                       classif_targets, classif_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,

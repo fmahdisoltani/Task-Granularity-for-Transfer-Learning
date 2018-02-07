@@ -3,7 +3,6 @@ import torch
 from collections import OrderedDict
 
 from pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.fudge.fudge import Fudge
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
@@ -55,9 +54,10 @@ class ScoresOperator(object):
                 the functions that will be applied.
         """
 
+        self.average = "avg"
         self.functions_dict = functions_dict
-        self.scores_dict = OrderedDict({"avg_" + score: 0 for score in
-                            self.functions_dict})
+        self.scores_dict = OrderedDict({self.average + "_" + score: 0 for score
+                                        in self.functions_dict})
 
     def compute_scores(self, score_attr, count):
         """
@@ -84,28 +84,45 @@ class ScoresOperator(object):
 
     def get_average_scores(self):
         return {key: self.scores_dict[key] for key in self.scores_dict
-                if "avg" in key}
+                if self.average in key}
 
     def update_moving_average(self, scores_dict, count):
         assert count > 0
         scores_dict = OrderedDict(scores_dict)
         scores_list = list(scores_dict.keys())
         for score in scores_list:
-            average_score = "avg_" + score
+            average_score = self.average + "_" + score
             self.scores_dict[average_score] += (
-                (scores_dict[score] - self.scores_dict[average_score])
-                / count)
+                (scores_dict[score] - self.scores_dict[average_score]) / count)
             scores_dict[average_score] = self.scores_dict[average_score]
         return scores_dict
 
 
-class MultiScoreAdapter(object):
-    def __init__(self, multiscorer, tokenizer):
+class MultiScorerOperator(ScoresOperator):
+    def __init__(self, functions_dict, multiscorer, tokenizer):
+        super().__init__(functions_dict)
         self.multiscorer = multiscorer
+        self.scores_dict.update({self.average + "_" + scorer: 0 for scorer in
+                                 self.multiscorer.scorers})
+        self.expand_key("BLEU")
         self.tokenizer = tokenizer
 
-    def __call__(self, score_attr):
-        return self.multiscore(score_attr)
+    def expand_key(self, key):
+        """
+            Expand BLEU to BLEU@1, BLEU@2, BLEU@3, and BLEU@4.
+        """
+
+        self.scores_dict.pop(self.average + "_" + key)
+        self.scores_dict.update({self.average + "_" + key + "@" + str(i + 1): 0
+                                 for i in range(self.multiscorer.scorers[key]._n
+                                                )})
+
+    def run_scores(self, score_attr):
+        scores_dict = OrderedDict()
+        for score, score_function in self.functions_dict.items():
+            scores_dict[score] = score_function(score_attr)
+        multiscore_dict = self.multiscore(score_attr)
+        return OrderedDict(multiscore_dict, **scores_dict)
 
     def multiscore(self, outputs):
         string_predictions = [self.tokenizer.get_string(str_pred.data.numpy())
