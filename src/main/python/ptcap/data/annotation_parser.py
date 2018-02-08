@@ -19,34 +19,11 @@ class AnnotationParser(object):
         pass
 
     def get_video_paths(self):
-        files = self.annotations[self.file_path]
-        return [os.path.join(self.video_root, name.split("/")[0])
-                for name in files]
-
+        return NotImplementedError
     def get_video_ids(self):
-
-        ids = [id for id in self.annotations["id"]]
-        return ids
-
-    def get_captions(self, caption_type=None):
-
-        if caption_type is None:
-            caption_type = self.caption_type
-
-        if self.object_list:
-            inds_to_keep_lbl = self.get_samples_by_objects(self.object_list)
-            
-            captions = []
-            for i in range(len(self.annotations)):
-                if i in inds_to_keep_lbl:
-                    captions.append(self.annotations["label"][i])
-                else:
-                    captions.append(self.annotations["template"][i])
-                    
-        else:
-            captions = [p for p in self.annotations[caption_type]]
-
-        return captions
+        return NotImplementedError
+    def get_captions(self):
+        return NotImplementedError
 
     def get_captions_from_tmp_and_lbl(self):
         return self.get_captions("template") + self.get_captions("label")
@@ -93,3 +70,78 @@ class JsonParser(AnnotationParser):
         else:
             json = pd.read_json(path)
         return json
+
+    def get_captions(self, caption_type=None):
+
+        if caption_type is None:
+            caption_type = self.caption_type
+
+        if self.object_list:
+            inds_to_keep_lbl = self.get_samples_by_objects(self.object_list)
+
+            captions = []
+            for i in range(len(self.annotations)):
+                if i in inds_to_keep_lbl:
+                    captions.append(self.annotations["label"][i])
+                else:
+                    captions.append(self.annotations["template"][i])
+
+        else:
+            captions = [p for p in self.annotations[caption_type]]
+
+        return captions
+
+    def get_video_ids(self):
+
+        ids = [id for id in self.annotations["id"]]
+        return ids
+
+    def get_video_paths(self):
+        files = self.annotations[self.file_path]
+        return [os.path.join(self.video_root, name.split("/")[0])
+                for name in files]
+
+
+class CSVParser(AnnotationParser):
+
+    @classmethod
+    def open_annotation(cls, path):
+        if path.endswith("gz"):
+            with gzip.open(path, "rb") as f:
+                csv = pd.read_csv(f.read().decode("utf-8"))
+        else:
+            csv = pd.read_csv(path, delimiter=";",
+                              names=["id", "template"])
+        return csv
+
+    def get_captions(self, caption_type=None):
+
+        if caption_type is None:
+            caption_type = self.caption_type
+
+        captions = [i for i in self.annotations[caption_type]]
+
+        return captions
+
+    def get_video_ids(self):
+
+        ids = [str(i)+".webm" for i in self.annotations["id"]]
+        return ids
+
+
+    def get_video_paths(self):
+        return self.get_video_ids()
+
+class V2Parser(JsonParser):
+
+    def get_video_ids(self):
+
+        ids = [str(i)+".webm" for i in self.annotations["id"]]
+        return ids
+
+
+    def get_video_paths(self):
+        return [file for file in self.get_video_ids()]
+
+
+
