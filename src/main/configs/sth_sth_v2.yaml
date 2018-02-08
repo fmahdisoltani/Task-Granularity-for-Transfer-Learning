@@ -1,10 +1,10 @@
 paths:
-  videos_folder: &vidpath /data-ssd/v2-gulp-128/
+  videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_labels_classif1_cap0
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_gulp160_labels_classif1_cap0
 
-  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
-  validation_annot: /data/20bn-something-something-v2/v2-validation.json
+  train_annot: &train_annot /data-ssd/v2-train.json
+  validation_annot: /data-ssd/v2-validation.json
   test_annot: /data/20bn-something-something-v2/v2-validation.json
 
 
@@ -17,7 +17,7 @@ device:
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 12, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -78,6 +78,6 @@ logging:
   tensorboard_frequency: 1000
 
 preprocess:
-  crop_size: [48, 96, 96]
+  crop_size: [48, 128, 128]
   scale: 64.
-  input_resize: [128, 128]
+  input_resize: [160, 160]
