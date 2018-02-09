@@ -75,7 +75,7 @@ class JesterEncoder(ExternalEncoder):
         return features.mean(dim=1)
 
 
-class BIJesterEncoder(ExternalEncoder):
+class BIJesterEncoder_II(ExternalEncoder):
 
     """
             Hardcoded encoder for using BIJesterNet from 20bn_rtorchn
@@ -110,6 +110,22 @@ class BIJesterEncoder(ExternalEncoder):
 
         features = self.encoder.extract_features(video_batch)
         return self.dropout(self.relu(self.fc(features)))
+
+
+class BIJesterEncoder(ExternalEncoder):
+    def __init__(self, pretrained_path=None, freeze=False):
+        self.encoder_output_size = 1024
+        relu_output_size = 1024
+        num_classes = 178
+        encoder_args = (num_classes, self.encoder_output_size)
+        super(BIJesterEncoder, self).__init__(encoder=BiJesterNetII,
+                                              encoder_args=encoder_args,
+                                              pretrained_path=pretrained_path,
+                                              freeze=freeze)
+
+    def extract_features(self, video_batch):
+        features = self.encoder.extract_features(video_batch)
+        return features
 
 
 class Resnet18Encoder(ExternalEncoder):
