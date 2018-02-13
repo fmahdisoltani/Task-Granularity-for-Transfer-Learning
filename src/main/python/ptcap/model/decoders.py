@@ -30,7 +30,7 @@ class DecoderBase(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
         # for resnet use 512
-        self.mapping = nn.Linear(1024, hidden_size)
+        self.mapping = nn.Linear(1000, hidden_size)
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.num_step = num_step
 
