@@ -93,12 +93,12 @@ def train_model(config_obj, relative_path=""):
         #tokenizer.build_dictionaries(training_parser.get_captions())
     preprocessor = Compose([prep.RandomCrop(crop_size),
                             prep.PadVideo(crop_size),
-                            prep.Float32Converter(scale),
+                            prep.ImagenetPreprocessor(scale),
                             prep.PytorchTransposer()])
 
     val_preprocessor = Compose([CenterCropper(crop_size),
                                 prep.PadVideo(crop_size),
-                                prep.Float32Converter(scale),
+                                prep.ImagenetPreprocessor(scale),
                                 prep.PytorchTransposer()])
 
     training_set = GulpVideoDataset(annotation_parser=training_parser,

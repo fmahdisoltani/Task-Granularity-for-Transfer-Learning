@@ -42,7 +42,11 @@ class ImagenetPreprocessor(object):
     def __call__(self, x):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          std=[0.229, 0.224, 0.225])
-        return np.array(x, "float32") / self.scale
+        for frame in len(x):
+            for w in range(224):
+                for h in range(224):
+                    x[frame][w][h] = normalize(x[frame][w][h])
+        return np.array(normalize(x), "float32") / self.scale
 
 
 class PytorchTransposer(object):
