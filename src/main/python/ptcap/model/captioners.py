@@ -52,9 +52,6 @@ class EncoderDecoder(Captioner):
             nn.Linear(self.encoder.encoder_output_size, self.num_classes)
 
     def forward(self, video_batch, use_teacher_forcing):
-
-
-
         videos, captions = video_batch
         features = self.encoder.extract_features(videos)
 
