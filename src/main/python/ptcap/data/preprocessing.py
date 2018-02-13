@@ -1,4 +1,5 @@
 import numpy as np
+import torchvision.transforms as transforms
 from rtorchn.data.preprocessing import pad_video
 
 
@@ -31,6 +32,16 @@ class Float32Converter(object):
         
     def __call__(self, x):
 
+        return np.array(x, "float32") / self.scale
+
+
+class ImagenetPreprocessor(object):
+    def __init__(self, scale=1.):
+        self.scale = scale
+
+    def __call__(self, x):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
         return np.array(x, "float32") / self.scale
 
 
