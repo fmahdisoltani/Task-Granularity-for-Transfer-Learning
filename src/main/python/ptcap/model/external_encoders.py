@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+
+from torchvision.models import vgg16_bn
 from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import BiJesterNetII, JesterNetBase
@@ -128,15 +130,25 @@ class BIJesterEncoder(ExternalEncoder):
         return features
 
 
-class Resnet18Encoder(ExternalEncoder):
-    def __init__(self, pretrained_path=None, freeze=False, ):
-        num_classes = 1363
-        encoder_args = (num_classes,)
-        super(Resnet18Encoder, self).__init__(encoder=InflatedResNet18,
-                                              encoder_args=encoder_args,
-                                              pretrained_path=pretrained_path,
-                                              freeze=freeze)
 
-    def forward(self, video_batch):
-        features = self.encoder.extract_features(video_batch)
-        return features
+class ImagenetEncoder(ExternalEncoder):
+    def __init__(self, pretrained_path=None, freeze=False):
+        # self.encoder = vgg16_bn(pretrained=True)
+
+        self.encoder_output_size = 1000
+
+        num_classes = 1000
+        pretrained = True
+        encoder_args = (pretrained,)
+        super().__init__(encoder=vgg16_bn,
+                         encoder_args=encoder_args,
+                         pretrained_path=pretrained_path,
+                         freeze=freeze)
+
+    def extract_features(self, video_batch):
+        num_frames =  video_batch.size()[2] #[batch_size*num_ch*len*w*h]
+        features = []
+        for f in range(num_frames):
+            frame_features = self.encoder(video_batch[:, :, f, :, :])
+            features.append(frame_features)
+        return torch.stack(features,dim=1) #len*num_features
