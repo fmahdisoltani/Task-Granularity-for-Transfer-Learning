@@ -149,6 +149,6 @@ class ImagenetEncoder(ExternalEncoder):
         num_frames =  video_batch.size()[2] #[batch_size*num_ch*len*w*h]
         features = []
         for f in range(num_frames):
-            frame_features = self.encoder(video_batch[:, :, f, :, :])
+            frame_features = self.encoder.features(video_batch[:, :, f, :, :])
             features.append(frame_features)
         return torch.stack(features,dim=1) #len*num_features
