@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 from rtorchn.data.preprocessing import pad_video
 
@@ -40,14 +41,20 @@ class ImagenetPreprocessor(object):
         self.scale = scale
 
     def __call__(self, x):
+        x_array = np.array(x, "float32") / self.scale
+
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          std=[0.229, 0.224, 0.225])
-        for frame in len(x):
-            for w in range(224):
-                for h in range(224):
-                    x[frame][w][h] = normalize(x[frame][w][h])
-        return np.array(normalize(x), "float32") / self.scale
 
+        x_tensor = torch.FloatTensor (x)/self.scale
+        num_frame, w,h, ch = x_tensor.size()
+        normalized = []
+        for f in range(num_frame):
+
+            normalized.append(normalize(x_tensor[f,:,:,:].permute(2,0,1))
+                              .permute(1,2,0))
+        gg= np.array(torch.stack(normalized, dim=0),"float32")
+        return gg
 
 class PytorchTransposer(object):
     """
