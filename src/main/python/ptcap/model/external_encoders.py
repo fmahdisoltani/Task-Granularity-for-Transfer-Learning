@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from torchvision.models import vgg16_bn
+from torchvision.models import vgg11_bn
 from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import BiJesterNetII, JesterNetBase
@@ -140,7 +140,7 @@ class ImagenetEncoder(ExternalEncoder):
         num_classes = 1000
         pretrained = True
         encoder_args = (pretrained,)
-        super().__init__(encoder=vgg16_bn,
+        super().__init__(encoder=vgg11_bn,
                          encoder_args=encoder_args,
                          pretrained_path=pretrained_path,
                          freeze=freeze)
