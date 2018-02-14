@@ -130,12 +130,11 @@ class BIJesterEncoder(ExternalEncoder):
         return features
 
 
-
 class ImagenetEncoder(ExternalEncoder):
-    def __init__(self, pretrained_path=None, freeze=False):
+    def __init__(self, pretrained_path=None, freeze=True):
         # self.encoder = vgg16_bn(pretrained=True)
 
-        self.encoder_output_size = 1000
+        self.encoder_output_size = 25088
 
         num_classes = 1000
         pretrained = True
@@ -146,9 +145,9 @@ class ImagenetEncoder(ExternalEncoder):
                          freeze=freeze)
 
     def extract_features(self, video_batch):
-        num_frames =  video_batch.size()[2] #[batch_size*num_ch*len*w*h]
+        num_frames = video_batch.size()[2] #[batch_size*num_ch*len*w*h]
         features = []
         for f in range(num_frames):
             frame_features = self.encoder.features(video_batch[:, :, f, :, :])
-            features.append(frame_features)
+            features.append(frame_features.view(1,-1))
         return torch.stack(features,dim=1) #len*num_features

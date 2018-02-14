@@ -24,7 +24,7 @@ model:
   type: EncoderDecoder
   encoder: ImagenetEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: , freeze: False}
+  encoder_kwargs: {pretrained_path: , freeze: True}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
