@@ -17,7 +17,7 @@ device:
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 12, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -25,8 +25,8 @@ model:
   encoder_args:
   encoder_kwargs: {encoder_output_size: 1024,
                    rnn_output_size: 1024,
-                   c2d_out_ch: 0,
-                   c3d_out_ch: 36}
+                   c2d_out_ch: 16,
+                   c3d_out_ch: 48}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,

@@ -17,7 +17,7 @@ class TwoStreamEncoder(Encoder):
         self.c3d_extractor = C3dExtractor(out_ch=c3d_out_ch)
 
         self.use_c2d = c2d_out_ch > 0
-        self.c2d_extractor = C2dExtractor(c2d_out_ch)
+        self.c2d_extractor = C2dExtractor(out_ch=c2d_out_ch)
 
         lstm_hidden_size = int(rnn_output_size/2 if
                                bidirectional else rnn_output_size)
