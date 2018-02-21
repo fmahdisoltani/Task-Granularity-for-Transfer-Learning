@@ -33,6 +33,11 @@ class TwoStreamEncoder(Encoder):
 
         self.activations = {}  # TODO:FIX Tensorboard
 
+        self.num_classes = 178
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
+        self.classif_layer = \
+            nn.Linear(self.encoder_output_size, self.num_classes)
+
     def extract_features(self, videos):
         # Video encoding
         cnn_features = []
@@ -47,4 +52,12 @@ class TwoStreamEncoder(Encoder):
         self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)  # lstm_outputs:[8*48*512]
 
-        return self.dropout(self.relu(self.fc(lstm_outputs)))
+        features = self.dropout(self.relu(self.fc(lstm_outputs)))
+
+        pre_activation = self.classif_layer(features)
+        probs = self.logsoftmax(pre_activation)
+        # probs = probs.permute(2,1,0)
+        if probs.ndimension() == 3:
+            probs = probs.mean(dim=1)  # probs: [8*48*178]
+
+        return features, probs

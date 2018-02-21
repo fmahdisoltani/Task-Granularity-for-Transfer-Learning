@@ -4,9 +4,50 @@ from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import BiJesterNetII, JesterNetBase
 from .encoders import Encoder
+from .two_stream_encoders import TwoStreamEncoder
 #from rtorchn.core.networks.resnets import InflatedResNet18
 
 import torch.nn.functional as F
+
+
+class ExtractEncoder(Encoder):
+    def __init__(self, encoder, pretrained_path=None, checkpoint_key=None,
+                 freeze=False, *encoder_args, **encoder_kwargs):
+        super().__init__()
+
+        if pretrained_path is not None:
+            checkpoint = torch.load(pretrained_path)
+            if checkpoint_key is not None:
+                state_dict = checkpoint[checkpoint_key]
+            else:
+                state_dict = checkpoint
+
+        encoder_state_dict = {}
+
+        for name, param in state_dict.items():
+            if "decoder" not in name.lower():
+                if "encoder" in name.lower():
+                    encoder_state_dict[self.preprocess_name(name, 2)] = param
+                else:
+                    encoder_state_dict[self.preprocess_name(name, 1)] = param
+
+        self.encoder = encoder(**encoder_kwargs)
+        self.encoder.load_state_dict(encoder_state_dict)
+
+        for param in self.encoder.parameters():
+            param.requires_grad = not freeze
+        self.activations = {}
+
+    def extract_features(self, videos):
+        return self.encoder.extract_features(videos)
+
+    def preprocess_name(self, name, num):
+        return ".".join(name.split(".")[num:])
+
+
+class ExtractTwoStreamEncoder(ExtractEncoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(encoder=TwoStreamEncoder, *args, **kwargs)
 
 
 class ExternalEncoder(Encoder):
