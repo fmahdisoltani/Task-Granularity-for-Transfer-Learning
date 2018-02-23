@@ -14,7 +14,8 @@ from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser, V2Parser
-from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset,
+                                NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
@@ -91,27 +92,17 @@ def train_model(config_obj, relative_path=""):
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = Compose([prep.RandomCrop(crop_size),
-                            prep.PadVideo(crop_size),
-                            prep.Float32Converter(scale),
-                            prep.PytorchTransposer()])
+    preprocessor = prep.FixedCrop1D(cropsize=crop_size)
 
-    val_preprocessor = Compose([CenterCropper(crop_size),
-                                prep.PadVideo(crop_size),
-                                prep.Float32Converter(scale),
-                                prep.PytorchTransposer()])
+    val_preprocessor = prep.FixedCrop1D(cropsize=crop_size)
 
-    training_set = GulpVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer,
-                                    preprocess=preprocessor,
-                                    gulp_dir=videos_folder,
-                                    size=input_resize)
+    training_set = NumpyVideoDataset(annotation_parser=training_parser,
+                                     tokenizer=tokenizer,
+                                     preprocess=preprocessor)
 
-    validation_set = GulpVideoDataset(annotation_parser=validation_parser,
-                                      tokenizer=tokenizer,
-                                      preprocess=val_preprocessor,
-                                      gulp_dir=videos_folder,
-                                      size=input_resize)
+    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+                                       tokenizer=tokenizer,
+                                       preprocess=val_preprocessor)
 
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,

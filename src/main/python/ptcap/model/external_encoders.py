@@ -3,6 +3,10 @@ import torch.nn as nn
 from .encoders import Encoder
 from rtorchn.core.networks import (FullyConvolutionalNet, JesterNet)
 from rtorchn.core.networks import BiJesterNetII, JesterNetBase
+from rtorchn.core.networks import (VGG16Classifier,
+                                   VGG16RecurrentClassifier,
+                                   ResNet152Classifier,
+                                   ResNet152RecurrentClassifier)
 from .encoders import Encoder
 #from rtorchn.core.networks.resnets import InflatedResNet18
 
@@ -22,6 +26,8 @@ class ExternalEncoder(Encoder):
 
         if pretrained_path is not None:
             checkpoint = torch.load(pretrained_path)
+            checkpoint = {key.replace('module.', ''): value for key, value in
+                          checkpoint.items()}
             if checkpoint_key is not None:
                 self.encoder.load_state_dict(checkpoint[checkpoint_key])
             else:
@@ -140,3 +146,33 @@ class Resnet18Encoder(ExternalEncoder):
     def forward(self, video_batch):
         features = self.encoder.extract_features(video_batch)
         return features
+
+
+class RtorchnEncoder(ExternalEncoder):
+    module = None
+    encoder_output_size = 1024
+
+    def __init__(self, pretrained_path=None, freeze=False):
+        super().__init__(encoder=self.module,
+                         encoder_args=(174, self.encoder_output_size),
+                         pretrained_path=pretrained_path,
+                         freeze=freeze)
+
+    def extract_features(self, video_batch):
+        return self.encoder.extract_features(video_batch)
+
+
+class VGG16Encoder(RtorchnEncoder):
+    module = VGG16Classifier
+
+
+class VGG16RecurrentEncoder(RtorchnEncoder):
+    module = VGG16RecurrentClassifier
+
+
+class ResNet152Encoder(RtorchnEncoder):
+    module = ResNet152Classifier
+
+
+class ResNet152RecurrentEncoder(RtorchnEncoder):
+    module = ResNet152RecurrentClassifier

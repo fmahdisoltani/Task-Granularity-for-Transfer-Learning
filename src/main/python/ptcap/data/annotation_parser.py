@@ -139,9 +139,9 @@ class V2Parser(JsonParser):
         ids = [str(i)+".webm" for i in self.annotations["id"]]
         return ids
 
-
     def get_video_paths(self):
-        return [file for file in self.get_video_ids()]
+        ids = self.get_video_ids()
+        return [os.path.join(self.video_root, id_) for id_ in ids]
 
 
 

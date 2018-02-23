@@ -1,5 +1,5 @@
 import numpy as np
-from rtorchn.data.preprocessing import pad_video
+from rtorchn.data.preprocessing import pad_video, FixedCrop1D
 
 
 class RandomCrop(object):
