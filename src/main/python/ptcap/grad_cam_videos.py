@@ -5,11 +5,12 @@ import numpy as np
 from torch.autograd import Variable
 
 # Taken and adapted from: https://github.com/jacobgil/pytorch-grad-cam
+# It is assumed that the model is a two_stream encoder_decoder
 
 
-class FeatureExtractor():
+class GradHolder():
     """ Class for extracting activations and
-    registering gradients from targetted intermediate layers """
+    registering gradients from target intermediate layers """
 
     def __init__(self, model, target_layers):
         self.model = model
@@ -30,7 +31,7 @@ class FeatureExtractor():
         return outputs, x
 
 
-class ModelOutputs():
+class RunModel():
     """ Class for making a forward pass, and getting:
     1. The network output.
     2. Activations from intermeddiate targetted layers.
@@ -38,14 +39,14 @@ class ModelOutputs():
 
     def __init__(self, model, target_layers):
         self.model = model
-        self.feature_extractor = FeatureExtractor(
-            self.model.conv_column, target_layers)
+        self.grad_holder = GradHolder(
+            model, self.model.module.encoder.c3d_extractor.conv4)
 
     def get_gradients(self):
-        return self.feature_extractor.gradients
+        return self.grad_holder.gradients
 
     def __call__(self, x):
-        target_activations, output = self.feature_extractor(x)
+        target_activations, output = self.grad_holder(x)
 
         # averaging features in time dimension
         output = output.mean(-1).mean(-1).mean(-1)
@@ -55,6 +56,7 @@ class ModelOutputs():
 
 
 class GradCam:
+
     def __init__(self, model, target_layer_names, class_dict, use_cuda,
                  input_spatial_size=224):
         self.model = model
@@ -65,7 +67,7 @@ class GradCam:
         if self.cuda:
             self.model = model.cuda()
 
-        self.extractor = ModelOutputs(self.model, target_layer_names)
+        self.extractor = RunModel(self.model, target_layer_names)
 
     def forward(self, input):
         return self.model(input)
@@ -88,8 +90,8 @@ class GradCam:
         else:
             one_hot = torch.sum(one_hot * output)
 
-        self.model.conv_column.zero_grad()
-        self.model.clf_layers.zero_grad()
+        self.model.module.encoder.c3d_extractor.conv4.zero_grad()
+        self.model.module.classif_layer.zero_grad()
         one_hot.backward(retain_graph=True)
 
         grads_val = self.extractor.get_gradients()[-1].cpu().data.numpy()

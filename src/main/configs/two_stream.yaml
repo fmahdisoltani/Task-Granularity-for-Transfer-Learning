@@ -10,7 +10,7 @@ paths:
 
 pretrained:
   pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_c3d_0_c2_32_labels_classif1_cap0
-  pretrained_file: model.latest
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
