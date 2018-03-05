@@ -28,7 +28,8 @@ class Checkpointer(object):
 
         return False
 
-    def load_model(self, model, optimizer, folder=None, filename=None):
+    def load_model(self, model, optimizer, folder=None, filename=None,
+                   load_encoder_only=False):
         pretrained_path = None if not folder or not filename else (
             os.path.join(folder, filename))
         init_epoch = 0

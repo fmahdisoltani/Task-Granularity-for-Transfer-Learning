@@ -39,6 +39,7 @@ def train_model(config_obj, relative_path=""):
     frequency_valid = config_obj.get("validation", "frequency")
     gpus = config_obj.get("device", "gpus")
     num_epoch = config_obj.get("training", "num_epochs")
+    load_encoder_only = config_obj.get("pretrained", "load_encoder_only")
     pretrained_folder = config_obj.get("pretrained", "pretrained_folder")
     pretrained_file = config_obj.get("pretrained", "pretrained_file")
     pretrained_folder = os.path.join(relative_path, pretrained_folder
@@ -175,7 +176,7 @@ def train_model(config_obj, relative_path=""):
 
     # Trainer
     trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
-                      writer, checkpointer, folder=pretrained_folder,
+                      writer, checkpointer, load_encoder_only, folder=pretrained_folder,
                       filename=pretrained_file, gpus=gpus, clip_grad=clip_grad,
                       classif_loss_function=classif_loss_function, 
                       w_classif_loss=w_classif_loss)

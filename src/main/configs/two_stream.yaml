@@ -1,23 +1,24 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/test_v2_gulp160_two_stream_c2_48_c3_16_labels_cutoff5_classif0.1_cap0.9_single
 
-  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
-  validation_annot: /data/20bn-something-something-v2/v2-validation.json
-  test_annot: /data/20bn-something-something-v2/v2-validation.json
+  train_annot: &train_annot /data/20bn-something-something-v2/v2-train-single.json
+  validation_annot: /data/20bn-something-something-v2/v2-validation-single.json
+  test_annot: /data/20bn-something-something-v2/v2-validation-single.json
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9
-  pretrained_file: model.be---st
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_48_c3_16_labels_cutoff5_classif1_cap0
+  pretrained_file: model.best
+  load_encoder_only: True
 
 device:
   synchronize_gpu: &sync True
-  gpus: &gpus [0, 1]
+  gpus: &gpus [0,1]
 
 dataloaders:
-  kwargs: {batch_size: 20, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -25,8 +26,8 @@ model:
   encoder_args:
   encoder_kwargs: {encoder_output_size: 1024,
                    rnn_output_size: 1024,
-                   c2d_out_ch: 0,
-                   c3d_out_ch: 32}
+                   c2d_out_ch: 48,
+                   c3d_out_ch: 16}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -37,10 +38,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0
+  w_caption_loss: 0.9
 
   classif_loss: CrossEntropy
-  w_classif_loss: 1
+  w_classif_loss: 0.1
 
 
 
