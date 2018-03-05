@@ -7,7 +7,6 @@ from ptcap.model.decoders import LSTMDecoder
 
 
 class Captioner(nn.Module):
-
     def forward(self, video_batch, use_teacher_forcing):
         """BxCxTxWxH -> BxTxV"""
         raise NotImplementedError
@@ -30,7 +29,6 @@ class RtorchnCaptioner(Captioner):
 class EncoderDecoder(Captioner):
     def __init__(self, encoder, decoder, encoder_args=None, encoder_kwargs=None,
                  decoder_args=None, decoder_kwargs=None, gpus=None):
-
         print("gpus: {}".format(gpus))
         super(EncoderDecoder, self).__init__()
         self.use_cuda = True if gpus else False
@@ -43,13 +41,19 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
         self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
-        self.activations = {}#TODO: Fix activations
+        self.activations = {}  # TODO: Fix activations
         self.register_forward_hook(self.merge_activations)
+
+        self.num_classes = 178
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
+        self.classif_layer = \
+            nn.Linear(self.encoder.encoder_output_size, self.num_classes)
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
-        features, classif_probs = self.encoder.extract_features(videos)
+        features = self.encoder.extract_features(videos)
 
+        classif_probs = self.predict_from_encoder_features(features)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
         return probs, classif_probs
@@ -58,6 +62,14 @@ class EncoderDecoder(Captioner):
         self.activations = dict(self.encoder.activations,
                                 **self.decoder.activations)
 
+    def predict_from_encoder_features(self, features):
+        pre_activation = self.classif_layer(features)
+        probs = self.logsoftmax(pre_activation)
+        # probs = probs.permute(2,1,0)
+        if probs.ndimension() == 3:
+            probs = probs.mean(dim=1)  # probs: [8*48*178]
+
+        return probs
 
 # class CNN3dLSTM(EncoderDecoder):
 #     def __init__(self, encoder_output_size=256, embedding_size=31,
