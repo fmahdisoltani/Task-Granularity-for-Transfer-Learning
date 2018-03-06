@@ -9,8 +9,7 @@ class TwoStreamEncoder(Encoder):
     def __init__(self, encoder_output_size=52, c3d_out_ch=0,
                  c2d_out_ch=0, rnn_output_size=51, bidirectional=True):
         super().__init__()
-        c3d_out_ch = 36
-        c2d_out_ch = 0
+
         self.encoder_output_size = encoder_output_size
 
         self.use_c3d = c3d_out_ch > 0

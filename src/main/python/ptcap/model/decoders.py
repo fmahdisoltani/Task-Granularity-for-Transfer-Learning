@@ -71,7 +71,7 @@ class DecoderBase(nn.Module):
 
         else:
             # Without teacher forcing: use its own predictions as the next input
-            probs = self.predict(features, captions, num_step=17)
+            probs = self.predict(features, captions, num_step=self.num_step)
 
 
         return probs
