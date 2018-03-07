@@ -4,6 +4,7 @@ import numpy as np
 from collections import namedtuple
 from collections import OrderedDict
 from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.fudge.fudge import Fudge
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.metrics import MultiScorer
 from pycocoevalcap.rouge.rouge import Rouge
@@ -56,8 +57,8 @@ class Trainer(object):
         self.logger = logger
 
         self.multiscore_adapter = MultiScoreAdapter(
-            MultiScorer(BLEU=Bleu(4), ROUGE_L=Rouge(), METEOR=Meteor()),
-            self.tokenizer)
+            MultiScorer(aggregator=Fudge(), BLEU=Bleu(4), ROUGE_L=Rouge(),
+                        METEOR=Meteor()), self.tokenizer)
 
         self.logger.on_train_init(folder, filename)
 
@@ -172,10 +173,10 @@ class Trainer(object):
             self.model.eval()
 
         ScoreAttr = namedtuple("ScoresAttr",
-                               "loss captions predictions classif_targets classif_probs")
+                               "loss string_captions captions predictions classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict(is_training))
 
-        for sample_counter, (videos, _, captions, classif_targets) in enumerate(
+        for sample_counter, (videos, string_captions, captions, classif_targets) in enumerate(
                 dataloader):
             self.logger.on_batch_begin()
 
@@ -234,7 +235,7 @@ class Trainer(object):
             classif_targets = classif_targets.cpu()
             classif_probs = classif_probs.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions,
+            batch_outputs = ScoreAttr(loss, string_captions, captions, predictions,
                                       classif_targets, classif_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,
