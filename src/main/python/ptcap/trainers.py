@@ -149,7 +149,8 @@ class Trainer(object):
         scoring_functions.append(loss_to_numpy)
         scoring_functions.append(token_accuracy)
         scoring_functions.append(first_token_accuracy)
-        #scoring_functions.append(caption_accuracy)
+        scoring_functions.append(caption_accuracy)
+        scoring_functions.append(classif_accuracy)
         if not is_training:
             scoring_functions.append(self.multiscore_adapter)
             #scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))

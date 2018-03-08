@@ -4,7 +4,7 @@ paths:
   checkpoint_folder: /home/waseem/Models/test_ptcap_config_delete
 
   train_annot: &train_annot /home/waseem/data/json/v2-train.json
-  validation_annot: /home/waseem/data/json/v2-validation.json
+  validation_annot: /home/waseem/data/json/v2-test.json
   test_annot: /home/waseem/data/json/v2-validation.json
 
 

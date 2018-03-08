@@ -9,7 +9,7 @@ paths:
 
 
 pretrained:
-  pretrained_folder: /home/waseem/Models/v2_gulp160_two_stream_c2_32_c3_32_labels_cutoff5_classif0.1_cap0.9
+  pretrained_folder: /home/waseem/Models/v2_gulp160_two_stream_c2_0_c3_64_labels_cutoff5_classif0.1_cap0.9
   pretrained_file: model.best
 
 device:
@@ -25,8 +25,8 @@ model:
   encoder_args:
   encoder_kwargs: {encoder_output_size: 1024,
                    rnn_output_size: 1024,
-                   c2d_out_ch: 32,
-                   c3d_out_ch: 32}
+                   c2d_out_ch: 0,
+                   c3d_out_ch: 64}
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,

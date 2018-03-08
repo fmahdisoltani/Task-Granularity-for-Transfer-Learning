@@ -4,12 +4,12 @@ paths:
   checkpoint_folder: /home/waseem/Models/test_ptcap_config_delete
 
   train_annot: &train_annot /home/waseem/data/json/v2-train.json
-  validation_annot: /home/waseem/data/json/v2-test.json
+  validation_annot: /home/waseem/data/json/v2-validation.json
   test_annot: /home/waseem/data/json/v2-validation.json
 
 
 pretrained:
-  pretrained_folder: /home/waseem/Models/v2_gulp160_two_stream_c2_32_c3_32_labels_cutoff5_classif0.1_cap0.9
+  pretrained_folder: /home/waseem/Models/v2_gulp160_two_stream_c2_32_c3_32_labels_cutoff5_cassif0.1_cap0.9_simple
   pretrained_file: model.best
 
 device:
