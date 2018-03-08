@@ -30,6 +30,9 @@ def train_model(config_obj, relative_path=""):
     validation_path = os.path.join(relative_path,
                                    config_obj.get("paths", "validation_annot"))
 
+    test_path = os.path.join(relative_path,
+                                   config_obj.get("paths", "test_annot"))
+
     # Load attributes of config file
     caption_type = config_obj.get("targets", "caption_type")
     checkpoint_folder = os.path.join(
@@ -74,6 +77,8 @@ def train_model(config_obj, relative_path=""):
                                  videos_folder), caption_type=caption_type)
         validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    videos_folder), caption_type=caption_type)
+
+        test_parser = validation_parser #TODO: FIX THIS
     elif annot_type=="v2":
         training_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
@@ -82,6 +87,11 @@ def train_model(config_obj, relative_path=""):
                                        os.path.join(relative_path,
                                                     videos_folder),
                                        caption_type=caption_type)
+
+        test_parser = V2Parser(test_path,
+                                 os.path.join(relative_path,
+                                              videos_folder),
+                                 caption_type=caption_type)
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
@@ -114,11 +124,20 @@ def train_model(config_obj, relative_path=""):
                                       gulp_dir=videos_folder,
                                       size=input_resize)
 
+    test_set = GulpVideoDataset(annotation_parser=test_parser,
+                                      tokenizer=tokenizer,
+                                      preprocess=val_preprocessor,
+                                      gulp_dir=videos_folder,
+                                      size=input_resize) #TODO: This is shit, fix the shit
+
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
 
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
+                                **config_obj.get("dataloaders", "kwargs"))
+
+    test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
 
     encoder_type = config_obj.get("model", "encoder")
@@ -182,6 +201,10 @@ def train_model(config_obj, relative_path=""):
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
-                  frequency_valid, teacher_force_train, teacher_force_valid,
-                  verbose_train, verbose_valid)
+    #trainer.train(dataloader, val_dataloader, criteria, num_epoch,
+    #              frequency_valid, teacher_force_train, teacher_force_valid,
+    #              verbose_train, verbose_valid)
+
+
+
+    trainer.test(test_dataloader )
