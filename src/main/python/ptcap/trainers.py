@@ -6,6 +6,8 @@ from collections import OrderedDict
 
 from torch.autograd import Variable
 
+from ptcap.scores import (ScoresInterface, Loss)
+
 from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
                           first_token_accuracy, loss_to_numpy, token_accuracy)
 from ptcap.utils import DataParallelWrapper
@@ -152,6 +154,7 @@ class Trainer(object):
 
     def run_epoch(self, dataloader, epoch, is_training,
                   use_teacher_forcing=False, verbose=True):
+        metrics = "[BLEU, METEOR, ROUGE, FUDGE, recall, gmeasure]"
         self.logger.on_epoch_begin(epoch)
 
         if is_training:
@@ -159,10 +162,12 @@ class Trainer(object):
         else:
             self.model.eval()
         
-        ScoreAttr = namedtuple("ScoresAttr", "loss captions predictions classif_targets classif_probs")
+        ScoreAttr = namedtuple("ScoresAttr", "loss string_captions captions predictions classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
+        scores_interface = ScoresInterface(metrics, self.tokenizer)
+        scores = scores_interface.get_score_operator()
 
-        for sample_counter, (videos, _, captions, classif_targets) in enumerate(dataloader):
+        for sample_counter, (videos, string_captions, captions, classif_targets) in enumerate(dataloader):
             self.logger.on_batch_begin()
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
@@ -214,11 +219,15 @@ class Trainer(object):
             classif_targets = classif_targets.cpu()
             classif_probs = classif_probs.cpu()
 
-            batch_outputs = ScoreAttr(loss, captions, predictions,
+            batch_outputs = ScoreAttr(loss, string_captions, captions, predictions,
                                       classif_targets, classif_probs)
 
-            scores_dict = scores.compute_scores(batch_outputs,
-                                                sample_counter + 1)
+            scores.compute_scores(batch_outputs, sample_counter + 1)
+
+            # Take only the average of the scores in scores_dict
+            average_scores_dict = scores_interface.get_average_scores()
+
+
 
             # Take only the average of the scores in scores_dict
             average_scores_dict = scores.get_average_scores()
@@ -235,3 +244,14 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+    def test(self, test_dataloader, verbose_valid=False):
+
+        test_average_scores = self.run_epoch(
+            test_dataloader, 0, is_training=False,
+            use_teacher_forcing=False,
+            verbose=True
+        )
+
+
+
