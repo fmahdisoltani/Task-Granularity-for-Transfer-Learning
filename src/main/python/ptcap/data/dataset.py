@@ -11,7 +11,7 @@ from gulpio import GulpDirectory
 class VideoDataset(Dataset):
 
     def __init__(self, annotation_parser, tokenizer, preprocess=None,
-                 remove_unk=False):
+                 remove_unk=False, use_action_groups=False):
         self.tokenizer = tokenizer
         self.video_paths = annotation_parser.get_video_paths()
         self.video_ids = [str(id) for id in annotation_parser.get_video_ids()]
@@ -20,8 +20,7 @@ class VideoDataset(Dataset):
         #tokenize and filter captions
         self.tokenized_captions = \
             [self.tokenizer.encode_caption(c) for c in self.captions]
-
-        self.labels = annotation_parser.get_labels()
+        self.labels = annotation_parser.get_labels(use_action_groups=use_action_groups)
         self.preprocess = preprocess
         if remove_unk:
             # filter out all the samples that have unk in their captions
@@ -34,7 +33,6 @@ class VideoDataset(Dataset):
             self.captions = [c for (i,c) in enumerate(self.captions) if i in inds_to_keep]
             self.tokenized_captions = [c for (i,c) in enumerate(self.tokenized_captions) if i in inds_to_keep]
             self.labels = [c for (i,c) in enumerate(self.labels) if i in inds_to_keep]
-          
 
     def __len__(self):
         return len(self.video_ids)
