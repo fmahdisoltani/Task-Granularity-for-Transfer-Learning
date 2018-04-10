@@ -43,6 +43,9 @@ class EncoderDecoder(Captioner):
         self.encoder = encoder(*encoder_args, **encoder_kwargs)
         self.decoder = decoder(*decoder_args, **decoder_kwargs)
 
+        # for param in self.encoder.parameters():
+        #     param.requires_grad = False
+
         self.activations = {}#TODO: Fix activations
         self.register_forward_hook(self.merge_activations)
 
