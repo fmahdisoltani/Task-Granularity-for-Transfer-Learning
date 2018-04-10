@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+import class_mappings
+
 from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import C3dLSTMEncoder
 from ptcap.model.decoders import LSTMDecoder
@@ -49,7 +51,7 @@ class EncoderDecoder(Captioner):
         self.activations = {}#TODO: Fix activations
         self.register_forward_hook(self.merge_activations)
 
-        self.num_classes = 178
+        self.num_classes = class_mappings.num_classes
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = \
             nn.Linear(self.encoder.encoder_output_size, self.num_classes)
