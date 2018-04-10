@@ -71,6 +71,9 @@ def train_model(config_obj, relative_path=""):
     scale = config_obj.get("preprocess", "scale")
     input_resize = config_obj.get("preprocess", "input_resize")
 
+    # TODO: read this from config file
+    use_action_groups = True
+
     # Load Json annotation files
     if annot_type=="json":
         training_parser = JsonParser(training_path, os.path.join(relative_path,
@@ -117,19 +120,22 @@ def train_model(config_obj, relative_path=""):
                                     tokenizer=tokenizer,
                                     preprocess=preprocessor,
                                     gulp_dir=videos_folder,
-                                    size=input_resize)
+                                    size=input_resize,
+                                    use_action_groups=use_action_groups)
 
     validation_set = GulpVideoDataset(annotation_parser=validation_parser,
                                       tokenizer=tokenizer,
                                       preprocess=val_preprocessor,
                                       gulp_dir=videos_folder,
-                                      size=input_resize)
+                                      size=input_resize,
+                                      use_action_groups=use_action_groups)
 
     test_set = GulpVideoDataset(annotation_parser=test_parser,
                                       tokenizer=tokenizer,
                                       preprocess=val_preprocessor,
                                       gulp_dir=videos_folder,
-                                      size=input_resize) #TODO: This is shit, fix the shit
+                                      size=input_resize,
+                                      use_action_groups=use_action_groups) #TODO: This is shit, fix the shit
 
 
     dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
