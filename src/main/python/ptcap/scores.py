@@ -1,6 +1,19 @@
 import torch
 
 from collections import OrderedDict
+from ptcap.data.annotation_parser import action_groups, class_freqs
+
+import numpy as np
+from torch.autograd import Variable
+
+import class_mappings
+
+all_actions = sorted(set(action_groups.values()))
+grp2int = {k: idx for idx, k in enumerate(all_actions)}
+class2grp = {idx: grp2int[action_groups[class_mappings.int2label[idx].replace('[', '').replace(']', '')]]
+             for idx in range(174)}
+
+
 
 
 def token_accuracy(outputs, num_tokens=None):
@@ -38,6 +51,67 @@ def classif_accuracy(outputs):
     _, class_index = torch.max(outputs.classif_probs, dim=1)
     equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
     accuracy = equal_values.float().data.numpy()[0] * 100.0
+    return accuracy
+
+
+def action_groups_accuracy(outputs):
+    probas_in = torch.exp(outputs.classif_probs)
+    probas_out = torch.zeros((probas_in.size(0), 50))
+    for k in range(probas_in.size(0)):
+        for idx in range(174):
+            probas_out[k, class2grp[idx]] += float(probas_in[k, idx])
+    probas_out = Variable(probas_out)
+    _, class_index = torch.max(probas_out, dim=1)
+    equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
+    accuracy = equal_values.float().data.numpy()[0] * 100.0
+    return accuracy
+
+def classif_accuracy4(outputs):
+    probas_in = torch.exp(outputs.classif_probs) #50
+
+    _, class_index = torch.max(outputs.classif_probs, dim=1)
+    equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
+
+
+    accuracy = equal_values.eq(caption_len).float().mean().data.numpy()[0] * 100.0
+
+
+    for k in range(probas_in.size(0)):
+        classes_per_group = []
+
+        _, grp_index = torch.max(probas_in, dim=1)
+        for fg in range(174):
+            if class2grp[fg] ==grp_index[k].data.numpy()[0]:
+                classes_per_group.append(fg)
+
+        class_index[k] = classes_per_group[np.argmax(dist)]
+
+
+
+    def classif_accuracy2(outputs):
+        probas_in = torch.exp(outputs.classif_probs)  # 50
+
+        class_index = np.zeros(probas_in.size(0))
+
+        for k in range(probas_in.size(0)):
+            classes_per_group = []
+            dist = []
+            _, grp_index = torch.max(probas_in, dim=1)
+            for fg in range(174):
+                if class2grp[fg] == grp_index[k].data.numpy()[0]:
+                    classes_per_group.append(fg)
+                    dist.append(class_freqs[int2label[fg]])
+
+            import random
+            # class_index[k] = np.random.choice(classes_per_group, p=[d/sum(dist) for d in dist])
+            class_index[k] = classes_per_group[np.argmax(dist)]
+
+
+
+
+
+    equal_values = np.mean(torch.DoubleTensor(class_index).long().eq(outputs.classif_targets.data))
+    accuracy = equal_values * 100.0
     return accuracy
 
 
