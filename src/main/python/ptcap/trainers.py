@@ -7,7 +7,8 @@ from collections import OrderedDict
 from torch.autograd import Variable
 
 from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
-                          first_token_accuracy, loss_to_numpy, token_accuracy)
+                          first_token_accuracy, loss_to_numpy, token_accuracy,
+                          action_groups_accuracy)
 from ptcap.utils import DataParallelWrapper
 
 
@@ -15,16 +16,16 @@ class Trainer(object):
     def __init__(self, model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
                  writer, checkpointer, load_encoder_only, folder=None, filename=None,
                  gpus=None, clip_grad=None, classif_loss_function=None,
-                 w_classif_loss=0):
+                 w_classif_loss=0, use_action_groups = False):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
         self.load_encoder_only = load_encoder_only
+        self.use_action_groups = use_action_groups
 
 
         #model = DataParallelWrapper(model, device_ids=gpus).cuda(gpus[0])
-
 
         self.model = model if self.gpus is None else(
             DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
@@ -139,7 +140,9 @@ class Trainer(object):
         function_dict["accuracy"] = token_accuracy
         function_dict["first_accuracy"] = first_token_accuracy
         function_dict["caption_accuracy"] = caption_accuracy
-        function_dict["classif_accuracy"] = classif_accuracy
+        function_dict["classif_accuracy"] = \
+            action_groups_accuracy if self.use_action_groups else\
+                classif_accuracy
 
         return function_dict
 
