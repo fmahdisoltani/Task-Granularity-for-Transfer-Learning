@@ -83,6 +83,7 @@ def train_model(config_obj, relative_path=""):
         training_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
                                      caption_type=caption_type)
+        class_pop = training_parser.get_class_pop()
         validation_parser = V2Parser(validation_path,
                                        os.path.join(relative_path,
                                                     videos_folder),
@@ -201,7 +202,7 @@ def train_model(config_obj, relative_path=""):
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
+    trainer.train(dataloader, val_dataloader, criteria, 5, #num_epoch,
                  frequency_valid, teacher_force_train, teacher_force_valid,
                  verbose_train, verbose_valid)
 
