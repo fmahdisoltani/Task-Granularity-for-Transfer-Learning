@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from ptcap.model.feature_extractors import C3dExtractor
+from ptcap.model.feature_extractors import C3dExtractor, CausalC3dExtractor
 from ptcap.tensorboardY import forward_hook_closure
 
 
@@ -12,7 +12,7 @@ class Encoder(nn.Module):
 
 class C3dLSTMEncoder(Encoder):
     def __init__(self, encoder_output_size=52, out_ch=32, bidirectional=True,
-                 rnn_output_size=51, num_lstm_layers=1):
+                 rnn_output_size=51, num_lstm_layers=1, causal=True):
         """
         encoder_output_size: defines the output size of the encoder
         """
@@ -21,11 +21,15 @@ class C3dLSTMEncoder(Encoder):
 
         self.encoder_output_size = encoder_output_size
 
-        self.c3d_extractor = C3dExtractor()
+        self.c3d_extractor = CausalC3dExtractor() if causal else C3dExtractor()
+
         self.relu = nn.ReLU()
         self.fc = (nn.Linear(rnn_output_size, self.encoder_output_size))
         self.dropout = nn.Dropout(p=0.5)
-
+        if causal and bidirectional:
+            print("Can not use bidirectional LSTM in causal mode \n "
+                  "I'm changing it to unidirectional")
+        bidirectional = bidirectional and not causal
         lstm_hidden_size = int(
             rnn_output_size / 2) if bidirectional else rnn_output_size
 
