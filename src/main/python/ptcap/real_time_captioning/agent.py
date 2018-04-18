@@ -3,10 +3,7 @@ import torch
 
 
 class Agent:
-    def __init__(self, input_size, hidden_size, output_size,
-                 encoder, decoder, encoder_args=None, encoder_kwargs=None,
-                 decoder_args=None, decoder_kwargs=None,):
-
+    def __init__(self, input_size=20, hidden_size=33, output_size=2):
 
         self.policy = nn.Sequential(
             nn.Linear(input_size, hidden_size),
