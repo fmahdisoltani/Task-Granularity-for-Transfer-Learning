@@ -1,4 +1,5 @@
-
+import numpy as np
+import torch
 
 
 class Environment:
@@ -9,19 +10,18 @@ class Environment:
     STATUS_CORRECT_WORD = 'correct'
     STATUS_INCORRECT_WORD = 'incorrect'
 
-    MAX_CAPTION_COUNT = 14
+    MAX_TOKEN_COUNT = 14
     MAX_FRAME_COUNT = 48
 
-    def __init__(self, encoder, decoder, encoder_args=None, encoder_kwargs=None,
-                 decoder_args=None, decoder_kwargs=None):
-        self.reset()
-        self.encoder = encoder(*encoder_args, **encoder_kwargs)
-        self.decoder = decoder(*decoder_args, **decoder_kwargs)
+    def __init__(self, encoder, decoder):
+
+        self.encoder = encoder
+        self.decoder = decoder
 
     def reset(self, video, caption):
         self.caption = caption
-        self.vid_encoding = self.encoder(video)
-        self.output_buffer = np.array([0] * self.MAX_CAPTION_LEN)
+        self.vid_encoding = self.encoder.extract_features(video)
+        self.output_buffer = np.array([0] * self.MAX_TOKEN_COUNT)
         self.input_buffer = []  # input buffer contains the seen video frames
         self.read_count = 0
         self.write_count =0
