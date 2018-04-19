@@ -6,23 +6,39 @@ from torch.autograd import Variable
 
 
 class Agent:
-    def __init__(self, input_size=1, hidden_size=33, output_size=2):
+    def __init__(self, input_size=1025, hidden_size=33, num_actions=2):
 
+
+
+        self.input_layer = nn.Linear(input_size, input_size)
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                            num_layers=2, batch_first=True)
+        self.output_layer = nn.Linear(hidden_size, num_actions)
+        self.softmax = nn.Softmax(dim=-1)
         self.policy = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
+            nn.Linear(hidden_size, num_actions),
             nn.Softmax()
         )
 
     def get_action_probs(self, x):
-        #TODO: Fix x
-        x=Variable(torch.zeros(1))
-        action_probs = self.policy(x)
-        return action_probs
+        #orig = self.prepare_policy_input(x)
+        x = self.prepare_policy_input(x)
+        x = self.input_layer(x)
+        lstm_output, lstm_hidden = self.lstm(x)
+        self.lstm.flatten_parameters()
+
+        lstm_out_projected = self.output_layer(lstm_output)
+        action_probs = self.softmax(lstm_out_projected)
+
+        return action_probs.squeeze(dim=1)
+
     def prepare_policy_input(self, state):
-        last_token = state.output_buffer[-1]
-        return
+        last_token = state['output_buffer'][-1]
+        last_vid_feature = state['input_buffer'][-1]
+        policy_input = torch.cat((last_vid_feature.data, last_token.float()), dim=1)
+        return Variable(torch.unsqueeze(policy_input,dim=1))
     def select_action(self, state):
         action_probs = self.get_action_probs(state)
         m = torch.distributions.Categorical(action_probs)
