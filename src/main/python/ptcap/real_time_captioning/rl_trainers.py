@@ -42,11 +42,11 @@ class RLTrainer(object):
     def train(self, train_dataloader, teacher_force_train=True,
                verbose_train=False):
         for i_episode in range(1000):
-            self.run_episode(train_dataloader,i_episode, is_training=True,
+            self.run_episode(train_dataloader, i_episode, is_training=True,
                              use_teacher_forcing=teacher_force_train,
                              verbose=verbose_train)
 
-    def run_episode(self, dataloader, epoch, is_training,
+    def run_episode(self, dataloader, i_episode, is_training,
                   use_teacher_forcing=False, verbose=True):
         print("*****inside episode*****{}".format("%"*3))
 
@@ -54,7 +54,7 @@ class RLTrainer(object):
         #if is_training: self.model.train()
         #else: self.model.eval()
 
-        for i_episode, (videos, _, captions, _) in enumerate(dataloader):
+        for sample_counter, (videos, _, captions, _) in enumerate(dataloader):
 
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
@@ -80,7 +80,13 @@ class RLTrainer(object):
                 reward = self.env.update_state(action)
                 reward_seq.append(reward)
                 finished = self.env.check_finished()
+            print([a.data[0] for a in action_seq])
+            print(reward_seq)
+
             self.agent.update_policy(reward_seq, logprob_seq)
+            print("episode{}: sample{}".format(i_episode,sample_counter))
+            if sample_counter==1:
+                break
 
 
 
