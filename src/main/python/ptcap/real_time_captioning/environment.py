@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.autograd import Variable
+from collections import namedtuple
 
 class Environment:
     # statuses
@@ -18,6 +19,7 @@ class Environment:
         self.encoder = encoder
         self.decoder = decoder
 
+
     def reset(self, video, caption):
         self.caption = caption
         self.vid_encoding = self.encoder.extract_features(video)
@@ -31,7 +33,10 @@ class Environment:
         # input_buffer: (Batch_size x num_frames x feature_size): 1 x 48 x 1024
         return {
             "output_buffer": self.output_buffer,
-            "input_buffer": self.input_buffer
+            "input_buffer": self.input_buffer,
+            "read_count": self.read_count,
+            "write_count": self.write_count
+
         }
 
     def update_state(self, action):
@@ -50,8 +55,8 @@ class Environment:
                 status = Environment.STATUS_INVALID_ACTION
             elif self.write_count == self.MAX_TOKEN_COUNT:
                 status = Environment.STATUS_INVALID_ACTION
-            else:
-                word_probs = self.decoder(self.input_buffer[-1].unsqueeze(dim=1), Variable(self.output_buffer[-1].long()))
+            else:# use input_buffer[-1].unsqueeze(dim=1) instead of vid_encoding
+                word_probs = self.decoder(self.vid_encoding, Variable(self.output_buffer[-1].long()))
 
                 #next_word = torch.max(word_probs)
                 prob, next_word = torch.max(word_probs, dim=2)
@@ -68,7 +73,7 @@ class Environment:
         return reward
 
     def check_finished(self):
-        return self.write_count == self.MAX_TOKEN_COUNT
+        return self.write_count >= 12# self.MAX_TOKEN_COUNT
 
     def give_reward(self, status):
         return {
