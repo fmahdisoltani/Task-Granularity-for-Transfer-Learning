@@ -29,7 +29,7 @@ class Checkpointer(object):
         return False
 
     def load_model(self, model, optimizer, folder=None, filename=None,
-                   load_encoder_only=False):
+                   load_encoder_only=False, load_decoder_only=False):
         pretrained_path = None if not folder or not filename else (
             os.path.join(folder, filename))
         init_epoch = 0
@@ -38,7 +38,16 @@ class Checkpointer(object):
         elif os.path.isfile(pretrained_path):
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
-            model.load_state_dict(checkpoint["model"])
+            state_dict = checkpoint["model"]
+            if load_encoder_only:
+                state_dict = {key.replace('module.encoder.', ''): value for
+                              key, value in checkpoint['model'].items()
+                              if 'module.encoder' in key}
+            elif load_decoder_only:
+                state_dict = {key.replace('module.decoder.', ''): value for
+                              key, value in checkpoint['model'].items()
+                              if 'module.decoder' in key}
+            model.load_state_dict(state_dict)
             self.set_best_score(checkpoint["score"])
             #optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
