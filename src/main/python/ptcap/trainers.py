@@ -235,3 +235,10 @@ class Trainer(object):
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
 
         return average_scores_dict
+
+    def test(self, test_dataloader, verbose_valid=False):
+        test_average_scores = self.run_epoch(
+        test_dataloader, 0, is_training=False, use_teacher_forcing = False,
+                                             verbose = True)
+
+
