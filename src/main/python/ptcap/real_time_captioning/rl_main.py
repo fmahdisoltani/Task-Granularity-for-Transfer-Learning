@@ -9,6 +9,7 @@ Options:
 """
 import torch
 import os
+import copy
 
 from docopt import docopt
 from torch.utils.data import DataLoader
@@ -25,7 +26,7 @@ from ptcap.main import train_model
 from ptcap.data.tokenizer import Tokenizer
 from rtorchn.data.preprocessing import CenterCropper
 from ptcap.real_time_captioning.rl_trainers import RLTrainer
-
+from ptcap.checkpointers import Checkpointer
 
 
 def train_model(config_obj, relative_path=""):
@@ -61,10 +62,11 @@ if __name__ == "__main__":
 
     # Load attributes of config file
     caption_type = config_obj.get("targets", "caption_type")
-    pretrained_folder = config_obj.get("pretrained", "pretrained_folder")
+    pretrained_encoder = config_obj.get("pretrained", "pretrained_encoder")
+    pretrained_decoder = config_obj.get("pretrained", "pretrained_decoder")
     pretrained_file = config_obj.get("pretrained", "pretrained_file")
-    pretrained_folder = os.path.join(relative_path, pretrained_folder
-                                     ) if pretrained_folder else None
+    pretrained_folder = os.path.join(relative_path, pretrained_encoder
+                                     ) if pretrained_encoder else None
     encoder_type = "C3dLSTMEncoder"
     decoder_type = "CoupledLSTMDecoder"
     caption_loss_type = config_obj.get("loss", "caption_loss")
@@ -76,6 +78,9 @@ if __name__ == "__main__":
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
     videos_folder = config_obj.get("paths", "videos_folder")
+    checkpoint_folder = os.path.join(
+        relative_path, config_obj.get("paths", "checkpoint_folder"))
+    higher_is_better = config_obj.get("criteria", "higher_is_better")
 
     # Preprocess
     crop_size = config_obj.get("preprocess", "crop_size")
@@ -97,9 +102,10 @@ if __name__ == "__main__":
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
-    if pretrained_folder:
-        tokenizer.load_dictionaries(pretrained_folder)
+    if pretrained_decoder:
+        tokenizer.load_dictionaries(pretrained_encoder)
         print("Inside pretrained", tokenizer.get_vocab_size())
+        print("pretty fucked up")
     else:
         tokenizer.build_dictionaries(
             training_parser.get_captions_from_tmp_and_lbl())
@@ -154,7 +160,7 @@ if __name__ == "__main__":
     # TODO: Remove GPUs?
     gpus = config_obj.get("device", "gpus")
 
-    # decoder_kwargs["gpus"] = gpus
+    checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
     # Create encoder, decoder loss, and optimizer objects
     encoder_args = encoder_args or ()
@@ -183,6 +189,15 @@ if __name__ == "__main__":
     optimizer = getattr(torch.optim, optimizer_type)(
         params=params, **config_obj.get("optimizer", "kwargs"))
 
-    rl_trainer = RLTrainer(encoder, decoder, caption_loss_function, tokenizer, gpus=None)
+    scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
+    scheduler_kwargs["optimizer"] = optimizer
+    scheduler_kwargs["mode"] = "max" if higher_is_better else "min"
+
+    scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
+        **scheduler_kwargs)
+
+    rl_trainer = RLTrainer(encoder, decoder, caption_loss_function, tokenizer,
+                           checkpointer, scheduler, folder=pretrained_folder,
+                      filename=pretrained_file, gpus=None)
     rl_trainer.train(train_dataloader, teacher_force_train=True)
 
