@@ -12,7 +12,7 @@ class Encoder(nn.Module):
 
 class C3dLSTMEncoder(Encoder):
     def __init__(self, encoder_output_size=52, out_ch=32, bidirectional=True,
-                 rnn_output_size=51, num_lstm_layers=1, causal=True):
+                 rnn_output_size=51, num_lstm_layers=1, causal=False):
         """
         encoder_output_size: defines the output size of the encoder
         """
