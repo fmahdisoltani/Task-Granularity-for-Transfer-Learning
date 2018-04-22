@@ -9,9 +9,8 @@ class Environment:
     STATUS_INVALID_ACTION = 'invalid'
     STATUS_DONE = 'done'
 
-    def __init__(self, encoder, decoder):
+    def __init__(self):
         self.reset()
-
 
     def reset(self):
         self.read_count = 0
