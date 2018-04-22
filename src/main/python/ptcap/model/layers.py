@@ -59,7 +59,7 @@ class CausalC3dLayer(nn.Module):
         t = kernel_size[0]
 
         self.pad = nn.ConstantPad3d((padding, padding, padding, padding,
-                                     2*dilation, 0), value=0)
+                                     (t-1)*dilation, 0), value=0)
         self.conv = nn.Conv3d(in_channels, out_channels, kernel_size,
                               stride, 0, dilation, groups, bias)
         self.activation = activation
