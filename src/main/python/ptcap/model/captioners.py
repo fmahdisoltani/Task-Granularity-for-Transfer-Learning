@@ -3,7 +3,7 @@ from torch import nn
 
 from rtorchn.core.networks import RtorchnCaptioner as RtorchnCap
 from ptcap.model.encoders import C3dLSTMEncoder
-from ptcap.model.decoders import LSTMDecoder
+from ptcap.model.decoders import CoupledLSTMDecoder
 
 
 class Captioner(nn.Module):
