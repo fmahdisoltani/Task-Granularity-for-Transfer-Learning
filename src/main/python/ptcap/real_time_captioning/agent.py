@@ -12,7 +12,7 @@ class Agent:
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, num_actions),
-            nn.Softmax()
+            nn.Softmax(dim=2)
         )
 
     def get_action_probs(self, x):
@@ -65,3 +65,4 @@ class Agent:
         policy_loss.backward(retain_graph=True)
         # note: retain_graph=True allows for multiple calls to .backward()
         # in a single step
+        return returns
