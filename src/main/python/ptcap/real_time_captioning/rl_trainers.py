@@ -14,8 +14,9 @@ from ptcap.real_time_captioning.agent import Agent
 
 
 class RLTrainer(object):
-    def __init__(self, encoder,decoder, caption_loss_function, tokenizer, gpus=None):
-
+    def __init__(self, encoder,decoder, caption_loss_function, tokenizer,
+                 checkpointer, scheduler, folder=None, filename=None, gpus=None):
+        self.scheduler = scheduler
         self.gpus = gpus
         self.use_cuda = True if gpus else False
         self.encoder = encoder if self.gpus is None else(
@@ -24,13 +25,22 @@ class RLTrainer(object):
         self.decoder = decoder if self.gpus is None else(
             DataParallelWrapper(decoder, device_ids=self.gpus).cuda(gpus[0])
         )
-        self.loss_function = caption_loss_function if self.gpus is None else(
-            caption_loss_function.cuda(gpus[0])
-        )
 
-        self.tokenizer = tokenizer
+        #self.tokenizer = tokenizer
         self.env = Environment(self.encoder, self.decoder)
         self.agent = Agent()
+        self.checkpointer = checkpointer
+        init_state = self.checkpointer.load_model(self.encoder,
+                                                  scheduler.optimizer,
+                                                  folder, filename,
+                                                  load_encoder_only=True)
+        self.num_epochs, self.encoder, scheduler.optimizer = init_state
+
+        init_state = self.checkpointer.load_model(self.decoder,
+                                                  scheduler.optimizer,
+                                                  folder, filename,
+                                                  load_decoder_only=True)
+        self.num_epochs, self.decoder, scheduler.optimizer = init_state
 
     def get_input_captions(self, captions, use_teacher_forcing):
         batch_size = captions.size(0)
@@ -46,50 +56,103 @@ class RLTrainer(object):
                              use_teacher_forcing=teacher_force_train,
                              verbose=verbose_train)
 
+    # def run_episode(self, dataloader, i_episode, is_training,use_teacher_forcing=False, verbose=True):
+    #     print("*****inside episode*****{}".format("%"*3))
+    #
+    #
+    #     #if is_training: self.model.train()
+    #     #else: self.model.eval()
+    #
+    #     for sample_counter, (videos, _, captions, _) in enumerate(dataloader):
+    #         if sample_counter == 1:
+    #             break
+    #         input_captions = self.get_input_captions(captions,
+    #                                                  use_teacher_forcing)
+    #
+    #         videos, captions, input_captions = (Variable(videos),Variable(captions),
+    #         Variable(input_captions))
+    #         if self.use_cuda:
+    #             videos = videos.cuda(self.gpus[0])
+    #             captions = captions.cuda(self.gpus[0])
+    #             input_captions = input_captions.cuda(self.gpus[0])
+    #         import time
+    #         s = time.time()
+    #         self.env.reset(videos, input_captions)
+    #         print("reset:{}".format(time.time() - s))
+    #
+    #         # o = self.env.decoder(self.env.vid_encoding, input_captions)
+    #         # o2 = self.env.decoder(self.env.vid_encoding, input_captions[:, 0:1],
+    #         #                       use_teacher_forcing=False)
+    #         # self.tokenizer.decode_caption(
+    #         #     list(torch.max(o2, dim=2)[1].cpu().data.numpy()[0]))
+    #
+    #
+    #
+    #         # Reset the RL environment
+    #         for bb in range(1000):
+    #             #print("******{}******".format(bb))
+    #
+    #             self.env.reset(videos, input_captions, dont_load=True)
+    #
+    #             finished = False
+    #             reward_seq = []
+    #             action_seq = []
+    #             logprob_seq = []
+    #             while not finished:
+    #                 s = time.time()
+    #                 state = self.env.get_state()
+    #                 action, logprob = self.agent.select_action(state)
+    #                 action_seq.append(action)
+    #                 logprob_seq.append(logprob)
+    #                 reward = self.env.update_state(action)
+    #                 reward_seq.append(reward)
+    #                 finished = self.env.check_finished()
+    #
+    #             #gg = [i[0][0] for i in self.env.output_buffer]
+    #             #decoded_cap = self.tokenizer.decode_caption(gg)
+    #             #decoded_target = self.tokenizer.decode_caption([i.numpy() for i in captions.data][0])
+    #             #print(decoded_cap)
+    #             #print(decoded_target)
+    #                 print("****")
+    #
+    #
+    #             # print([a.data[0] for a in action_seq])
+    #                 print(sum(reward_seq))
+    #                 self.agent.update_policy(reward_seq, logprob_seq)
+    #                 print("episode{}: sample{}".format(i_episode,sample_counter))
+    #                 self.scheduler.optimizer.step()
+    #
+    #
+    #
+    #
+    #
+    #     return
+
+
     def run_episode(self, dataloader, i_episode, is_training,
                   use_teacher_forcing=False, verbose=True):
-        print("*****inside episode*****{}".format("%"*3))
+
+        print("episode{}".format(i_episode))
+        self.env.reset(None, None, dont_load=True)
+
+        finished = False
+        reward_seq = []
+        action_seq = []
+        logprob_seq = []
+        while not finished:
+
+            state = self.env.get_state()
+            action, logprob = self.agent.select_action(state)
+            action_seq.append(action)
+            logprob_seq.append(logprob)
+            reward = self.env.update_state(action)
+            reward_seq.append(reward)
+            finished = self.env.check_finished()
 
 
-        #if is_training: self.model.train()
-        #else: self.model.eval()
-
-        for sample_counter, (videos, _, captions, _) in enumerate(dataloader):
-
-            input_captions = self.get_input_captions(captions,
-                                                     use_teacher_forcing)
-
-            videos, captions, input_captions = (Variable(videos),Variable(captions),
-            Variable(input_captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
-                input_captions = input_captions.cuda(self.gpus[0])
-
-            # Reset the RL environment
-            self.env.reset(videos, input_captions)
-            finished = False
-            reward_seq = []
-            action_seq = []
-            logprob_seq = []
-            while not finished:
-                state = self.env.get_state()
-                action, logprob = self.agent.select_action(state)
-                action_seq.append(action)
-                logprob_seq.append(logprob)
-                reward = self.env.update_state(action)
-                reward_seq.append(reward)
-                finished = self.env.check_finished()
-            print([a.data[0] for a in action_seq])
-            print(reward_seq)
-
+            print(sum(reward_seq))
             self.agent.update_policy(reward_seq, logprob_seq)
-            print("episode{}: sample{}".format(i_episode,sample_counter))
-            if sample_counter==1:
-                break
-
-
-
+            self.scheduler.optimizer.step()
 
         return
 
