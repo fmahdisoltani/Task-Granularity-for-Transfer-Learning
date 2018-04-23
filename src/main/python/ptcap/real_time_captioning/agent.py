@@ -57,8 +57,8 @@ class Agent:
         returns = self.compute_returns(reward_seq, gamma)
         returns = torch.Tensor(returns)
         # subtract mean and std for faster training
-        returns = (returns - returns.mean()) / (returns.std() +
-                                                np.finfo(np.float32).eps)
+        #returns = (returns - returns.mean()) / (returns.std() +
+        #                                        np.finfo(np.float32).eps)
         for log_prob, r in zip(logprobs_seq, returns):
             policy_loss.append(-log_prob * r)
         policy_loss = torch.cat(policy_loss).sum()
