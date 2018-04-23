@@ -11,7 +11,7 @@ class RLTrainer(object):
 
         self.env = Environment()
         self.agent = Agent()
-        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.0000001)
+        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
 
@@ -19,14 +19,15 @@ class RLTrainer(object):
         running_reward = 0
         logging_interval = 1000
         for i_episode in count(1):
-            returns = self.run_episode(i_episode)
+            returns, action_seq = self.run_episode(i_episode)
             R = returns[0]
             running_reward += R
 
-            if i_episode % 1000 == 0:
+            if i_episode % logging_interval == 0:
                 print('Episode {}\tAverage return: {:.2f}'.format(
                     i_episode,
                     running_reward / logging_interval))
+                print(action_seq)
                 running_reward = 0
 
 
@@ -43,7 +44,7 @@ class RLTrainer(object):
 
             state = self.env.get_state()
             action, logprob = self.agent.select_action(state)
-            action_seq.append(action)
+            action_seq.append(action.data.numpy()[0])
             logprob_seq.append(logprob)
             reward = self.env.update_state(action)
             reward_seq.append(reward)
@@ -56,9 +57,7 @@ class RLTrainer(object):
                 self.scheduler.step()
                 self.optimizer.zero_grad()
 
-
-
-        return returns
+        return returns, action_seq
 
 
 
