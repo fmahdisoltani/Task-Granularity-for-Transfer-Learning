@@ -11,7 +11,7 @@ class RLTrainer(object):
 
         self.env = Environment()
         self.agent = Agent()
-        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.00001)
+        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.0000001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
 
@@ -32,7 +32,7 @@ class RLTrainer(object):
 
     def run_episode(self, i_episode):
 
-        print("episode{}".format(i_episode))
+        #print("episode{}".format(i_episode))
         self.env.reset()
 
         finished = False
