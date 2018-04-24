@@ -25,12 +25,18 @@ class Environment:
     def update_state(self, action):
         status = ""
         if action.data.numpy()[0] == 0:  # READ
+            if self.read_count == 0:
+                status = Environment.STATUS_VALID_ACTION
+            else:
+                status = Environment.STATUS_INVALID_ACTION
 
-            status = Environment.STATUS_VALID_ACTION
             self.read_count += 1
 
         if action.data.numpy()[0] == 1:  # WRITE
-            status = Environment.STATUS_INVALID_ACTION
+            if self.read_count == 0:
+                status = Environment.STATUS_INVALID_ACTION
+            else:
+                status = Environment.STATUS_VALID_ACTION
             self.write_count += 1
 
         reward = self.give_reward(status)
