@@ -62,7 +62,6 @@ class Agent:
         for log_prob, r in zip(logprobs_seq, returns):
             policy_loss.append(-log_prob * r)
         policy_loss = torch.cat(policy_loss).sum()
-        policy_loss.backward(retain_graph=True)
-        # note: retain_graph=True allows for multiple calls to .backward()
-        # in a single step
+        policy_loss.backward()
+
         return returns
