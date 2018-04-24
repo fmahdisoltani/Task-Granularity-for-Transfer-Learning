@@ -50,12 +50,12 @@ class RLTrainer(object):
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-            returns = self.agent.update_policy(reward_seq, logprob_seq)
+        returns = self.agent.update_policy(reward_seq, logprob_seq)
 
-            if i_episode % 1 == 0:  # replace 1 with batch_size
-                self.optimizer.step()
-                self.scheduler.step()
-                self.optimizer.zero_grad()
+        if i_episode % 1 == 0:  # replace 1 with batch_size
+            self.optimizer.step()
+            self.scheduler.step()
+            self.optimizer.zero_grad()
 
         return returns, action_seq
 
