@@ -11,7 +11,7 @@ class RLTrainer(object):
 
         self.env = Environment()
         self.agent = Agent()
-        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.0001)
+        self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.00001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
 
@@ -51,11 +51,12 @@ class RLTrainer(object):
             finished = self.env.check_finished()
 
         returns = self.agent.update_policy(reward_seq, logprob_seq)
-
+        self.agent.lstm_hidden = None
         if i_episode % 1 == 0:  # replace 1 with batch_size
             self.optimizer.step()
             self.scheduler.step()
             self.optimizer.zero_grad()
+
 
         return returns, action_seq
 
