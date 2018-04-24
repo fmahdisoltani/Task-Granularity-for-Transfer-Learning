@@ -5,25 +5,29 @@ import numpy as np
 from torch.autograd import Variable
 
 
-class Agent:
-    def __init__(self, input_size=2, hidden_size=33, num_actions=2):
+class Agent(nn.Module):
+    def __init__(self, input_size=1, hidden_size=33, num_actions=2):
+        super().__init__()
 
+        # Feed forward policy
         self.policy = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, num_actions),
             nn.Softmax(dim=2)
         )
+
+        # Recurrent policy
         self.input_layer = nn.Linear(input_size, input_size)
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                             num_layers=2, batch_first=True)
+                            num_layers=2, batch_first=True)
         self.output_layer = nn.Linear(hidden_size, num_actions)
         self.softmax = nn.Softmax(dim=2)
         self.lstm_hidden = None
 
     def get_action_probs(self, x):
-        x = self.prepare_policy_input(x)
-        # return self.policy(x).squeeze(dim=1)
+        x = self.prepare_policy_input_temp(x)
+        return self.policy(x).squeeze(dim=1)
         x = self.input_layer(x)
         lstm_output, self.lstm_hidden = self.lstm(x, self.lstm_hidden)
         self.lstm.flatten_parameters()
@@ -35,8 +39,8 @@ class Agent:
         rc = state['read_count']
         wc = state['write_count']
         policy_input = torch.cat([rc * torch.ones((1, 1)),
-                                  wc * torch.ones((1,1))], dim=1)
-        return Variable(torch.unsqueeze(policy_input,dim=1))
+                                  wc * torch.ones((1, 1))], dim=1)
+        return Variable(torch.unsqueeze(policy_input, dim=1))
 
     def select_action(self, state):
         action_probs = self.get_action_probs(state)
@@ -75,5 +79,6 @@ class Agent:
             policy_loss.append(-log_prob * r)
         policy_loss = torch.cat(policy_loss).sum()
         policy_loss.backward()
+        self.lstm_hidden = None
 
         return returns
