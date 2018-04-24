@@ -6,7 +6,7 @@ from torch.autograd import Variable
 
 
 class Agent(nn.Module):
-    def __init__(self, input_size=1, hidden_size=33, num_actions=2):
+    def __init__(self, input_size=2, hidden_size=33, num_actions=2):
         super().__init__()
 
         # Feed forward policy
@@ -26,8 +26,8 @@ class Agent(nn.Module):
         self.lstm_hidden = None
 
     def get_action_probs(self, x):
-        x = self.prepare_policy_input_temp(x)
-        return self.policy(x).squeeze(dim=1)
+        x = self.prepare_policy_input(x)
+        # return self.policy(x).squeeze(dim=1)
         x = self.input_layer(x)
         lstm_output, self.lstm_hidden = self.lstm(x, self.lstm_hidden)
         self.lstm.flatten_parameters()
