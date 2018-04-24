@@ -14,10 +14,22 @@ class Agent:
             nn.Linear(hidden_size, num_actions),
             nn.Softmax(dim=2)
         )
+        self.input_layer = nn.Linear(input_size, input_size)
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                             num_layers=2, batch_first=True)
+        self.output_layer = nn.Linear(hidden_size, num_actions)
+        self.softmax = nn.Softmax(dim=2)
+        self.lstm_hidden = None
 
     def get_action_probs(self, x):
         x = self.prepare_policy_input(x)
-        return self.policy(x).squeeze(dim=1)
+        # return self.policy(x).squeeze(dim=1)
+        x = self.input_layer(x)
+        lstm_output, self.lstm_hidden = self.lstm(x, self.lstm_hidden)
+        self.lstm.flatten_parameters()
+        lstm_out_projected = self.output_layer(lstm_output)
+        action_probs = self.softmax(lstm_out_projected)
+        return action_probs.squeeze(dim=1)
 
     def prepare_policy_input(self, state):
         rc = state['read_count']
