@@ -28,9 +28,9 @@ class Agent:
 
     def select_action(self, state):
         action_probs = self.get_action_probs(state)
-        m = torch.distributions.Categorical(action_probs)
-        action = m.sample()
-        log_prob = torch.sum(m.log_prob(action))
+        dist = torch.distributions.Categorical(action_probs)
+        action = dist.sample()
+        log_prob = torch.sum(dist.log_prob(action))
         return action, log_prob
 
     def compute_returns(self,rewards, gamma=1.0):
