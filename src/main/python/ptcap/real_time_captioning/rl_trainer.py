@@ -1,25 +1,54 @@
 import torch.optim as optim
+import torch
 
 from itertools import count
+from torch.autograd import Variable
 
 from ptcap.real_time_captioning.environment import Environment
 from ptcap.real_time_captioning.agent import Agent
+from ptcap.utils import DataParallelWrapper
 
 
 class RLTrainer(object):
-    def __init__(self):
+    def __init__(self, encoder, checkpointer, gpus=None):
 
-        self.env = Environment()
+        self.env = Environment(encoder)
         self.agent = Agent()
         self.optimizer = optim.Adam(self.agent.parameters(), lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
+        self.gpus = gpus
+        self.use_cuda = True if gpus else False
+        self.encoder = encoder if self.gpus is None else(
+            DataParallelWrapper(encoder, device_ids=self.gpus).cuda(gpus[0])
+        )
+        self.checkpointer = checkpointer
 
-    def train(self):
+
+    def get_input_captions(self, captions, use_teacher_forcing):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_()
+        if use_teacher_forcing:
+            input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
+        return input_captions
+
+    def train(self, dataloader):
+
         running_reward = 0
         logging_interval = 1000
-        for i_episode in count(1):
-            returns, action_seq = self.run_episode(i_episode)
+        #for i_episode in count(1):
+        for i_episode, (videos, _, captions, _) in enumerate(dataloader):
+            input_captions = self.get_input_captions(captions,
+                                                     use_teacher_forcing=False)
+            videos, captions, input_captions = (
+            Variable(videos), Variable(captions),
+                     Variable(input_captions))
+            if self.use_cuda:
+                videos = videos.cuda(self.gpus[0])
+                captions = captions.cuda(self.gpus[0])
+                input_captions = input_captions.cuda(self.gpus[0])
+
+            returns, action_seq = self.run_episode(i_episode, videos)
             R = returns[0]
             running_reward += R
 
@@ -30,10 +59,10 @@ class RLTrainer(object):
                 print(action_seq)
                 running_reward = 0
 
-    def run_episode(self, i_episode):
+    def run_episode(self, i_episode, videos):
 
         #print("episode{}".format(i_episode))
-        self.env.reset()
+        self.env.reset(videos)
 
         finished = False
         reward_seq = []
