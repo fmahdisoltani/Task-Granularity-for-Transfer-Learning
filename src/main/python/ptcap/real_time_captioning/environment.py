@@ -20,10 +20,9 @@ class Environment:
         self.read_count = 0
         self.write_count = 0
 
-        self.vid_encoding = self.encoder.module.extract_features(video)
+        self.vid_encoding = self.encoder.extract_features(video)
         # input buffer contains the seen video frames
         self.input_buffer = [self.vid_encoding[:, 0,:]]
-
 
 
     def get_state(self):
