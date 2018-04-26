@@ -11,17 +11,26 @@ class Environment:
     STATUS_INVALID_ACTION = 'invalid'
     STATUS_DONE = 'done'
 
-    def __init__(self):
-        self.reset()
+    def __init__(self, encoder):
 
-    def reset(self):
+        self.encoder = encoder
+        #self.reset()
+
+    def reset(self, video=None, caption=None):
         self.read_count = 0
         self.write_count = 0
+
+        self.vid_encoding = self.encoder.module.extract_features(video)
+        # input buffer contains the seen video frames
+        self.input_buffer = [self.vid_encoding[:, 0,:]]
+
+
 
     def get_state(self):
         return {
             "read_count": self.read_count,
-            "write_count": self.write_count
+            "write_count": self.write_count,
+            "input_buffer": self.input_buffer
         }
 
     def update_state(self, action, action_seq=[]):
@@ -29,7 +38,7 @@ class Environment:
 
         if action.data.numpy()[0] == 0:  # READ
             status = Environment.STATUS_VALID_ACTION
-
+            self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
             self.read_count += 1
 
         if action.data.numpy()[0] == 1:  # WRITE
