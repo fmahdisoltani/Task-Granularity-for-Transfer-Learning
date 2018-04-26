@@ -10,3 +10,6 @@ class DataParallelWrapper(nn.DataParallel):
     @property
     def activations(self):
         return self.module.activations
+
+    def extract_features(self, x):
+        return self.module.extract_features(x)
