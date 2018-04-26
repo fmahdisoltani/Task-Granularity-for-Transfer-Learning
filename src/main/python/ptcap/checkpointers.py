@@ -38,8 +38,16 @@ class Checkpointer(object):
         elif os.path.isfile(pretrained_path):
             checkpoint = torch.load(pretrained_path)
             init_epoch = checkpoint["epoch"]
-            model.load_state_dict(checkpoint["model"])
+            state_dict = checkpoint["model"]
+
+            if load_encoder_only:
+                state_dict = {key.replace('encoder.', ''):
+                                  value for key, value in
+                checkpoint['model'].items() if 'module.encoder' in key}
+
+            model.load_state_dict(state_dict)
             self.set_best_score(checkpoint["score"])
+
             #optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
