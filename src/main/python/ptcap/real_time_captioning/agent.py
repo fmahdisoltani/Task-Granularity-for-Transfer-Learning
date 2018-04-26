@@ -6,7 +6,7 @@ from torch.autograd import Variable
 
 
 class Agent(nn.Module):
-    def __init__(self, input_size=2, hidden_size=33, num_actions=2):
+    def __init__(self, input_size=1026, hidden_size=33, num_actions=2):
         super().__init__()
 
         # Feed forward policy
@@ -38,8 +38,13 @@ class Agent(nn.Module):
     def prepare_policy_input(self, state):
         rc = state['read_count']
         wc = state['write_count']
+        last_vid_feature = state['input_buffer'][-1]
+        # policy_input = torch.cat([rc * torch.ones((1, 1)),
+        #                           wc * torch.ones((1, 1))], dim=1)
         policy_input = torch.cat([rc * torch.ones((1, 1)),
-                                  wc * torch.ones((1, 1))], dim=1)
+                                  wc * torch.ones((1, 1)),
+                                  last_vid_feature.cpu()], dim=1)
+
         return Variable(torch.unsqueeze(policy_input, dim=1))
 
     def select_action(self, state):
@@ -77,7 +82,7 @@ class Agent(nn.Module):
         #                                        np.finfo(np.float32).eps)
         for log_prob, r in zip(logprobs_seq, returns):
             policy_loss.append(-log_prob * r)
-        policy_loss = torch.cat(policy_loss).sum()
+        policy_loss = torch.stack(policy_loss).sum()
         policy_loss.backward()
         self.lstm_hidden = None
 
