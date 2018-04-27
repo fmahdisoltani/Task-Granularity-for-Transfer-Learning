@@ -37,7 +37,7 @@ class RLTrainer(object):
         running_reward = 0
         logging_interval = 1000
         #for i_episode in count(1):
-        for i_episode, (videos, _, captions, _) in enumerate(dataloader):
+        for i_episode, (videos, _, captions, classif_targets) in enumerate(dataloader):
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing=False)
             videos, captions, input_captions = (
@@ -47,8 +47,9 @@ class RLTrainer(object):
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
                 input_captions = input_captions.cuda(self.gpus[0])
+                classif_targets = classif_targets.cuda(self.gpus[0])
 
-            returns, action_seq = self.run_episode(i_episode, videos)
+            returns, action_seq = self.run_episode(i_episode, videos, classif_targets)
             R = returns[0]
             running_reward += R
 
@@ -59,7 +60,7 @@ class RLTrainer(object):
                 print(action_seq)
                 running_reward = 0
 
-    def run_episode(self, i_episode, videos):
+    def run_episode(self, i_episode, videos, classif_targets):
 
         #print("episode{}".format(i_episode))
         self.env.reset(videos)
@@ -74,7 +75,7 @@ class RLTrainer(object):
             action, logprob = self.agent.select_action(state)
             action_seq.append(action.data.numpy()[0])
             logprob_seq.append(logprob)
-            reward = self.env.update_state(action, action_seq)
+            reward = self.env.update_state(action, action_seq, classif_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
