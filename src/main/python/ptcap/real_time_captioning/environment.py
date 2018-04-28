@@ -15,9 +15,7 @@ class Environment:
     def __init__(self, encoder):
 
         self.encoder = encoder
-        self.classif_layer = \
-            nn.Linear(self.encoder.encoder_output_size, 174)
-        self.classif_layer = self.classif_layer.cuda()
+
         self.logsoftmax = nn.LogSoftmax(dim=-1)
 
         #self.reset()
@@ -40,24 +38,24 @@ class Environment:
 
     def update_state(self, action, action_seq=[], classif_targets=None):
         status = ""
+        classif_probs = self.classify()
+        #if action.data.numpy()[0] == 0:  # READ
+        #    status = Environment.STATUS_READ
+        #    self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
+        #    self.read_count += 1
+        #    reward = self.give_reward(status)
 
-        if action.data.numpy()[0] == 0:  # READ
-            status = Environment.STATUS_READ
-            self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
-            self.read_count += 1
+        #if action.data.numpy()[0] == 1:  # WRITE
 
-        if action.data.numpy()[0] == 1:  # WRITE
-            classif_probs = self.classify()
-            _, prediction = torch.max(classif_probs, dim=1)
-            #print(prediction.data.cpu().numpy()[0])
-            #print(classif_targets.data.cpu().numpy()[0])
-            if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
-                status = Environment.STATUS_CORRECT_WRITE
-            else:
-                status = Environment.STATUS_INCORRECT_WRITE
-            self.write_count += 1
+        #    _, prediction = torch.max(classif_probs, dim=1)
 
-        reward = self.give_reward(status)
+        #   if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
+        #       status = Environment.STATUS_CORRECT_WRITE
+        #  else:
+        #      status = Environment.STATUS_INCORRECT_WRITE
+        #  self.write_count += 1
+
+        reward = torch.sum(classif_probs)
         return reward
 
     def check_finished(self):
