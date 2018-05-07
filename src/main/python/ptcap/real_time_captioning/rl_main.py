@@ -96,21 +96,9 @@ if __name__ == "__main__":
     higher_is_better = config_obj.get("criteria", "higher_is_better")
     checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
-    scheduler_type = config_obj.get("scheduler", "type")
-    optimizer_type = config_obj.get("optimizer", "type")
-    # TODO: add parameters of Encoder if needed
-    params = filter(lambda p: p.requires_grad, encoder.parameters())
-    optimizer = getattr(torch.optim, optimizer_type)(
-           params = params, ** config_obj.get("optimizer", "kwargs"))
 
-    scheduler_kwargs = copy.deepcopy(config_obj.get("scheduler", "kwargs"))
-    scheduler_kwargs["optimizer"] = optimizer
-    scheduler_kwargs["mode"] = "max" if higher_is_better else "min"
-
-    scheduler = getattr(torch.optim.lr_scheduler, scheduler_type)(
-         ** scheduler_kwargs)
     init_state = checkpointer.load_model(encoder,
-                                         scheduler.optimizer,
+                                         None,
                                          folder=pretrained_encoder,
                                          filename=pretrained_file,
                                          load_encoder_only=True)
