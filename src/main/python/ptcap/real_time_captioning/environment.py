@@ -5,17 +5,24 @@ from torch.autograd import Variable
 from collections import namedtuple
 
 
-class Environment:
+class Environment(nn.Module):
     # statuses
     STATUS_CORRECT_WRITE = 'correct_write'
     STATUS_INCORRECT_WRITE = 'incorrect_write'
+    STATUS_INVALID_READ = 'invalid_read'
     STATUS_READ = 'read'
     STATUS_DONE = 'done'
 
     def __init__(self, encoder):
+        super().__init__()
 
         self.encoder = encoder
 
+        self.logsoftmax = nn.LogSoftmax(dim=-1)
+        self.classif_layer = \
+                      nn.Linear(self.encoder.encoder_output_size, 174)
+
+        self.classif_layer = self.classif_layer.cuda()
         self.logsoftmax = nn.LogSoftmax(dim=-1)
 
         #self.reset()
@@ -39,23 +46,27 @@ class Environment:
     def update_state(self, action, action_seq=[], classif_targets=None):
         status = ""
         classif_probs = self.classify()
-        #if action.data.numpy()[0] == 0:  # READ
-        #    status = Environment.STATUS_READ
-        #    self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
-        #    self.read_count += 1
-        #    reward = self.give_reward(status)
+        if action.data.numpy()[0] == 0:  # READ
+            if self.read_count == 48:
+                status = Environment.STATUS_INVALID_READ
+            else:
+                status = Environment.STATUS_READ
+                self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
+                self.read_count += 1
 
-        #if action.data.numpy()[0] == 1:  # WRITE
 
-        #    _, prediction = torch.max(classif_probs, dim=1)
+        if action.data.numpy()[0] == 1:  # WRITE
 
-        #   if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
-        #       status = Environment.STATUS_CORRECT_WRITE
-        #  else:
-        #      status = Environment.STATUS_INCORRECT_WRITE
-        #  self.write_count += 1
+            _, prediction = torch.max(classif_probs, dim=1)
 
-        reward = torch.sum(classif_probs)
+            if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
+                status = Environment.STATUS_CORRECT_WRITE
+            else:
+                status = Environment.STATUS_INCORRECT_WRITE
+            self.write_count += 1
+
+        reward = self.give_reward(status)
+    #    reward = torch.sum(classif_probs)
         return reward
 
     def check_finished(self):
@@ -66,6 +77,7 @@ class Environment:
             Environment.STATUS_CORRECT_WRITE: 100,
             Environment.STATUS_INCORRECT_WRITE: -1000,
             Environment.STATUS_READ: -1,
+            Environment.STATUS_INVALID_READ: -10,
         }[status]
 
     def classify(self):
