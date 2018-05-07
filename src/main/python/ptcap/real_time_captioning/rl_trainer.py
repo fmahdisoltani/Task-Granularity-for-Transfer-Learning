@@ -14,7 +14,9 @@ class RLTrainer(object):
 
         self.env = Environment(encoder)
         self.agent = Agent()
-        self.optimizer = optim.Adam(self.agent.parameters(), lr=0.0001)
+
+        params = list(self.env.parameters()) + list((self.agent.parameters()))
+        self.optimizer = optim.Adam(params, lr=0.1)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
         self.gpus = gpus
@@ -33,7 +35,7 @@ class RLTrainer(object):
         return input_captions
 
     def train(self, dataloader):
-
+        print("*"*10)
         running_reward = 0
         logging_interval = 1000
         #for i_episode in count(1):
@@ -70,6 +72,7 @@ class RLTrainer(object):
         action_seq = []
         logprob_seq = []
         while not finished:
+
 
             state = self.env.get_state()
             action, logprob = self.agent.select_action(state)
