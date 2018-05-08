@@ -15,6 +15,7 @@ import copy
 from docopt import docopt
 from torchvision.transforms import Compose
 from torch.utils.data import DataLoader
+import torch.nn as nn
 
 import ptcap.data.preprocessing as prep
 import ptcap.model.captioners
@@ -91,19 +92,22 @@ if __name__ == "__main__":
                                      ) if pretrained_encoder else None
     pretrained_file = config_obj.get("pretrained", "pretrained_file")
 
+    classif_layer = \
+        nn.Linear(encoder.encoder_output_size, 178)
+
     checkpoint_folder = os.path.join(
                 relative_path, config_obj.get("paths", "checkpoint_folder"))
     higher_is_better = config_obj.get("criteria", "higher_is_better")
     checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
 
-    init_state = checkpointer.load_model(encoder,
+    init_state = checkpointer.load_model(encoder, classif_layer,
                                          None,
                                          folder=pretrained_encoder,
                                          filename=pretrained_file,
                                          load_encoder_only=True)
     _, encoder, _ = init_state
 
-    rl_trainer = RLTrainer(encoder, checkpointer, gpus=gpus)
+    rl_trainer = RLTrainer(encoder, classif_layer.cuda(), checkpointer, gpus=gpus)
     rl_trainer.train(train_dataloader)
 
