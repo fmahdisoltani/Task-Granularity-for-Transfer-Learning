@@ -28,7 +28,7 @@ class Checkpointer(object):
 
         return False
 
-    def load_model(self, model, optimizer, folder=None, filename=None,
+    def load_model(self, model, classif_layer, optimizer, folder=None, filename=None,
                    load_encoder_only=False):
         pretrained_path = None if not folder or not filename else (
             os.path.join(folder, filename))
@@ -41,12 +41,18 @@ class Checkpointer(object):
             state_dict = checkpoint["model"]
 
             if load_encoder_only:
-                state_dict = {key.replace('encoder.', ''):
+                encoder_state_dict = {key.replace('encoder.', ''):
                                   value for key, value in
                 checkpoint['model'].items() if 'module.encoder' in key}
 
-            model.load_state_dict(state_dict)
+            model.load_state_dict(encoder_state_dict)
             self.set_best_score(checkpoint["score"])
+            cls_state_dict = {key.replace('module.classif_layer.', ''):
+                                  value for key, value in
+                checkpoint['model'].items() if 'module.classif_layer' in key}
+
+
+            classif_layer.load_state_dict(cls_state_dict)
 
             #optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
