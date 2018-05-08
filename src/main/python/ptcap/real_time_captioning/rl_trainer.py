@@ -10,22 +10,22 @@ from ptcap.utils import DataParallelWrapper
 
 
 class RLTrainer(object):
-    def __init__(self, encoder, checkpointer, gpus=None):
+    def __init__(self, encoder, classif_layer, checkpointer, gpus=None):
 
-        self.env = Environment(encoder)
-        self.agent = Agent()
-
-        params = list(self.env.parameters()) + list((self.agent.parameters()))
-        self.optimizer = optim.Adam(params, lr=0.1)
-        self.scheduler = optim.lr_scheduler.StepLR(
-                         self.optimizer, step_size=10000, gamma=0.9)
         self.gpus = gpus
         self.use_cuda = True if gpus else False
-        self.encoder = encoder if self.gpus is None else(
-            DataParallelWrapper(encoder, device_ids=self.gpus).cuda(gpus[0])
-        )
-        self.checkpointer = checkpointer
 
+        self.env = Environment(encoder, classif_layer)
+        self.agent = Agent()
+
+        params = list(self.env.parameters()) + \
+                 list(self.agent.parameters()) + \
+                 list(self.env.classif_layer.parameters())
+        self.optimizer = optim.Adam(params, lr=0.0001)
+        self.scheduler = optim.lr_scheduler.StepLR(
+                         self.optimizer, step_size=10000, gamma=0.9)
+
+        self.checkpointer = checkpointer
 
     def get_input_captions(self, captions, use_teacher_forcing):
         batch_size = captions.size(0)
@@ -38,29 +38,32 @@ class RLTrainer(object):
         print("*"*10)
         running_reward = 0
         logging_interval = 1000
-        #for i_episode in count(1):
-        for i_episode, (videos, _, captions, classif_targets) in enumerate(dataloader):
-            input_captions = self.get_input_captions(captions,
-                                                     use_teacher_forcing=False)
-            videos, captions, input_captions = (
-            Variable(videos), Variable(captions),
-                     Variable(input_captions))
-            if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                captions = captions.cuda(self.gpus[0])
-                input_captions = input_captions.cuda(self.gpus[0])
-                classif_targets = classif_targets.cuda(self.gpus[0])
+        stop_training = False
 
-            returns, action_seq = self.run_episode(i_episode, videos, classif_targets)
-            R = returns[0]
-            running_reward += R
+        while not stop_training:
 
-            if i_episode % logging_interval == 0:
-                print('Episode {}\tAverage return: {:.2f}'.format(
-                    i_episode,
-                    running_reward / logging_interval))
-                print(action_seq)
-                running_reward = 0
+            for i_episode, (videos, _, captions, classif_targets) in enumerate(dataloader):
+                input_captions = self.get_input_captions(captions,
+                                                         use_teacher_forcing=False)
+                videos, captions, input_captions = (
+                Variable(videos), Variable(captions),
+                         Variable(input_captions))
+                if self.use_cuda:
+                    videos = videos.cuda(self.gpus[0])
+                    captions = captions.cuda(self.gpus[0])
+                    input_captions = input_captions.cuda(self.gpus[0])
+                    classif_targets = classif_targets.cuda(self.gpus[0])
+
+                returns, action_seq = self.run_episode(i_episode, videos, classif_targets)
+                R = returns[0]
+                running_reward += R
+
+                if i_episode % logging_interval == 0:
+                    print('Episode {}\tAverage return: {:.2f}'.format(
+                        i_episode,
+                        running_reward / logging_interval))
+                    print(action_seq)
+                    running_reward = 0
 
     def run_episode(self, i_episode, videos, classif_targets):
 
@@ -78,13 +81,15 @@ class RLTrainer(object):
             action, logprob = self.agent.select_action(state)
             action_seq.append(action.data.numpy()[0])
             logprob_seq.append(logprob)
-            reward = self.env.update_state(action, action_seq, classif_targets)
+            reward, classif_probs = self.env.update_state(action, action_seq, classif_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-        returns = self.agent.update_policy(reward_seq, logprob_seq)
+        returns, policy_loss = \
+            self.agent.update_policy(reward_seq, logprob_seq, classif_probs, classif_targets)
 
         if i_episode % 1 == 0:  # replace 1 with batch_size
+            # policy_loss.backward()
             self.optimizer.step()
             self.scheduler.step()
             self.optimizer.zero_grad()
