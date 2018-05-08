@@ -1,8 +1,9 @@
-import torch.nn as nn
 import torch
-import numpy as np
+import torch.nn as nn
 
 from torch.autograd import Variable
+
+from ptcap.losses import CrossEntropy
 
 
 class Agent(nn.Module):
@@ -24,6 +25,8 @@ class Agent(nn.Module):
         self.output_layer = nn.Linear(hidden_size, num_actions)
         self.softmax = nn.Softmax(dim=2)
         self.lstm_hidden = None
+        self.classif_loss_function = CrossEntropy()
+        self.classif_loss_function = self.classif_loss_function.cpu()
 
     def get_action_probs(self, x):
         x = self.prepare_policy_input(x)
@@ -41,11 +44,12 @@ class Agent(nn.Module):
         last_vid_feature = state['input_buffer'][-1]
         # policy_input = torch.cat([rc * torch.ones((1, 1)),
         #                           wc * torch.ones((1, 1))], dim=1)
-        policy_input = torch.cat([rc * torch.ones((1, 1)),
-                                  wc * torch.ones((1, 1)),
+        policy_input = torch.cat([Variable(rc * torch.ones((1, 1))),
+                                  Variable(wc * torch.ones((1, 1))),
                                   last_vid_feature.cpu()], dim=1)
 
-        return Variable(torch.unsqueeze(policy_input, dim=1))
+        x = torch.unsqueeze(policy_input, dim=1)
+        return x
 
     def select_action(self, state):
         action_probs = self.get_action_probs(state)
@@ -72,7 +76,7 @@ class Agent(nn.Module):
         G.reverse()
         return G
 
-    def update_policy(self, reward_seq, logprobs_seq, gamma=1.0):
+    def update_policy(self, reward_seq, logprobs_seq, classif_probs, classif_targets, gamma=1.0):
 
         policy_loss = []
         returns = self.compute_returns(reward_seq, gamma)
@@ -82,8 +86,14 @@ class Agent(nn.Module):
         #                                        np.finfo(np.float32).eps)
         for log_prob, r in zip(logprobs_seq, returns):
             policy_loss.append(-log_prob * r)
-        policy_loss = torch.stack(policy_loss).sum()
-        policy_loss.backward()
+        policy_loss = torch.stack(policy_loss).sum() * 0.01
+        classif_loss = self.classif_loss_function(classif_probs,
+                                                  classif_targets)
+        loss = policy_loss.cuda()*0.01 + classif_loss.cuda()
+        # print("policy_loss: {}".format(policy_loss))
+        # print("classif_loss: {}".format(classif_loss))
+        # print("*"*100)
+        loss.backward()
         self.lstm_hidden = None
 
         return returns
