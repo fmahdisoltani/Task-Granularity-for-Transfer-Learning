@@ -30,6 +30,7 @@ from ptcap.data.tokenizer import Tokenizer
 from ptcap.model.two_stream_encoders import TwoStreamEncoder
 from ptcap.real_time_captioning.rl_trainer import RLTrainer
 from ptcap.utils import DataParallelWrapper
+from rtorchn.data.preprocessing import CenterCropper
 
 
 if __name__ == "__main__":
@@ -43,6 +44,8 @@ if __name__ == "__main__":
     relative_path = ""
     training_path = os.path.join(relative_path,
                                  config_obj.get("paths", "train_annot"))
+    validation_path = os.path.join(relative_path,
+                                   config_obj.get("paths", "validation_annot"))
     videos_folder = config_obj.get("paths", "videos_folder")
 
 
@@ -55,9 +58,18 @@ if __name__ == "__main__":
                             prep.PadVideo(crop_size),
                             prep.Float32Converter(scale),
                             prep.PytorchTransposer()])
+    val_preprocessor = Compose([CenterCropper(crop_size),
+                                prep.PadVideo(crop_size),
+                                prep.Float32Converter(scale),
+                                prep.PytorchTransposer()])
 
     training_parser = V2Parser(training_path, os.path.join(relative_path,
                                videos_folder),caption_type=caption_type)
+
+    validation_parser = V2Parser(validation_path,
+                                 os.path.join(relative_path,
+                                              videos_folder),
+                                 caption_type=caption_type)
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
 
     tokenizer.build_dictionaries(
@@ -69,8 +81,16 @@ if __name__ == "__main__":
                                     gulp_dir=videos_folder,
                                     size=input_resize)
 
+    validation_set = GulpVideoDataset(annotation_parser=validation_parser,
+                                      tokenizer=tokenizer,
+                                      preprocess=val_preprocessor,
+                                      gulp_dir=videos_folder,
+                                      size=input_resize)
+
     train_dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
                                   **config_obj.get("dataloaders", "kwargs"))
+    val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
+                               **config_obj.get("dataloaders", "kwargs"))
 
     gpus = config_obj.get("device", "gpus")
     encoder_type = config_obj.get("model", "encoder")
@@ -93,7 +113,7 @@ if __name__ == "__main__":
     pretrained_file = config_obj.get("pretrained", "pretrained_file")
 
     classif_layer = \
-        nn.Linear(encoder.encoder_output_size, 178)
+        nn.Linear(encoder.module.encoder_output_size, 178)
 
     checkpoint_folder = os.path.join(
                 relative_path, config_obj.get("paths", "checkpoint_folder"))
@@ -108,6 +128,10 @@ if __name__ == "__main__":
                                          load_encoder_only=True)
     _, encoder, _ = init_state
 
-    rl_trainer = RLTrainer(encoder, classif_layer.cuda(), checkpointer, gpus=gpus)
-    rl_trainer.train(train_dataloader)
+    # Setup the logger
+    from ptcap.loggers import CustomLogger
+    logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
+
+    rl_trainer = RLTrainer(encoder, classif_layer.cuda(), checkpointer, logger, gpus=gpus)
+    rl_trainer.train(train_dataloader, val_dataloader)
 
