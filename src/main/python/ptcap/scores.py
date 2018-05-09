@@ -8,9 +8,11 @@ def token_accuracy(outputs, num_tokens=None):
                                 num_tokens)
 
 
-def loss_to_numpy(score_attr):
-    return score_attr.loss.data.cpu().numpy()[0]
+def classif_loss_to_numpy(score_attr):
+    return score_attr.classif_loss.data.cpu().numpy()
 
+def policy_loss_to_numpy(score_attr):
+    return score_attr.policy_loss.data.cpu().numpy()
 
 def first_token_accuracy(outputs):
     return token_accuracy(outputs, 1)
@@ -37,7 +39,7 @@ def caption_level_accuracy(captions, predictions):
 def classif_accuracy(outputs):
     _, class_index = torch.max(outputs.classif_probs, dim=1)
     equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
-    accuracy = equal_values.float().data.numpy()[0] * 100.0
+    accuracy = equal_values.float().data.numpy() * 100.0
     return accuracy
 
 
