@@ -89,11 +89,7 @@ class Agent(nn.Module):
         policy_loss = torch.stack(policy_loss).sum() * 0.01
         classif_loss = self.classif_loss_function(classif_probs,
                                                   classif_targets)
-        loss = policy_loss.cuda()*0.01 + classif_loss.cuda()
-        # print("policy_loss: {}".format(policy_loss))
-        # print("classif_loss: {}".format(classif_loss))
-        # print("*"*100)
-        loss.backward()
+
         self.lstm_hidden = None
 
         return returns, policy_loss, classif_loss
