@@ -30,7 +30,9 @@ class Environment(nn.Module):
         self.write_count = 0
 
         self.vid_encoding = self.encoder.extract_features(video)
-        # input buffer contains the seen video frames
+        # input buffer contains the seen video frames, in the beginning only the
+        # first frame of video
+
         self.input_buffer = [self.vid_encoding[:, 0, :]]
 
     def get_state(self):
@@ -73,7 +75,7 @@ class Environment(nn.Module):
         r =  {
             Environment.STATUS_CORRECT_WRITE: 100,
             Environment.STATUS_INCORRECT_WRITE: -100,
-            Environment.STATUS_READ: 1,
+            Environment.STATUS_READ: -1,
             Environment.STATUS_INVALID_READ: -10,
         }[status]
         #r = r if value_prob is None else (-1/(1+value_prob)) * r
