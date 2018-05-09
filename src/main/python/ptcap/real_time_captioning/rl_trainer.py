@@ -37,6 +37,7 @@ class RLTrainer(object):
                          self.optimizer, step_size=10000, gamma=0.9)
 
         self.checkpointer = checkpointer
+        self.num_epochs = 0
 
     def get_function_dict(self):
 
@@ -48,20 +49,20 @@ class RLTrainer(object):
         return function_dict
 
 
-    def train(self, dataloader, val_dataloader):
+    def train(self, dataloader, val_dataloader, criteria):
         print("*"*10)
         running_reward = 0
-        logging_interval = 1000000
+        logging_interval = 1000
         stop_training = False
         epoch = 0
 
         while not stop_training:
-            if epoch % 1 == 0:
+            if epoch % 5 == 0:
                 valid_average_scores = self.run_epoch(val_dataloader, is_training=False)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
-
+                self.score = valid_average_scores["avg_" + criteria]
                 state_dict = self.get_trainer_state()
                 self.checkpointer.save_best(state_dict)
 
@@ -71,16 +72,20 @@ class RLTrainer(object):
             state_dict = self.get_trainer_state()
             self.checkpointer.save_latest(state_dict)
             epoch += 1
+            stop_training = self.update_stop_training(epoch, max_num_epochs)
+
+
         self.logger.on_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
             "env": self.env.state_dict(),
             "agent": self.agent.state_dict(),
-            "score":None
+            "score": self.score,
+            "epoch": self.num_epochs
         }
 
-    def run_episode(self, i_episode, videos, classif_targets):
+    def run_episode(self, i_episode, videos, classif_targets, is_training):
         self.logger.on_batch_begin()
 
         #print("episode{}".format(i_episode))
@@ -103,6 +108,11 @@ class RLTrainer(object):
         returns, policy_loss, classif_loss = \
             self.agent.update_policy(reward_seq, logprob_seq, classif_probs, classif_targets)
         loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+        # print("policy_loss: {}".format(policy_loss))
+        # print("classif_loss: {}".format(classif_loss))
+        # print("*"*100)
+        if is_training:
+            loss.backward()
 
         if i_episode % 1 == 0:  # replace 1 with batch_size
             # policy_loss.backward()
@@ -110,36 +120,32 @@ class RLTrainer(object):
             self.scheduler.step()
             self.optimizer.zero_grad()
 
-
         return returns, action_seq, classif_probs, classif_loss, policy_loss
 
-    def run_epoch(self, dataloader, is_training, logging_interval = 1000):
-
+    def run_epoch(self, dataloader, is_training, logging_interval=1000):
+        if is_training:
+            self.env.train()
+            self.agent.train()
+        else:
+            self.env.eval()
+            self.agent.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
-                    "policy_loss classif_loss preds classif_targets classif_probs")
+                               "policy_loss classif_loss preds "
+                               "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
 
         # loop over videos
         for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
-
-            videos = (Variable(videos))
+            videos = Variable(videos)
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 classif_targets = classif_targets.cuda(self.gpus[0])
 
             returns, action_seq, classif_probs, classif_loss, policy_loss = \
-                            self.run_episode(i_episode, videos, classif_targets)
-            R = returns[0]
-            running_reward += R
+                self.run_episode(i_episode, videos, classif_targets, is_training)
 
-            if i_episode % logging_interval == 0:
-                print('Episode {}\tAverage return: {:.2f}'.format(
-                    i_episode,
-                    running_reward / logging_interval))
-                print(action_seq)
-                running_reward = 0
-
+            running_reward += returns[0]
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
@@ -148,21 +154,29 @@ class RLTrainer(object):
             _, predictions = torch.max(classif_probs, dim=1)
             predictions = predictions.cpu()
 
+            episode_outputs = ScoreAttr(policy_loss.cpu(),
+                                        classif_loss.cpu(),
+                                        predictions,
+                                        classif_targets.cpu(),
+                                        classif_probs.cpu())
 
-            batch_outputs = ScoreAttr(policy_loss.cpu(), classif_loss.cpu(), predictions,
-                                      classif_targets.cpu(), classif_probs.cpu())
-
-            scores_dict = scores.compute_scores(batch_outputs,
+            scores_dict = scores.compute_scores(episode_outputs,
                                                 i_episode + 1)
 
             # Take only the average of the scores in scores_dict
             average_scores_dict = scores.get_average_scores()
-            self.logger.on_batch_end(average_scores_dict, None, predictions,
-                 True,total_samples=len(dataloader), verbose=False)
-
+            if i_episode % logging_interval == 0:
+                print('\nEpisode {}\tAverage return: {:.2f}'.format(
+                    i_episode,
+                    running_reward / logging_interval))
+                print(action_seq)
+                running_reward = 0
+                self.logger.on_batch_end(average_scores_dict, None, predictions,
+                     True,total_samples=len(dataloader), verbose=False)
 
         self.logger.on_epoch_end(average_scores_dict, True,
                                      total_samples=len(dataloader))
+        return average_scores_dict
 
 
 
