@@ -1,6 +1,9 @@
 import torch.optim as optim
 import torch
 
+from collections import OrderedDict
+from collections import namedtuple
+
 from itertools import count
 from torch.autograd import Variable
 
@@ -9,63 +12,76 @@ from ptcap.real_time_captioning.agent import Agent
 from ptcap.utils import DataParallelWrapper
 
 
+from torch.autograd import Variable
+from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
+                          first_token_accuracy, policy_loss_to_numpy, classif_loss_to_numpy,
+                          token_accuracy)
+
+
 class RLTrainer(object):
-    def __init__(self, encoder, classif_layer, checkpointer, gpus=None):
+    def __init__(self, encoder, classif_layer, checkpointer, logger, gpus=None):
 
         self.gpus = gpus
         self.use_cuda = True if gpus else False
-
+        self.logger = logger
         self.env = Environment(encoder, classif_layer)
+
+
         self.agent = Agent()
 
         params = list(self.env.parameters()) + \
-                 list(self.agent.parameters()) + \
-                 list(self.env.classif_layer.parameters())
+                 list(self.agent.parameters()) \
+                 # + list(self.env.module.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
 
         self.checkpointer = checkpointer
 
-    def get_input_captions(self, captions, use_teacher_forcing):
-        batch_size = captions.size(0)
-        input_captions = torch.LongTensor(batch_size, 1).zero_()
-        if use_teacher_forcing:
-            input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
-        return input_captions
+    def get_function_dict(self):
 
-    def train(self, dataloader):
+        function_dict = OrderedDict()
+        function_dict["policy_loss"] = policy_loss_to_numpy
+        function_dict["classif_loss"] = classif_loss_to_numpy
+        function_dict["classif_accuracy"] = classif_accuracy
+
+        return function_dict
+
+
+    def train(self, dataloader, val_dataloader):
         print("*"*10)
         running_reward = 0
-        logging_interval = 1000
+        logging_interval = 1000000
         stop_training = False
+        epoch = 0
 
         while not stop_training:
+            if epoch % 1 == 0:
+                valid_average_scores = self.run_epoch(val_dataloader, is_training=False)
 
-            for i_episode, (videos, _, captions, classif_targets) in enumerate(dataloader):
-                input_captions = self.get_input_captions(captions,
-                                                         use_teacher_forcing=False)
-                videos, captions, input_captions = (
-                Variable(videos), Variable(captions),
-                         Variable(input_captions))
-                if self.use_cuda:
-                    videos = videos.cuda(self.gpus[0])
-                    captions = captions.cuda(self.gpus[0])
-                    input_captions = input_captions.cuda(self.gpus[0])
-                    classif_targets = classif_targets.cuda(self.gpus[0])
+                # remember best loss and save checkpoint
+                #self.score = valid_average_scores["avg_" + criteria]
 
-                returns, action_seq = self.run_episode(i_episode, videos, classif_targets)
-                R = returns[0]
-                running_reward += R
+                state_dict = self.get_trainer_state()
+                self.checkpointer.save_best(state_dict)
 
-                if i_episode % logging_interval == 0:
-                    print('Episode {}\tAverage return: {:.2f}'.format(
-                        i_episode,
-                        running_reward / logging_interval))
-                    print(action_seq)
-                    running_reward = 0
+
+            self.num_epochs += 1
+            self.run_epoch(dataloader, is_training=True)
+            state_dict = self.get_trainer_state()
+            self.checkpointer.save_latest(state_dict)
+            epoch += 1
+        self.logger.on_train_end(self.scheduler.best)
+
+    def get_trainer_state(self):
+        return {
+            "env": self.env.state_dict(),
+            "agent": self.agent.state_dict(),
+            "score":None
+        }
 
     def run_episode(self, i_episode, videos, classif_targets):
+        self.logger.on_batch_begin()
 
         #print("episode{}".format(i_episode))
         self.env.reset(videos)
@@ -76,7 +92,6 @@ class RLTrainer(object):
         logprob_seq = []
         while not finished:
 
-
             state = self.env.get_state()
             action, logprob = self.agent.select_action(state)
             action_seq.append(action.data.numpy()[0])
@@ -85,8 +100,9 @@ class RLTrainer(object):
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-        returns, policy_loss = \
+        returns, policy_loss, classif_loss = \
             self.agent.update_policy(reward_seq, logprob_seq, classif_probs, classif_targets)
+        loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
 
         if i_episode % 1 == 0:  # replace 1 with batch_size
             # policy_loss.backward()
@@ -95,7 +111,58 @@ class RLTrainer(object):
             self.optimizer.zero_grad()
 
 
-        return returns, action_seq
+        return returns, action_seq, classif_probs, classif_loss, policy_loss
+
+    def run_epoch(self, dataloader, is_training, logging_interval = 1000):
+
+        running_reward = 0
+        ScoreAttr = namedtuple("ScoresAttr",
+                    "policy_loss classif_loss preds classif_targets classif_probs")
+        scores = ScoresOperator(self.get_function_dict())
+
+        # loop over videos
+        for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
+
+            videos = (Variable(videos))
+            if self.use_cuda:
+                videos = videos.cuda(self.gpus[0])
+                classif_targets = classif_targets.cuda(self.gpus[0])
+
+            returns, action_seq, classif_probs, classif_loss, policy_loss = \
+                            self.run_episode(i_episode, videos, classif_targets)
+            R = returns[0]
+            running_reward += R
+
+            if i_episode % logging_interval == 0:
+                print('Episode {}\tAverage return: {:.2f}'.format(
+                    i_episode,
+                    running_reward / logging_interval))
+                print(action_seq)
+                running_reward = 0
+
+
+            # self.checkpointer.save_value_csv([epoch, train_avg_loss],
+            #                                  filename="train_loss")
+
+            # convert probabilities to predictions
+            _, predictions = torch.max(classif_probs, dim=1)
+            predictions = predictions.cpu()
+
+
+            batch_outputs = ScoreAttr(policy_loss.cpu(), classif_loss.cpu(), predictions,
+                                      classif_targets.cpu(), classif_probs.cpu())
+
+            scores_dict = scores.compute_scores(batch_outputs,
+                                                i_episode + 1)
+
+            # Take only the average of the scores in scores_dict
+            average_scores_dict = scores.get_average_scores()
+            self.logger.on_batch_end(average_scores_dict, None, predictions,
+                 True,total_samples=len(dataloader), verbose=False)
+
+
+        self.logger.on_epoch_end(average_scores_dict, True,
+                                     total_samples=len(dataloader))
 
 
 
