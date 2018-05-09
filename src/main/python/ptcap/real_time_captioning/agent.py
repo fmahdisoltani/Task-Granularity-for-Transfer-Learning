@@ -96,4 +96,4 @@ class Agent(nn.Module):
         loss.backward()
         self.lstm_hidden = None
 
-        return returns
+        return returns, policy_loss, classif_loss
