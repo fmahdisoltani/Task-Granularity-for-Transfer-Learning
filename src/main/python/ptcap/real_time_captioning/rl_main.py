@@ -133,5 +133,6 @@ if __name__ == "__main__":
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     rl_trainer = RLTrainer(encoder, classif_layer.cuda(), checkpointer, logger, gpus=gpus)
-    rl_trainer.train(train_dataloader, val_dataloader)
+    rl_trainer.train(train_dataloader, val_dataloader, criteria="classif_accuracy"
+                     )
 
