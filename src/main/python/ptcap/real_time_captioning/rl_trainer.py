@@ -72,7 +72,7 @@ class RLTrainer(object):
             state_dict = self.get_trainer_state()
             self.checkpointer.save_latest(state_dict)
             epoch += 1
-            stop_training = self.update_stop_training(epoch, max_num_epochs)
+            #stop_training = self.update_stop_training(epoch, max_num_epochs)
 
 
         self.logger.on_train_end(self.scheduler.best)
@@ -172,7 +172,7 @@ class RLTrainer(object):
                 print(action_seq)
                 running_reward = 0
                 self.logger.on_batch_end(average_scores_dict, None, predictions,
-                     True,total_samples=len(dataloader), verbose=False)
+                     is_training, total_samples=len(dataloader), verbose=False)
 
         self.logger.on_epoch_end(average_scores_dict, True,
                                      total_samples=len(dataloader))

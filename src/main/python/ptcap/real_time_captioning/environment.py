@@ -74,7 +74,7 @@ class Environment(nn.Module):
     def give_reward(self, status, value_prob=None):
         r =  {
             Environment.STATUS_CORRECT_WRITE: 100,
-            Environment.STATUS_INCORRECT_WRITE: -100,
+            Environment.STATUS_INCORRECT_WRITE: -1000,
             Environment.STATUS_READ: -1,
             Environment.STATUS_INVALID_READ: -10,
         }[status]
