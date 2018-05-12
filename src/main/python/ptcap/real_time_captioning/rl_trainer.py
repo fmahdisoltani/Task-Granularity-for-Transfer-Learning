@@ -54,24 +54,30 @@ class RLTrainer(object):
         running_reward = 0
         logging_interval = 1000
         stop_training = False
+        valid_frequency = 1
         epoch = 0
 
         while not stop_training:
-            if epoch % 5 == 0:
-                valid_average_scores = self.run_epoch(val_dataloader, is_training=False)
+            if epoch % valid_frequency == 0:
+                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
                 self.score = valid_average_scores["avg_" + criteria]
                 state_dict = self.get_trainer_state()
                 self.checkpointer.save_best(state_dict)
-
+                self.checkpointer.save_value_csv([epoch, self.score],
+                                                 filename="valid_loss")
 
             self.num_epochs += 1
-            self.run_epoch(dataloader, is_training=True)
+            epoch += 1
+            train_average_scores = self.run_epoch(dataloader, epoch, is_training=True)
+            train_avg_loss = train_average_scores["avg_"+criteria]
             state_dict = self.get_trainer_state()
             self.checkpointer.save_latest(state_dict)
-            epoch += 1
+            self.checkpointer.save_value_csv([epoch, train_avg_loss],
+                                             filename="train_loss")
+
             #stop_training = self.update_stop_training(epoch, max_num_epochs)
 
 
@@ -105,24 +111,23 @@ class RLTrainer(object):
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-        returns, policy_loss, classif_loss = \
-            self.agent.update_policy(reward_seq, logprob_seq, classif_probs, classif_targets)
-        loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
-        # print("policy_loss: {}".format(policy_loss))
-        # print("classif_loss: {}".format(classif_loss))
-        # print("*"*100)
-        if is_training:
-            loss.backward()
+        # returns, policy_loss, classif_loss = \
+        #     self.agent.compute_losses(reward_seq, logprob_seq, classif_probs, classif_targets)
+        # loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+        #
+        # if is_training:
+        #     loss.backward()
+        #
+        # if i_episode % 1 == 0:  # replace 1 with batch_size
+        #     # policy_loss.backward()
+        #     self.optimizer.step()
+        #     self.scheduler.step()
+        #     self.optimizer.zero_grad()
 
-        if i_episode % 1 == 0:  # replace 1 with batch_size
-            # policy_loss.backward()
-            self.optimizer.step()
-            self.scheduler.step()
-            self.optimizer.zero_grad()
+        return action_seq, reward_seq, logprob_seq, classif_probs
 
-        return returns, action_seq, classif_probs, classif_loss, policy_loss
-
-    def run_epoch(self, dataloader, is_training, logging_interval=1000):
+    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000, batch_size=4):
+        self.logger.on_epoch_begin(epoch)
         if is_training:
             self.env.train()
             self.agent.train()
@@ -136,16 +141,44 @@ class RLTrainer(object):
         scores = ScoresOperator(self.get_function_dict())
 
         # loop over videos
+        batch_reward_seq = []
+        batch_action_seq = []
+        batch_logprob_seq = []
+
         for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
             videos = Variable(videos)
+
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 classif_targets = classif_targets.cuda(self.gpus[0])
 
-            returns, action_seq, classif_probs, classif_loss, policy_loss = \
+            action_seq, reward_seq, logprob_seq, classif_probs = \
                 self.run_episode(i_episode, videos, classif_targets, is_training)
 
-            running_reward += returns[0]
+            batch_reward_seq = batch_reward_seq + reward_seq
+            batch_action_seq = batch_action_seq + action_seq
+            batch_logprob_seq = batch_logprob_seq + logprob_seq
+
+            if i_episode % 1 == 0:
+                returns, policy_loss, classif_loss = \
+                    self.agent.compute_losses(batch_reward_seq,
+                                              batch_logprob_seq, classif_probs,
+                                              classif_targets)
+
+                loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+                running_reward += returns[0]
+                if is_training:
+                    loss.backward()
+                # policy_loss.backward()
+                self.optimizer.step()
+                self.scheduler.step()
+                self.optimizer.zero_grad()
+
+                batch_reward_seq = []
+                batch_action_seq = []
+                batch_logprob_seq = []
+
+
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
