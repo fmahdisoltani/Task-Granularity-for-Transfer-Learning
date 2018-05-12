@@ -76,7 +76,7 @@ class Agent(nn.Module):
         G.reverse()
         return G
 
-    def update_policy(self, reward_seq, logprobs_seq, classif_probs, classif_targets, gamma=1.0):
+    def compute_losses(self, reward_seq, logprobs_seq, classif_probs, classif_targets, gamma=1.0):
 
         policy_loss = []
         returns = self.compute_returns(reward_seq, gamma)
