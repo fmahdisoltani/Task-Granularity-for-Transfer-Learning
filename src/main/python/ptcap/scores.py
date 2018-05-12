@@ -7,6 +7,8 @@ def token_accuracy(outputs, num_tokens=None):
     return token_level_accuracy(outputs.captions, outputs.predictions,
                                 num_tokens)
 
+def loss_to_numpy(score_attr):
+    return score_attr.loss.data.cpu().numpy()
 
 def classif_loss_to_numpy(score_attr):
     return score_attr.classif_loss.data.cpu().numpy()
