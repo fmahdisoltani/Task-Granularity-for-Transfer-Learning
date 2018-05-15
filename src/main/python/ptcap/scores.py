@@ -16,6 +16,9 @@ def classif_loss_to_numpy(score_attr):
 def policy_loss_to_numpy(score_attr):
     return score_attr.policy_loss.data.cpu().numpy()
 
+def get_wait_time(score_attr):
+    return score_attr.wait_time
+
 def first_token_accuracy(outputs):
     return token_accuracy(outputs, 1)
 
