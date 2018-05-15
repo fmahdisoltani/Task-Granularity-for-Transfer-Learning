@@ -15,7 +15,7 @@ from ptcap.utils import DataParallelWrapper
 from torch.autograd import Variable
 from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
                           first_token_accuracy, policy_loss_to_numpy, classif_loss_to_numpy,
-                          token_accuracy)
+                          token_accuracy, get_wait_time)
 
 
 class RLTrainer(object):
@@ -42,6 +42,7 @@ class RLTrainer(object):
     def get_function_dict(self):
 
         function_dict = OrderedDict()
+        function_dict["wait_time"] = get_wait_time
         function_dict["policy_loss"] = policy_loss_to_numpy
         function_dict["classif_loss"] = classif_loss_to_numpy
         function_dict["classif_accuracy"] = classif_accuracy
@@ -136,7 +137,7 @@ class RLTrainer(object):
             self.agent.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
-                               "policy_loss classif_loss preds "
+                               "wait_time policy_loss classif_loss preds "
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
 
@@ -155,30 +156,24 @@ class RLTrainer(object):
             action_seq, reward_seq, logprob_seq, classif_probs = \
                 self.run_episode(i_episode, videos, classif_targets, is_training)
 
-            batch_reward_seq = batch_reward_seq + reward_seq
-            batch_action_seq = batch_action_seq + action_seq
-            batch_logprob_seq = batch_logprob_seq + logprob_seq
 
-            if i_episode % 1 == 0:
-                returns, policy_loss, classif_loss = \
-                    self.agent.compute_losses(batch_reward_seq,
-                                              batch_logprob_seq, classif_probs,
-                                              classif_targets)
+            returns, policy_loss, classif_loss = \
+                self.agent.compute_losses(reward_seq,
+                                          logprob_seq,
+                                          classif_probs,
+                                          classif_targets)
 
-                loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
-                running_reward += returns[0]
-                if is_training:
-                    loss.backward()
+            loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+            wait_time = len(action_seq)
+            running_reward += returns[0]
+            if is_training:
+                loss.backward()
+
+            if i_episode % 10 == 0:
                 # policy_loss.backward()
                 self.optimizer.step()
                 self.scheduler.step()
                 self.optimizer.zero_grad()
-
-                batch_reward_seq = []
-                batch_action_seq = []
-                batch_logprob_seq = []
-
-
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
@@ -187,7 +182,8 @@ class RLTrainer(object):
             _, predictions = torch.max(classif_probs, dim=1)
             predictions = predictions.cpu()
 
-            episode_outputs = ScoreAttr(policy_loss.cpu(),
+            episode_outputs = ScoreAttr(wait_time,
+                                        policy_loss.cpu(),
                                         classif_loss.cpu(),
                                         predictions,
                                         classif_targets.cpu(),
