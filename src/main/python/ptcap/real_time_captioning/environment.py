@@ -29,11 +29,11 @@ class Environment(nn.Module):
         self.read_count = 0
         self.write_count = 0
 
-        self.vid_encoding = self.encoder.extract_features(video)
+        self.vid_encoding = torch.zeros([1,1024]).cuda()#self.encoder.extract_features(video)
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
-        self.input_buffer = [self.vid_encoding[:, 0, :]]
+        self.input_buffer = self.vid_encoding#[:, 0, :]
 
     def get_state(self):
         return {
@@ -47,15 +47,15 @@ class Environment(nn.Module):
         classif_probs = self.classify()
         value_prob = None
 
-        if action.data.numpy()[0] == 0:  # READ
+        if action.data.cpu().numpy()[0] == 0:  # READ
             if self.read_count == 47:
                 status = Environment.STATUS_INVALID_READ
             else:
                 status = Environment.STATUS_READ
-                self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
+                #self.input_buffer = self.vid_encoding#[:, 0, :]
                 self.read_count += 1
 
-        if action.data.numpy()[0] == 1:  # WRITE
+        if action.data.cpu().numpy()[0] == 1:  # WRITE
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
             if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
@@ -82,8 +82,8 @@ class Environment(nn.Module):
         return r
 
     def classify(self):
-        features = self.input_buffer[-1]
-        pre_activation = self.classif_layer(self.vid_encoding[:, self.read_count, :])
+        #features = self.input_buffer[-1]
+        pre_activation = self.classif_layer(self.vid_encoding)#[:, self.read_count, :])
         probs = self.logsoftmax(pre_activation)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)  # probs: [8*48*178]

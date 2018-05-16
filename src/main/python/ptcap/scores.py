@@ -14,7 +14,7 @@ def classif_loss_to_numpy(score_attr):
     return score_attr.classif_loss.data.cpu().numpy()
 
 def policy_loss_to_numpy(score_attr):
-    return score_attr.policy_loss.data.cpu().numpy()
+    return score_attr.policy_loss[0].data.cpu().numpy()
 
 def get_wait_time(score_attr):
     return score_attr.wait_time
