@@ -112,19 +112,6 @@ class RLTrainer(object):
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-        # returns, policy_loss, classif_loss = \
-        #     self.agent.compute_losses(reward_seq, logprob_seq, classif_probs, classif_targets)
-        # loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
-        #
-        # if is_training:
-        #     loss.backward()
-        #
-        # if i_episode % 1 == 0:  # replace 1 with batch_size
-        #     # policy_loss.backward()
-        #     self.optimizer.step()
-        #     self.scheduler.step()
-        #     self.optimizer.zero_grad()
-
         return action_seq, reward_seq, logprob_seq, classif_probs
 
     def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000, batch_size=4):
@@ -141,11 +128,6 @@ class RLTrainer(object):
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
 
-        # loop over videos
-        batch_reward_seq = []
-        batch_action_seq = []
-        batch_logprob_seq = []
-
         for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
             videos = Variable(videos)
 
@@ -155,7 +137,6 @@ class RLTrainer(object):
 
             action_seq, reward_seq, logprob_seq, classif_probs = \
                 self.run_episode(i_episode, videos, classif_targets, is_training)
-
 
             returns, policy_loss, classif_loss = \
                 self.agent.compute_losses(reward_seq,
@@ -169,11 +150,9 @@ class RLTrainer(object):
             if is_training:
                 loss.backward()
 
-            if i_episode % 10 == 0:
-                # policy_loss.backward()
-                self.optimizer.step()
-                self.scheduler.step()
-                self.optimizer.zero_grad()
+            self.optimizer.step()
+            self.scheduler.step()
+            self.optimizer.zero_grad()
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
