@@ -16,6 +16,7 @@ from torch.autograd import Variable
 from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
                           first_token_accuracy, policy_loss_to_numpy, classif_loss_to_numpy,
                           token_accuracy, get_wait_time)
+from ptcap.utils import DataParallelWrapper
 
 
 class RLTrainer(object):
@@ -24,13 +25,16 @@ class RLTrainer(object):
         self.gpus = gpus
         self.use_cuda = True if gpus else False
         self.logger = logger
-        self.env = Environment(encoder, classif_layer)
+        self.env = DataParallelWrapper((Environment(encoder, classif_layer)),
+                                       device_ids=self.gpus).cuda(gpus[0])
 
 
-        self.agent = Agent()
+        self.agent = DataParallelWrapper(Agent(),
+                                       device_ids=self.gpus).cuda(gpus[0])
 
-        params = list(self.env.parameters()) + \
-                 list(self.agent.parameters()) \
+
+        params = list(self.env.module.parameters()) + \
+                 list(self.agent.module.parameters()) \
                  # + list(self.env.module.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
@@ -60,7 +64,7 @@ class RLTrainer(object):
 
         while not stop_training:
             if epoch % valid_frequency == 0:
-                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
+                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=True)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
@@ -96,7 +100,7 @@ class RLTrainer(object):
         self.logger.on_batch_begin()
 
         #print("episode{}".format(i_episode))
-        self.env.reset(videos)
+        self.env.module.reset(videos)
 
         finished = False
         reward_seq = []
@@ -104,24 +108,24 @@ class RLTrainer(object):
         logprob_seq = []
         while not finished:
 
-            state = self.env.get_state()
-            action, logprob = self.agent.select_action(state)
-            action_seq.append(action.data.numpy()[0])
+            state = self.env.module.get_state()
+            action, logprob = self.agent.module.select_action(state)
+            action_seq.append(action)
             logprob_seq.append(logprob)
-            reward, classif_probs = self.env.update_state(action, action_seq, classif_targets)
+            reward, classif_probs = self.env.module.update_state(action, action_seq, classif_targets)
             reward_seq.append(reward)
-            finished = self.env.check_finished()
+            finished = self.env.module.check_finished()
 
         return action_seq, reward_seq, logprob_seq, classif_probs
 
     def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000, batch_size=4):
         self.logger.on_epoch_begin(epoch)
         if is_training:
-            self.env.train()
-            self.agent.train()
+            self.env.module.train()
+            self.agent.module.train()
         else:
-            self.env.eval()
-            self.agent.eval()
+            self.env.module.eval()
+            self.agent.module.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
                                "wait_time policy_loss classif_loss preds "
@@ -139,12 +143,12 @@ class RLTrainer(object):
                 self.run_episode(i_episode, videos, classif_targets, is_training)
 
             returns, policy_loss, classif_loss = \
-                self.agent.compute_losses(reward_seq,
+                self.agent.module.compute_losses(reward_seq,
                                           logprob_seq,
                                           classif_probs,
                                           classif_targets)
 
-            loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+            loss = policy_loss * 0.01 + classif_loss
             wait_time = len(action_seq)
             running_reward += returns[0]
             if is_training:
@@ -159,12 +163,11 @@ class RLTrainer(object):
 
             # convert probabilities to predictions
             _, predictions = torch.max(classif_probs, dim=1)
-            predictions = predictions.cpu()
 
             episode_outputs = ScoreAttr(wait_time,
                                         policy_loss.cpu(),
                                         classif_loss.cpu(),
-                                        predictions,
+                                        predictions.cpu(),
                                         classif_targets.cpu(),
                                         classif_probs.cpu())
 

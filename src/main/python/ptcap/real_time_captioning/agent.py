@@ -41,12 +41,12 @@ class Agent(nn.Module):
     def prepare_policy_input(self, state):
         rc = state['read_count']
         wc = state['write_count']
-        last_vid_feature = state['input_buffer'][-1]
+        last_vid_feature = state['vid_encoding']
         # policy_input = torch.cat([rc * torch.ones((1, 1)),
         #                           wc * torch.ones((1, 1))], dim=1)
-        policy_input = torch.cat([Variable(rc * torch.ones((1, 1))),
-                                  Variable(wc * torch.ones((1, 1))),
-                                  last_vid_feature.cpu()], dim=1)
+        policy_input = torch.cat([Variable(rc * torch.ones((1, 1))).cuda(),
+                                  Variable(wc * torch.ones((1, 1))).cuda(),
+                                  last_vid_feature], dim=1)
 
         x = torch.unsqueeze(policy_input, dim=1)
         return x
@@ -85,7 +85,7 @@ class Agent(nn.Module):
         #returns = (returns - returns.mean()) / (returns.std() +
         #                                        np.finfo(np.float32).eps)
         for log_prob, r in zip(logprobs_seq, returns):
-            policy_loss.append(-log_prob * r)
+            policy_loss.append(-log_prob * r.cuda())
         policy_loss = torch.stack(policy_loss).sum() * 0.01
         classif_loss = self.classif_loss_function(classif_probs,
                                                   classif_targets)

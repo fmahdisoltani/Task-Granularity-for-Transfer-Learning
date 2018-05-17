@@ -33,13 +33,13 @@ class Environment(nn.Module):
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
-        self.input_buffer = [self.vid_encoding[:, 0, :]]
+        #self.input_buffer = [self.vid_encoding[:, 0, :]]
 
     def get_state(self):
         return {
             "read_count": self.read_count,
             "write_count": self.write_count,
-            "input_buffer": self.input_buffer
+            "vid_encoding": self.vid_encoding[:, self.read_count, :]
         }
 
     def update_state(self, action, action_seq=[], classif_targets=None):
@@ -47,15 +47,14 @@ class Environment(nn.Module):
         classif_probs = self.classify()
         value_prob = None
 
-        if action.data.numpy()[0] == 0:  # READ
+        if action == 0:  # READ
             if self.read_count == 47:
                 status = Environment.STATUS_INVALID_READ
             else:
                 status = Environment.STATUS_READ
-                self.input_buffer.append(self.vid_encoding[:, self.read_count, :])
                 self.read_count += 1
 
-        if action.data.numpy()[0] == 1:  # WRITE
+        if action == 1:  # WRITE
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
             if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
@@ -82,7 +81,6 @@ class Environment(nn.Module):
         return r
 
     def classify(self):
-        features = self.input_buffer[-1]
         pre_activation = self.classif_layer(self.vid_encoding[:, self.read_count, :])
         probs = self.logsoftmax(pre_activation)
         if probs.ndimension() == 3:
