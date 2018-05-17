@@ -41,7 +41,7 @@ class Agent(nn.Module):
     def prepare_policy_input(self, state):
         rc = state['read_count']
         wc = state['write_count']
-        last_vid_feature = state['input_buffer'][-1]
+        last_vid_feature = state['input_buffer']
         # policy_input = torch.cat([rc * torch.ones((1, 1)),
         #                           wc * torch.ones((1, 1))], dim=1)
         policy_input = torch.cat([Variable(rc * torch.ones((1, 1))),

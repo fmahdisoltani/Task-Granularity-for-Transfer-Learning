@@ -60,7 +60,7 @@ class RLTrainer(object):
 
         while not stop_training:
             if epoch % valid_frequency == 0:
-                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
+                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=True)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
