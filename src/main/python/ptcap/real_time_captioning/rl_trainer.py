@@ -26,11 +26,10 @@ class RLTrainer(object):
         self.logger = logger
         self.env = Environment(encoder, classif_layer)
 
+        self.agent = Agent().cuda()
 
-        self.agent = Agent()
-
-        params = list(self.env.parameters()) + \
-                 list(self.agent.parameters()) \
+        params = list(self.agent.parameters())
+                # list(self.env.parameters()) \
                  # + list(self.env.module.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
@@ -55,12 +54,12 @@ class RLTrainer(object):
         running_reward = 0
         logging_interval = 1000
         stop_training = False
-        valid_frequency = 1
+        valid_frequency = 5
         epoch = 0
 
         while not stop_training:
             if epoch % valid_frequency == 0:
-                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=True)
+                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
@@ -106,7 +105,7 @@ class RLTrainer(object):
 
             state = self.env.get_state()
             action, logprob = self.agent.select_action(state)
-            action_seq.append(action.data.numpy()[0])
+            action_seq.append(action)
             logprob_seq.append(logprob)
             reward, classif_probs = self.env.update_state(action, action_seq, classif_targets)
             reward_seq.append(reward)
@@ -127,7 +126,7 @@ class RLTrainer(object):
                                "wait_time policy_loss classif_loss preds "
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
-
+        loss = 0
         for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
             videos = Variable(videos)
 
@@ -144,15 +143,17 @@ class RLTrainer(object):
                                           classif_probs,
                                           classif_targets)
 
-            loss = policy_loss.cuda() * 0.01 + classif_loss.cuda()
+            loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
             wait_time = len(action_seq)
             running_reward += returns[0]
-            if is_training:
-                loss.backward()
+            if i_episode % 3 ==0:
+                if is_training:
+                    loss.backward()
 
-            self.optimizer.step()
-            self.scheduler.step()
-            self.optimizer.zero_grad()
+                self.optimizer.step()
+                self.scheduler.step()
+                self.optimizer.zero_grad()
+                loss = 0
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
