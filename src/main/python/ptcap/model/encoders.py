@@ -44,7 +44,7 @@ class C3dLSTMEncoder(Encoder):
         # videos: [batch_size*num_ch*len*w*h]
         c3d_features = self.c3d_extractor.extract_features(videos)
 
-        self.lstm.flatten_parameters()
+        # self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(c3d_features)
         return self.dropout(self.relu(self.fc(lstm_outputs)))  # [batch_size*num_step*num_features]
 
