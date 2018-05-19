@@ -59,7 +59,7 @@ class Checkpointer(object):
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
             print("No checkpoint found at {}".format(pretrained_path))
-        return init_epoch, model, optimizer
+        return init_epoch, model, classif_layer, optimizer
 
     def save_best(self, state, folder=None, filename="model.best"):
         if not folder:
