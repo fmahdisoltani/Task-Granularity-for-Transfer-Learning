@@ -26,14 +26,13 @@ class Agent(nn.Module):
         self.softmax = nn.Softmax(dim=2)
         self.lstm_hidden = None
         self.classif_loss_function = CrossEntropy()
-        self.classif_loss_function = self.classif_loss_function.cpu()
 
     def get_action_probs(self, x):
         x = self.prepare_policy_input(x)
         # return self.policy(x).squeeze(dim=1)
         x = self.input_layer(x)
         lstm_output, self.lstm_hidden = self.lstm(x, self.lstm_hidden)
-        self.lstm.flatten_parameters()
+        # self.lstm.flatten_parameters()
         lstm_out_projected = self.output_layer(lstm_output)
         action_probs = self.softmax(lstm_out_projected)
         return action_probs.squeeze(dim=1)
@@ -44,9 +43,9 @@ class Agent(nn.Module):
         last_vid_feature = state['input_buffer']
         # policy_input = torch.cat([rc * torch.ones((1, 1)),
         #                           wc * torch.ones((1, 1))], dim=1)
-        policy_input = torch.cat([Variable(rc * torch.ones((1, 1))),
-                                  Variable(wc * torch.ones((1, 1))),
-                                  last_vid_feature.cpu()], dim=1)
+        policy_input = torch.cat([Variable(rc * torch.ones((1, 1)).cuda()),
+                                  Variable(wc * torch.ones((1, 1)).cuda()),
+                                  last_vid_feature], dim=1)
 
         x = torch.unsqueeze(policy_input, dim=1)
         return x
@@ -56,7 +55,7 @@ class Agent(nn.Module):
         dist = torch.distributions.Categorical(action_probs)
         action = dist.sample()
         log_prob = torch.sum(dist.log_prob(action))
-        return action, log_prob
+        return action.cpu().data.numpy()[0], log_prob
 
     def compute_returns(self,rewards, gamma=1.0):
         """
@@ -80,7 +79,7 @@ class Agent(nn.Module):
 
         policy_loss = []
         returns = self.compute_returns(reward_seq, gamma)
-        returns = torch.Tensor(returns)
+        # returns = torch.Tensor(returns)
         # subtract mean and std for faster training
         #returns = (returns - returns.mean()) / (returns.std() +
         #                                        np.finfo(np.float32).eps)
