@@ -17,8 +17,6 @@ class Environment(nn.Module):
         super().__init__()
 
         self.encoder = encoder
-
-        self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = classif_layer
 
         self.logsoftmax = nn.LogSoftmax(dim=-1)
@@ -47,7 +45,7 @@ class Environment(nn.Module):
         classif_probs = self.classify()
         value_prob = None
 
-        if action.data.numpy()[0] == 0:  # READ
+        if action == 0:  # READ
             if self.read_count == 47:
                 status = Environment.STATUS_INVALID_READ
             else:
@@ -55,10 +53,10 @@ class Environment(nn.Module):
                 #self.input_buffer = self.vid_encoding[:, self.read_count, :]
                 self.read_count += 1
 
-        if action.data.numpy()[0] == 1:  # WRITE
+        if action == 1:  # WRITE
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
-            if prediction.data.cpu().numpy()[0] == classif_targets.data.cpu().numpy()[0]:
+            if torch.equal(prediction, classif_targets):
                 status = Environment.STATUS_CORRECT_WRITE
             else:
                 status = Environment.STATUS_INCORRECT_WRITE
@@ -75,7 +73,7 @@ class Environment(nn.Module):
         r =  {
             Environment.STATUS_CORRECT_WRITE: 100,
             Environment.STATUS_INCORRECT_WRITE: -1000,
-            Environment.STATUS_READ: -1,
+            Environment.STATUS_READ: 0,
             Environment.STATUS_INVALID_READ: -10,
         }[status]
         #r = r if value_prob is None else (-1/(1+value_prob)) * r
