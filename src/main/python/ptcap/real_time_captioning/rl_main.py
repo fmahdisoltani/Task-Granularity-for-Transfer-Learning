@@ -99,7 +99,7 @@ if __name__ == "__main__":
     encoder_args = encoder_args or ()
     encoder_kwargs = encoder_kwargs or {}
 
-    encoder = getattr(ptcap.model.two_stream_encoders, encoder_type)(
+    encoder = getattr(ptcap.model.encoders, encoder_type)(
         *encoder_args,
         **encoder_kwargs)
 
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                                          folder=pretrained_encoder,
                                          filename=pretrained_file,
                                          load_encoder_only=True)
-    _, encoder, _ = init_state
+    _, encoder,classif_layer,  _ = init_state
 
     # Setup the logger
     from ptcap.loggers import CustomLogger
