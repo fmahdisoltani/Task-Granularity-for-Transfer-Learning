@@ -43,19 +43,19 @@ class Agent(nn.Module):
         last_vid_feature = state['input_buffer']
         # policy_input = torch.cat([rc * torch.ones((1, 1)),
         #                           wc * torch.ones((1, 1))], dim=1)
-        policy_input = torch.cat([Variable(rc * torch.ones((1, 1)).cuda()),
-                                  Variable(wc * torch.ones((1, 1)).cuda()),
-                                  last_vid_feature], dim=1)
+        policy_input = torch.cat([Variable(rc.long().view(-1, 1, 1).cuda()),
+                                  Variable(wc.long().view(-1, 1, 1).cuda()),
+                                  last_vid_feature.long()], dim=2).float()
 
-        x = torch.unsqueeze(policy_input, dim=1)
-        return x
+        #x = torch.unsqueeze(policy_input, dim=1)
+        return policy_input
 
     def select_action(self, state):
         action_probs = self.get_action_probs(state)
         dist = torch.distributions.Categorical(action_probs)
         action = dist.sample()
-        log_prob = torch.sum(dist.log_prob(action))
-        return action.cpu().data.numpy()[0], log_prob
+        logprob = dist.log_prob(action)
+        return action, logprob
 
     def compute_returns(self,rewards, gamma=1.0):
         """

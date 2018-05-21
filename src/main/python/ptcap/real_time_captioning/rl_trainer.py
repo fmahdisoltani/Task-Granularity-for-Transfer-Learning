@@ -101,15 +101,15 @@ class RLTrainer(object):
         reward_seq = []
         action_seq = []
         logprob_seq = []
-        while not finished:
-
+        #while not finished:
+        for i in range(47):
             state = self.env.get_state()
             action, logprob = self.agent.select_action(state)
             action_seq.append(action)
             logprob_seq.append(logprob)
-            reward, classif_probs = self.env.update_state(action, action_seq, classif_targets)
+            reward, classif_probs = self.env.update_state(action, classif_targets)
             reward_seq.append(reward)
-            finished = self.env.check_finished()
+        #    finished = self.env.check_finished()
 
         return action_seq, reward_seq, logprob_seq, classif_probs
 
