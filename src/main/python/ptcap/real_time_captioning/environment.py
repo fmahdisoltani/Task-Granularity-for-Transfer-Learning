@@ -23,26 +23,21 @@ class Environment(nn.Module):
 
         #self.reset()
 
-    def reset(self, videos=None, caption=None, classif=None):
-        batch_size = videos.shape[0]
-        self.read_count = torch.zeros(batch_size)
-        self.write_count = torch.zeros(batch_size)
+    def reset(self, video=None, caption=None, classif=None):
+        self.read_count = 0
+        self.write_count = 0
 
-        self.vid_encodings = self.encoder.extract_features(videos)
-        self.input_buffer = self.vid_encodings.gather(1, self.read_count.long().view(-1,1,1).expand(4, 1,1024).cuda())
-        print("")
+        self.vid_encoding = self.encoder.extract_features(video)
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
         #self.input_buffer = self.vid_encoding[:, 0, :]
 
     def get_state(self):
-
         return {
             "read_count": self.read_count,
             "write_count": self.write_count,
-            "input_buffer": self.input_buffer
-            #"input_buffer": self.vid_encoding[:, self.read_count, :]
+            "input_buffer": self.vid_encoding[:, self.read_count, :]
         }
 
     def update_state(self, action, classif_targets=None):
@@ -72,8 +67,6 @@ class Environment(nn.Module):
         return reward, classif_probs
 
     def check_finished(self):
-        self.fin = self.write_count == 1
-        return self.fin
         return self.write_count == 1 or self.read_count == 48
 
     def give_reward(self, status, value_prob=None):
@@ -88,7 +81,7 @@ class Environment(nn.Module):
 
     def classify(self):
         #features = self.input_buffer[-1]
-        pre_activation = self.classif_layer(self.input_buffer)
+        pre_activation = self.classif_layer(self.vid_encoding[:, self.read_count, :])
         probs = self.logsoftmax(pre_activation)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)  # probs: [8*48*178]

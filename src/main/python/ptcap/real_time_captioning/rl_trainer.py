@@ -52,7 +52,7 @@ class RLTrainer(object):
     def train(self, dataloader, val_dataloader, criteria):
         print("*"*10)
         running_reward = 0
-        logging_interval = 1000
+        wait_time = 0
         stop_training = False
         valid_frequency = 5
         epoch = 0
@@ -91,29 +91,31 @@ class RLTrainer(object):
             "epoch": self.num_epochs
         }
 
-    def run_episode(self, i_episode, videos, classif_targets, is_training):
-        self.logger.on_batch_begin()
+    def run_episode(self, i_sample, video, classif_target, is_training):
+
 
         #print("episode{}".format(i_episode))
-        self.env.reset(videos)
+        self.env.reset(video)
 
         finished = False
         reward_seq = []
         action_seq = []
         logprob_seq = []
-        #while not finished:
-        for i in range(47):
-            state = self.env.get_state()
+        wait_time = 0
+        state = self.env.get_state()
+
+        while not finished:
+
             action, logprob = self.agent.select_action(state)
             action_seq.append(action)
             logprob_seq.append(logprob)
-            reward, classif_probs = self.env.update_state(action, classif_targets)
+            reward, classif_probs = self.env.update_state(action, classif_target)
             reward_seq.append(reward)
-        #    finished = self.env.check_finished()
+            finished = self.env.check_finished()
 
         return action_seq, reward_seq, logprob_seq, classif_probs
 
-    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000, batch_size=4):
+    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1, batch_size=4):
         self.logger.on_epoch_begin(epoch)
         if is_training:
             self.env.train()
@@ -127,33 +129,39 @@ class RLTrainer(object):
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
+        wait_time = 0
+
         for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
             videos = Variable(videos)
 
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 classif_targets = classif_targets.cuda(self.gpus[0])
+            self.logger.on_batch_begin()
+            for i_sample in range(batch_size):
+                video = videos[i_sample:i_sample+1]
+                classif_target = classif_targets[i_sample:i_sample+1]
 
-            action_seq, reward_seq, logprob_seq, classif_probs = \
-                self.run_episode(i_episode, videos, classif_targets, is_training)
+                action_seq, reward_seq, logprob_seq, classif_probs = \
+                    self.run_episode(i_episode, video, classif_target, is_training)
 
-            returns, policy_loss, classif_loss = \
-                self.agent.compute_losses(reward_seq,
-                                          logprob_seq,
-                                          classif_probs,
-                                          classif_targets)
+                returns, policy_loss, classif_loss = \
+                    self.agent.compute_losses(reward_seq,
+                                              logprob_seq,
+                                              classif_probs,
+                                              classif_target)
 
-            loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
-            wait_time = len(action_seq)
-            running_reward += returns[0]
-            if i_episode % 3 ==0:
-                if is_training:
-                    loss.backward()
+                loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
+                wait_time += len(action_seq)
+                running_reward += returns[0]
 
-                self.optimizer.step()
-                self.scheduler.step()
-                self.optimizer.zero_grad()
-                loss = 0
+            if is_training:
+                loss.backward()
+
+            self.optimizer.step()
+            self.scheduler.step()
+            self.optimizer.zero_grad()
+            loss = 0
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
