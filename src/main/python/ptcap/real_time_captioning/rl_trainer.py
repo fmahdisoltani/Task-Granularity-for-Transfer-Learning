@@ -38,6 +38,14 @@ class RLTrainer(object):
         self.checkpointer = checkpointer
         self.num_epochs = 0
 
+        #path = "/home/farzaneh/PycharmProjects/pytorch-captioning/results/RL/model.best"
+        #ckpt = torch.load(path)
+        #env_state_dict = ckpt["env"]
+        #self.env.load_state_dict(env_state_dict)
+        #agent_state_dict = ckpt["agent"]
+        #self.agent.load_state_dict(agent_state_dict)
+
+
     def get_function_dict(self):
 
         function_dict = OrderedDict()
@@ -92,7 +100,7 @@ class RLTrainer(object):
         }
 
     def run_episode(self, i_episode, videos, classif_targets, is_training):
-        self.logger.on_batch_begin()
+
 
         #print("episode{}".format(i_episode))
         self.env.reset(videos)
@@ -127,61 +135,68 @@ class RLTrainer(object):
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
-        for i_episode, (videos, _, _, classif_targets) in enumerate(dataloader):
-            videos = Variable(videos)
+        for i_episode, (videos_b, _, _, classif_targets_b) in enumerate(dataloader):
+            videos_b = Variable(videos_b)
 
             if self.use_cuda:
-                videos = videos.cuda(self.gpus[0])
-                classif_targets = classif_targets.cuda(self.gpus[0])
+                videos_b = videos_b.cuda(self.gpus[0])
+                classif_targets_b = classif_targets_b.cuda(self.gpus[0])
 
-            action_seq, reward_seq, logprob_seq, classif_probs = \
-                self.run_episode(i_episode, videos, classif_targets, is_training)
+            self.logger.on_batch_begin()
+            num_samples = videos_b.size()[0]
+            for i_sample in range(num_samples):
+                videos = videos_b[i_sample:i_sample+1]
+                classif_targets = classif_targets_b[i_sample:i_sample+1]
+                action_seq, reward_seq, logprob_seq, classif_probs = \
+                    self.run_episode(i_episode, videos, classif_targets, is_training)
 
-            returns, policy_loss, classif_loss = \
-                self.agent.compute_losses(reward_seq,
+                returns, policy_loss, classif_loss = \
+                    self.agent.compute_losses(reward_seq,
                                           logprob_seq,
                                           classif_probs,
                                           classif_targets)
 
-            loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
-            wait_time = len(action_seq)
-            running_reward += returns[0]
-            if i_episode % 3 ==0:
-                if is_training:
-                    loss.backward()
+                loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
+                wait_time = len(action_seq)
+                running_reward += returns[0]
 
-                self.optimizer.step()
-                self.scheduler.step()
-                self.optimizer.zero_grad()
-                loss = 0
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
             #                                  filename="train_loss")
 
             # convert probabilities to predictions
-            _, predictions = torch.max(classif_probs, dim=1)
-            predictions = predictions.cpu()
+                _, predictions = torch.max(classif_probs, dim=1)
+                predictions = predictions.cpu()
 
-            episode_outputs = ScoreAttr(wait_time,
+                episode_outputs = ScoreAttr(wait_time,
                                         policy_loss.cpu(),
                                         classif_loss.cpu(),
                                         predictions,
                                         classif_targets.cpu(),
                                         classif_probs.cpu())
 
-            scores_dict = scores.compute_scores(episode_outputs,
-                                                i_episode + 1)
+                scores_dict = scores.compute_scores(episode_outputs,
+                                                    i_episode + 1)
 
-            # Take only the average of the scores in scores_dict
-            average_scores_dict = scores.get_average_scores()
+                # Take only the average of the scores in scores_dict
+                average_scores_dict = scores.get_average_scores()
             if i_episode % logging_interval == 0:
                 print('\nEpisode {}\tAverage return: {:.2f}'.format(
                     i_episode,
                     running_reward / logging_interval))
                 print(action_seq)
                 running_reward = 0
-                self.logger.on_batch_end(average_scores_dict, None, predictions,
-                     is_training, total_samples=len(dataloader), verbose=False)
+            self.logger.on_batch_end(average_scores_dict, None, predictions,
+                 is_training, total_samples=len(dataloader), verbose=False)
+
+            #if i_episode % 3 ==0:
+            if is_training:
+                loss.backward()
+
+            self.optimizer.step()
+            self.scheduler.step()
+            self.optimizer.zero_grad()
+            loss = 0
 
         self.logger.on_epoch_end(average_scores_dict, True,
                                      total_samples=len(dataloader))
