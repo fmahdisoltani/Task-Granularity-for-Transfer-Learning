@@ -172,6 +172,8 @@ def train_model(config_obj, relative_path=""):
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
-                  frequency_valid, teacher_force_train, teacher_force_valid,
-                  verbose_train, verbose_valid)
+    valid_captions, valid_preds = trainer.train(
+        dataloader, val_dataloader, criteria, num_epoch, frequency_valid,
+        teacher_force_train, teacher_force_valid, verbose_train, verbose_valid)
+
+    return valid_captions, valid_preds, tokenizer

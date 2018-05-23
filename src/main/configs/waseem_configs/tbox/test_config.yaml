@@ -1,0 +1,87 @@
+paths:
+  videos_folder: &vidpath /home/waseem/data/
+
+  checkpoint_folder: /home/waseem/Models/test_ptcap_config
+
+  train_annot: &train_annot /home/waseem/data/json/v2-train.json
+  validation_annot: /home/waseem/data/json/v2-validation.json
+  test_annot: /home/waseem/data/json/v2-validation.json
+
+
+pretrained:
+  pretrained_folder:
+  pretrained_file: model.best
+
+device:
+  synchronize_gpu: &sync True
+  gpus: &gpus [0]
+
+dataloaders:
+  kwargs: {batch_size: 4, num_workers: 8, pin_memory: False}
+
+model:
+  type: EncoderDecoder
+  encoder: TwoStreamEncoder
+  encoder_args:
+  encoder_kwargs: {encoder_output_size: 1024,
+                   rnn_output_size: 1024,
+                   c2d_out_ch: 0,
+                   c3d_out_ch: 36}
+  decoder: CoupledLSTMDecoder
+  decoder_args:
+  decoder_kwargs: {embedding_size: 256,
+                   hidden_size: 1024,
+                   num_lstm_layers: 2,
+                   encoder_hidden_size: 1024}
+
+loss:
+  caption_loss: SequenceCrossEntropy
+  balanced: False
+  w_caption_loss: 0.9
+
+  classif_loss: CrossEntropy
+  w_classif_loss: 0.1
+
+
+
+optimizer:
+  type: &optimizer Adam
+  kwargs: {lr: 0.0001}
+
+scheduler:
+  type: ReduceLROnPlateau
+  kwargs: {factor: 0.1,
+           min_lr: 1.0e-8,
+           optimizer: *optimizer,
+           patience: 2,
+           threshold: 1.0e-4}
+
+training:
+  num_epochs: 200
+  clip_grad:
+  teacher_force: True
+  verbose: False
+
+validation:
+  frequency: 1
+  teacher_force: True
+  verbose: True
+
+criteria:
+  score: classif_accuracy
+  higher_is_better: True
+
+targets:
+  caption_type: label
+
+tokenizer:
+  kwargs: {user_maxlen: 13, cutoff: 5}
+
+logging:
+  verbose: True
+  tensorboard_frequency: 1000
+
+preprocess:
+  crop_size: [48, 96, 96]
+  scale: 64.
+  input_resize: [128, 128]
