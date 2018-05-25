@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.data.annotation_parser import JsonParser, V2Parser
+from ptcap.data.annotation_parser import JsonParser, V2Parser, CSVParser, TestParser
 from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
@@ -52,7 +52,7 @@ def train_model(config_obj, relative_path=""):
     verbose_train = config_obj.get("training", "verbose")
     verbose_valid = config_obj.get("validation", "verbose")
     # annot_parser = config_obj.get("annot_type")
-    annot_type = "v2"
+    annot_type = "v1"
 
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
@@ -70,6 +70,21 @@ def train_model(config_obj, relative_path=""):
     crop_size = config_obj.get("preprocess", "crop_size")
     scale = config_obj.get("preprocess", "scale")
     input_resize = config_obj.get("preprocess", "input_resize")
+
+
+    if annot_type=="v1":
+        training_parser = CSVParser(training_path, os.path.join(relative_path,
+                                 videos_folder), caption_type=caption_type)
+        validation_parser = CSVParser(validation_path, os.path.join(relative_path,
+                                   videos_folder), caption_type=caption_type)
+
+        test_parser = TestParser(test_path,
+                                      os.path.join(relative_path,
+                                                   videos_folder),
+                                      caption_type=caption_type)
+
+        # test_parser = validation_parser #TODO: FIX THIS
+
 
     # Load Json annotation files
     if annot_type=="json":
@@ -201,9 +216,9 @@ def train_model(config_obj, relative_path=""):
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
-                 frequency_valid, teacher_force_train, teacher_force_valid,
-                 verbose_train, verbose_valid)
+    # trainer.train(dataloader, val_dataloader, criteria, num_epoch,
+    #              frequency_valid, teacher_force_train, teacher_force_valid,
+    #              verbose_train, verbose_valid)
 
 
 
