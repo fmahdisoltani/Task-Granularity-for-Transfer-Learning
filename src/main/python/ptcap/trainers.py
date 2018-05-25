@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import torch.nn as nn
 
 from collections import namedtuple
 from collections import OrderedDict
@@ -236,9 +237,40 @@ class Trainer(object):
 
         return average_scores_dict
 
+    def run_test_epoch(self, dataloader, epoch, is_training,
+                  use_teacher_forcing=False, verbose=True):
+        self.logger.on_epoch_begin(epoch)
+        softmax_layer = nn.Softmax(dim=1)
+        self.model.eval()
+        classif_predictions = []
+        for sample_counter, (videos, _, captions, classif_targets) in enumerate(
+                dataloader):
+            self.logger.on_batch_begin()
+            input_captions = self.get_input_captions(captions,
+                                                     use_teacher_forcing)
+
+            videos, captions, input_captions, classif_targets = (
+            Variable(videos),
+            Variable(captions),
+            Variable(input_captions),
+            Variable(classif_targets))
+            if self.use_cuda:
+                videos = videos.cuda(self.gpus[0])
+                input_captions = input_captions.cuda(self.gpus[0])
+
+            _, classif_probs = \
+                self.model((videos, input_captions), use_teacher_forcing)
+
+            classif_predictions.extend(list(np.argmax(softmax_layer(classif_probs).data.cpu(), axis=1)))
+        return classif_predictions
+
     def test(self, test_dataloader, verbose_valid=False):
-        test_average_scores = self.run_epoch(
-        test_dataloader, 0, is_training=False, use_teacher_forcing = False,
-                                             verbose = True)
+        classif_predictions = self.run_test_epoch(
+        test_dataloader, 0, is_training=False, use_teacher_forcing=False,
+                                             verbose=True)
+        for i in range(len(classif_predictions)):
+            print(classif_predictions[i])
+
+        np.save(classif_predictions)
 
 
