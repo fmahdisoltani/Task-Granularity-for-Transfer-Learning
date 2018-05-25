@@ -92,9 +92,9 @@ def train_model(config_obj, relative_path=""):
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = prep.FixedCrop1D(cropsize=crop_size)
+    preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
 
-    val_preprocessor = prep.FixedCrop1D(cropsize=crop_size)
+    val_preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
