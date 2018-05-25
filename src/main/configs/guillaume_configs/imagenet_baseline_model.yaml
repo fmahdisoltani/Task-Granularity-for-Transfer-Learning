@@ -1,16 +1,17 @@
 paths:
-  videos_folder: &vidpath /data-ssd/imagenet_features/
 
-  checkpoint_folder: /home/guillaume/model_checkpoint/ptcap_vgg16_single_frame
+  videos_folder:  &vidpath /data/resnet152_features/
 
-  train_annot: &train_annot /data-ssd/20bn-official-datasets/annotations/v2-train.json
-  validation_annot: /data-ssd/20bn-official-datasets/annotations/v2-validation.json
-  test_annot: /data-ssd/20bn-official-datasets/annotations/v2-validation.json
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/resnet152_metrics
+
+  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
+  validation_annot: /data/20bn-something-something-v2/v2-validation.json
+  test_annot: /data/20bn-something-something-v2/v2-validation.json
 
 
 pretrained:
-  pretrained_folder:
-  pretrained_file: model.latest
+  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/ptcap_resnet152
+  pretrained_file: model.best
 
 device:
   synchronize_gpu: &sync True
@@ -21,9 +22,9 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: VGG16Encoder
+  encoder: ResNet152RecurrentEncoder
   encoder_args:
-  encoder_kwargs: {pretrained_path: /home/guillaume/model_checkpoints/vgg16_single_frame_sthsth_v2/model.checkpoint}
+  encoder_kwargs:
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
