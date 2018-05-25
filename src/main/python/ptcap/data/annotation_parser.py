@@ -26,7 +26,7 @@ class AnnotationParser(object):
         return NotImplementedError
 
     def get_captions_from_tmp_and_lbl(self):
-        return self.get_captions("template") + self.get_captions("label")
+        return self.get_captions("template") # + self.get_captions("label")
 
     def get_labels(self):
         all_templates = sorted(set(self.annotations["template"]))
@@ -118,14 +118,15 @@ class CSVParser(AnnotationParser):
 
         if caption_type is None:
             caption_type = self.caption_type
-
+        caption_type = 'template'
         captions = [i for i in self.annotations[caption_type]]
 
         return captions
 
     def get_video_ids(self):
 
-        ids = [str(i)+".webm" for i in self.annotations["id"]]
+        ids = [str(i) #+".webm" 
+               for i in self.annotations["id"]]
         return ids
 
 
@@ -143,5 +144,38 @@ class V2Parser(JsonParser):
     def get_video_paths(self):
         return [file for file in self.get_video_ids()]
 
+
+class TestParser(AnnotationParser):
+    # CSV expected
+    @classmethod
+    def open_annotation(cls, path):
+        if path.endswith("gz"):
+            with gzip.open(path, "rb") as f:
+                csv = pd.read_csv(f.read().decode("utf-8"))
+        else:
+            csv = pd.read_csv(path, delimiter=";",
+                              names=["id", "template"])
+        return csv
+
+    def get_captions(self, caption_type=None):
+
+        if caption_type is None:
+            caption_type = self.caption_type
+        caption_type = 'template'
+        captions = ["cup" for i in self.annotations["id"]]
+
+        return captions
+
+    def get_labels(self, caption_type=None):
+
+        labels = [1 for i in self.annotations["id"]]
+
+        return labels
+
+    def get_video_ids(self):
+
+        ids = [str(i) #+".webm"
+               for i in self.annotations["id"]]
+        return ids
 
 
