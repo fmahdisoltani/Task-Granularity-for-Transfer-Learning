@@ -7,7 +7,7 @@ from ptcap.model.feature_extractors import C2dExtractor, C3dExtractor
 
 class TwoStreamEncoder(Encoder):
     def __init__(self, encoder_output_size=52, c3d_out_ch=0,
-                 c2d_out_ch=0, rnn_output_size=51, bidirectional=True):
+                 c2d_out_ch=0, rnn_output_size=51, bidirectional=False):
         super().__init__()
         # c3d_out_ch = 36
         # c2d_out_ch = 0
@@ -23,12 +23,13 @@ class TwoStreamEncoder(Encoder):
 
         lstm_hidden_size = int(rnn_output_size/2 if
                                bidirectional else rnn_output_size)
+        input_size = 8*c3d_out_ch + 8*c2d_out_ch
         self.lstm = nn.LSTM(input_size=8*c3d_out_ch + 8*c2d_out_ch,
                             hidden_size=lstm_hidden_size, num_layers=1,
-                            batch_first=True, bidirectional=True)
+                            batch_first=True, bidirectional=bidirectional)
 
         self.relu = nn.ReLU()
-        self.fc = (nn.Linear(rnn_output_size, self.encoder_output_size))
+        self.fc = (nn.Linear(input_size, self.encoder_output_size))
         self.dropout = nn.Dropout(p=0.5)
 
         self.activations = {}  # TODO:FIX Tensorboard
@@ -44,7 +45,7 @@ class TwoStreamEncoder(Encoder):
             cnn_features.append(c3d_features)
         h = torch.cat(cnn_features, 2)
 
-        self.lstm.flatten_parameters()
-        lstm_outputs, _ = self.lstm(h)  # lstm_outputs:[8*48*512]
+        #self.lstm.flatten_parameters()
+        #lstm_outputs, _ = self.lstm(h)  # lstm_outputs:[8*48*512]
 
-        return self.dropout(self.relu(self.fc(lstm_outputs)))
+        return self.dropout(self.relu(self.fc(h)))
