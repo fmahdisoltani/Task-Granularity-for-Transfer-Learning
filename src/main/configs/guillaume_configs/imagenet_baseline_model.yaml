@@ -78,7 +78,15 @@ logging:
   verbose: True
   tensorboard_frequency: 1000
 
+dataset:
+  train_dataset_type: NumpyVideoDataset
+  train_dataset_kwargs:
+  val_dataset_type: NumpyVideoDataset
+  val_dataset_kwargs:
+
 preprocess:
-  crop_size: 1
-  scale: 64.
-  input_resize: [128, 128]
+  train_prep_type: FixedSizeCrop1D
+  train_prep_kwargs: {cropsize: 48}
+  val_prep_type: FixedSizeCrop1D
+  val_prep_kwargs: {cropsize: 48}
+

@@ -82,6 +82,26 @@ logging:
   tensorboard_frequency: 1000
 
 preprocess:
-  crop_size: [48, 96, 96]
-  scale: 64.
-  input_resize: [128, 128]
+    train: &train_video_prep
+      [
+        {type: PadVideo, args:  [[48, 96, 96]]},
+        {type: CenterCropper, args:  [[48, 96, 96]]},
+        {type: Float32Converter, args: [64.]},
+        {type: PytorchTransposer, args:}
+      ]
+    valid: *train_video_prep
+    test: *train_video_prep
+
+dataset:
+  train_dataset_type: GulpVideoDataset
+  train_dataset_kwargs: {gulp_dir: /data-ssd/v2-gulp-160/,
+                         size: [128, 128]}
+  val_dataset_type: GulpVideoDataset
+  val_dataset_kwargs: {gulp_dir: /data-ssd/v2-gulp-160/,
+                         size: [128, 128]}
+
+preprocess2:
+  train_prep_type: FixedSizeCrop1D
+  train_prep_kwargs: {cropsize: 48}
+  val_prep_type: FixedSizeCrop1D
+  val_prep_kwargs: {cropsize: 48}
