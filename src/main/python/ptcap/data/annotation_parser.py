@@ -7,11 +7,10 @@ import pandas as pd
 class AnnotationParser(object):
 
     def __init__(self, annot_path, video_root, file_path="file",
-                 caption_type="template", object_list=None, single_object=False):
+                 caption_type="template", object_list=None):
         self.video_root = video_root
         self.file_path = file_path
         self.caption_type = caption_type
-        self.single_object = single_object
         self.annotations = self.open_annotation(annot_path)
         self.object_list = object_list
 
@@ -88,7 +87,6 @@ class JsonParser(AnnotationParser):
                     captions.append(self.annotations["template"][i])
 
         else:
-            print("Inside else: {}".format(caption_type))
             captions = [p for p in self.annotations[caption_type]]
 
         return captions
