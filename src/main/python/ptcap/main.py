@@ -63,10 +63,6 @@ def train_model(config_obj, relative_path=""):
     criteria = config_obj.get("criteria", "score")
     videos_folder = config_obj.get("paths", "videos_folder")
 
-    # Preprocess
-    crop_size = config_obj.get("preprocess", "crop_size")
-    scale = config_obj.get("preprocess", "scale")
-    input_resize = config_obj.get("preprocess", "input_resize")
 
     # Load Json annotation files
     if annot_type=="json":
@@ -92,13 +88,22 @@ def train_model(config_obj, relative_path=""):
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
         #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
 
-    val_preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
+    train_prep_type = config_obj.get("preprocess", "train_prep_type")
+    train_preprocessor = getattr(ptcap.data.preprocessing, train_prep_type)(
+         **config_obj.get("preprocess", "train_prep_kwargs"))
+
+
+
+    #preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
+
+    val_prep_type = config_obj.get("preprocess", "val_prep_type")
+    val_preprocessor = getattr(ptcap.data.preprocessing, val_prep_type)(
+        **config_obj.get("preprocess", "val_prep_kwargs"))
 
     training_set = NumpyVideoDataset(annotation_parser=training_parser,
                                      tokenizer=tokenizer,
-                                     preprocess=preprocessor)
+                                     preprocess=train_preprocessor)
 
     validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
                                        tokenizer=tokenizer,
