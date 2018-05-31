@@ -87,30 +87,47 @@ def train_model(config_obj, relative_path=""):
     else:
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
-        #tokenizer.build_dictionaries(training_parser.get_captions())
 
-    train_prep_type = config_obj.get("preprocess", "train_prep_type")
-    train_preprocessor = getattr(ptcap.data.preprocessing, train_prep_type)(
-         **config_obj.get("preprocess", "train_prep_kwargs"))
+    prep_list = []
+    for i in config_obj.get("preprocess", "train"):
+        args = i["args"] or ()
+        prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
 
+    train_preprocessor = Compose(prep_list)
 
-
-    #preprocessor = prep.FixedSizeCrop1D(cropsize=crop_size)
-
-    val_prep_type = config_obj.get("preprocess", "val_prep_type")
-    val_preprocessor = getattr(ptcap.data.preprocessing, val_prep_type)(
-        **config_obj.get("preprocess", "val_prep_kwargs"))
-
-    training_set = NumpyVideoDataset(annotation_parser=training_parser,
-                                     tokenizer=tokenizer,
-                                     preprocess=train_preprocessor)
-
-    validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-                                       tokenizer=tokenizer,
-                                       preprocess=val_preprocessor)
+    # train_prep_type = config_obj.get("preprocess", "train_prep_type")
+    # train_preprocessor = getattr(ptcap.data.preprocessing, train_prep_type)(
+    #      **config_obj.get("preprocess", "train_prep_kwargs"))
 
 
-    dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
+
+    train_dataset_type = config_obj.get("dataset", "train_dataset_type")
+    train_dataset_kwargs = config_obj.get("dataset", "train_dataset_kwargs")
+    train_dataset_kwargs = train_dataset_kwargs or {}
+    train_dataset = getattr(ptcap.data.dataset, train_dataset_type)(
+                            annotation_parser=training_parser,
+                            tokenizer=tokenizer,
+                            preprocess=train_preprocessor,
+                            **train_dataset_kwargs)
+
+    val_prep_list = []
+    for i in config_obj.get("preprocess", "valid"):
+        args = i["args"] or ()
+        val_prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
+
+    val_preprocessor = Compose(val_prep_list)
+
+    # val_prep_type = config_obj.get("preprocess", "val_prep_type")
+    # val_preprocessor = getattr(ptcap.data.preprocessing, val_prep_type)(
+    #     **config_obj.get("preprocess", "val_prep_kwargs"))
+    #
+    # validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
+    #                                    tokenizer=tokenizer,
+    #                                    preprocess=val_preprocessor)
+
+    validation_set = train_dataset
+
+    dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
 
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
@@ -123,7 +140,6 @@ def train_model(config_obj, relative_path=""):
     decoder_args = config_obj.get("model", "decoder_args")
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
-    # decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
 
     # TODO: Remove GPUs?
     gpus = config_obj.get("device", "gpus")
