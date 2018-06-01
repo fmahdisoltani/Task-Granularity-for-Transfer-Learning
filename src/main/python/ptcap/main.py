@@ -125,12 +125,22 @@ def train_model(config_obj, relative_path=""):
     #                                    tokenizer=tokenizer,
     #                                    preprocess=val_preprocessor)
 
-    validation_set = train_dataset
+
+    val_dataset_type = config_obj.get("dataset", "val_dataset_type")
+    val_dataset_kwargs = config_obj.get("dataset", "val_dataset_kwargs")
+    val_dataset_kwargs = val_dataset_kwargs or {}
+    val_dataset = getattr(ptcap.data.dataset, val_dataset_type)(
+                            annotation_parser=validation_parser,
+                            tokenizer=tokenizer,
+                            preprocess=val_preprocessor,
+                            **train_dataset_kwargs)
+
+
 
     dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
 
-    val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
+    val_dataloader = DataLoader(val_dataset, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
 
     encoder_type = config_obj.get("model", "encoder")
