@@ -21,7 +21,7 @@ device:
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 20, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -104,10 +104,10 @@ preprocess:
 
 dataset:
   train_dataset_type: GulpVideoDataset
-  train_dataset_kwargs: {gulp_dir: /data-ssd/v2-gulp-160/,
+  train_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
   val_dataset_type: GulpVideoDataset
-  val_dataset_kwargs: {gulp_dir: /data-ssd/v2-gulp-160/,
+  val_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
 
 preprocess2:

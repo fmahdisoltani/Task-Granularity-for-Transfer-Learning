@@ -134,8 +134,9 @@ def train_model(config_obj, relative_path=""):
     val_dataloader = DataLoader(val_dataset, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
 
-    test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
-                                **config_obj.get("dataloaders", "kwargs"))
+    # TODO: FIX TEST
+    # test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
+    #                             **config_obj.get("dataloaders", "kwargs"))
 
     encoder_type = config_obj.get("model", "encoder")
     decoder_type = config_obj.get("model", "decoder")
@@ -193,13 +194,14 @@ def train_model(config_obj, relative_path=""):
 
     # Trainer
     trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler,
-                      tokenizer, logger, writer, checkpointer,
+                      tokenizer, logger, writer, checkpointer, load_encoder_only,
                       folder=pretrained_folder, filename=pretrained_file,
                       gpus=gpus, clip_grad=clip_grad,
                       classif_loss_function=classif_loss_function, 
                       w_classif_loss=w_classif_loss)
 
-    # Train the Mode    valid_captions, valid_preds = trainer.train(
+    # Train the Model
+    valid_captions, valid_preds = trainer.train(
         train_dataloader, val_dataloader, criteria, num_epoch, frequency_valid,
         teacher_force_train, teacher_force_valid, verbose_train, verbose_valid)
 
