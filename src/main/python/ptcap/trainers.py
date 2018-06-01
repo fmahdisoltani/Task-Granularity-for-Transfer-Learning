@@ -17,15 +17,15 @@ from ptcap.utils import DataParallelWrapper
 
 
 class Trainer(object):
-    def __init__(self, model, caption_loss_function, w_caption_loss, scheduler,
-                 tokenizer, logger,
-                 writer, checkpointer, folder=None, filename=None,
+    def __init__(self, model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
+                 writer, checkpointer, load_encoder_only, folder=None, filename=None,
                  gpus=None, clip_grad=None, classif_loss_function=None,
                  w_classif_loss=0):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
+        self.load_encoder_only = load_encoder_only
 
         # model = DataParallelWrapper(model, device_ids=gpus).cuda(gpus[0])
 
@@ -41,9 +41,9 @@ class Trainer(object):
             else(classif_loss_function.cuda(gpus[0]))
         self.w_classif_loss = w_classif_loss
 
-        init_state = self.checkpointer.load_model(self.model,
-                                                  scheduler.optimizer,
-                                                  folder, filename)
+        init_state = self.checkpointer.load_model(self.model, scheduler.optimizer,
+                                                  folder, filename,
+                                                  load_encoder_only=load_encoder_only)
 
         self.num_epochs, self.model, scheduler.optimizer = init_state
 
@@ -256,5 +256,12 @@ class Trainer(object):
 
         # Display average scores on tensorboard
         self.writer.add_scalars(average_scores_dict, epoch, is_training)
-
+        
         return average_scores_dict, captions_list, predictions_list
+
+    def test(self, test_dataloader, verbose_valid=False):
+        test_average_scores = self.run_epoch(
+        test_dataloader, 0, is_training=False, use_teacher_forcing = False,
+                                             verbose = True)
+
+

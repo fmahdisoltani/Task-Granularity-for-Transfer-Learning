@@ -1,7 +1,8 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/v2_c3d_288_labels_classif1_cap0
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV//home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9_redo
+  pretrained_file: model.best
 
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
   validation_annot: /data/20bn-something-something-v2/v2-validation.json
@@ -12,13 +13,15 @@ paths:
 pretrained:
   pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif1_cap0
   pretrained_file: model.best
+  load_encoder_only: True
+
 
 device:
   synchronize_gpu: &sync True
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 8, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 20, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -38,10 +41,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0
+  w_caption_loss: 0.9
 
   classif_loss: CrossEntropy
-  w_classif_loss: 1
+  w_classif_loss: 0.1
 
 
 
@@ -65,11 +68,11 @@ training:
 
 validation:
   frequency: 1
-  teacher_force: True
+  teacher_force: False
   verbose: True
 
 criteria:
-  score: classif_accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
