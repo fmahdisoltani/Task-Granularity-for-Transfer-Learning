@@ -48,8 +48,6 @@ def train_model(config_obj, relative_path=""):
     teacher_force_valid = config_obj.get("validation", "teacher_force")
     verbose_train = config_obj.get("training", "verbose")
     verbose_valid = config_obj.get("validation", "verbose")
-    # annot_parser = config_obj.get("annot_type")
-    annot_type = "v2"
 
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
@@ -63,14 +61,15 @@ def train_model(config_obj, relative_path=""):
     criteria = config_obj.get("criteria", "score")
     videos_folder = config_obj.get("paths", "videos_folder")
 
+    annot_type = config_obj.get("paths","annot_type")
 
     # Load Json annotation files
-    if annot_type=="json":
+    if annot_type == "json":
         training_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
         validation_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    videos_folder), caption_type=caption_type)
-    elif annot_type=="v2":
+    elif annot_type == "v2":
         training_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
                                      caption_type=caption_type)
@@ -87,19 +86,13 @@ def train_model(config_obj, relative_path=""):
     else:
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
-
+    # Train preprocessor, dataset, and data_loader
     prep_list = []
     for i in config_obj.get("preprocess", "train"):
         args = i["args"] or ()
         prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
 
     train_preprocessor = Compose(prep_list)
-
-    # train_prep_type = config_obj.get("preprocess", "train_prep_type")
-    # train_preprocessor = getattr(ptcap.data.preprocessing, train_prep_type)(
-    #      **config_obj.get("preprocess", "train_prep_kwargs"))
-
-
 
     train_dataset_type = config_obj.get("dataset", "train_dataset_type")
     train_dataset_kwargs = config_obj.get("dataset", "train_dataset_kwargs")
@@ -109,22 +102,16 @@ def train_model(config_obj, relative_path=""):
                             tokenizer=tokenizer,
                             preprocess=train_preprocessor,
                             **train_dataset_kwargs)
+    train_dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
+                            **config_obj.get("dataloaders", "kwargs"))
 
+    # Valid preprocessor, dataset, and data_loader
     val_prep_list = []
     for i in config_obj.get("preprocess", "valid"):
         args = i["args"] or ()
         val_prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
 
     val_preprocessor = Compose(val_prep_list)
-
-    # val_prep_type = config_obj.get("preprocess", "val_prep_type")
-    # val_preprocessor = getattr(ptcap.data.preprocessing, val_prep_type)(
-    #     **config_obj.get("preprocess", "val_prep_kwargs"))
-    #
-    # validation_set = NumpyVideoDataset(annotation_parser=validation_parser,
-    #                                    tokenizer=tokenizer,
-    #                                    preprocess=val_preprocessor)
-
 
     val_dataset_type = config_obj.get("dataset", "val_dataset_type")
     val_dataset_kwargs = config_obj.get("dataset", "val_dataset_kwargs")
@@ -133,12 +120,7 @@ def train_model(config_obj, relative_path=""):
                             annotation_parser=validation_parser,
                             tokenizer=tokenizer,
                             preprocess=val_preprocessor,
-                            **train_dataset_kwargs)
-
-
-
-    dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
-                            **config_obj.get("dataloaders", "kwargs"))
+                            **val_dataset_kwargs)
 
     val_dataloader = DataLoader(val_dataset, shuffle=True, drop_last=False,
                                 **config_obj.get("dataloaders", "kwargs"))
@@ -169,8 +151,10 @@ def train_model(config_obj, relative_path=""):
     # loss_function = getattr(ptcap.losses, loss_type)()
     caption_loss_kwargs = {}
     if balanced_loss:
-        caption_loss_kwargs["token_freqs"]= tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
+        caption_loss_kwargs["token_freqs"] = \
+            tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
     #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
+
     caption_loss_function = getattr(ptcap.losses, caption_loss_type)(kwargs=caption_loss_kwargs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
@@ -187,24 +171,25 @@ def train_model(config_obj, relative_path=""):
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
                             config_obj.get("logging", "tensorboard_frequency"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
-
     checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
     # Setup the logger
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     # Trainer
-    trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
-                      writer, checkpointer, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad,
+    trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler,
+                      tokenizer, logger, writer, checkpointer,
+                      folder=pretrained_folder, filename=pretrained_file,
+                      gpus=gpus, clip_grad=clip_grad,
                       classif_loss_function=classif_loss_function, 
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
     valid_captions, valid_preds = trainer.train(
-        dataloader, val_dataloader, criteria, num_epoch, frequency_valid,
+        train_dataloader, val_dataloader, criteria, num_epoch, frequency_valid,
         teacher_force_train, teacher_force_valid, verbose_train, verbose_valid)
 
     return valid_captions, valid_preds, tokenizer

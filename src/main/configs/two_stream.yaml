@@ -6,6 +6,7 @@ paths:
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
   validation_annot: /data/20bn-something-something-v2/v2-validation.json
   test_annot: /data/20bn-something-something-v2/v2-validation.json
+  annot_type: v2
 
 
 pretrained:
