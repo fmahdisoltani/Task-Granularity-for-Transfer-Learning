@@ -56,9 +56,9 @@ class Trainer(object):
         self.tensorboard_frequency = 1
         self.logger = logger
 
-        self.multiscore_adapter = MultiScoreAdapter(
-            MultiScorer(aggregator=Fudge(), BLEU=Bleu(4), ROUGE_L=Rouge(),
-                        METEOR=Meteor()), self.tokenizer)
+        #self.multiscore_adapter = MultiScoreAdapter(
+        #    MultiScorer(aggregator=Fudge(), BLEU=Bleu(4), ROUGE_L=Rouge(),
+        #                METEOR=Meteor()), self.tokenizer)
 
         self.logger.on_train_init(folder, filename)
 
@@ -151,8 +151,8 @@ class Trainer(object):
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
         scoring_functions.append(classif_accuracy)
-        if not is_training:
-            scoring_functions.append(self.multiscore_adapter)
+        #if not is_training:
+        #    scoring_functions.append(self.multiscore_adapter)
             #scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
 
         return scoring_functions
@@ -249,6 +249,7 @@ class Trainer(object):
                 average_scores_dict, captions,
                 predictions, is_training, len(dataloader),
                 verbose=verbose)
+
 
         self.logger.on_epoch_end(average_scores_dict, is_training,
                                  total_samples=len(dataloader))
