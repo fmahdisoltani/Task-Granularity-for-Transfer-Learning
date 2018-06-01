@@ -89,7 +89,13 @@ preprocess:
         {type: Float32Converter, args: [64.]},
         {type: PytorchTransposer, args:}
       ]
-    valid: *train_video_prep
+    valid:
+      [
+        {type: PadVideo, args:  [[48, 96, 96]]},
+        {type: CenterCropper, args:  [[48, 96, 96]]},
+        {type: Float32Converter, args: [64.]},
+        {type: PytorchTransposer, args:}
+      ]
     test: *train_video_prep
 
 dataset:
