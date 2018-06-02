@@ -4,6 +4,15 @@ import torch
 from collections import OrderedDict
 
 
+def get_wait_time(score_attr):
+    return {"get_wait_time":score_attr.get_wait_time}
+
+def classif_loss_to_numpy(score_attr):
+    return {"classif_loss_to_numpy":score_attr.classif_loss.data.cpu().numpy()}
+
+def policy_loss_to_numpy(score_attr):
+    return {"policy_loss_to_numpy":score_attr.policy_loss.data.cpu().numpy()}
+
 def classif_accuracy(outputs):
     _, class_index = torch.max(outputs.classif_probs, dim=1)
     equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
