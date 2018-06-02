@@ -7,7 +7,7 @@ from collections import OrderedDict
 def classif_accuracy(outputs):
     _, class_index = torch.max(outputs.classif_probs, dim=1)
     equal_values = torch.mean(class_index.eq(outputs.classif_targets).float())
-    accuracy = equal_values.float().data.numpy()[0] * 100.0
+    accuracy = equal_values.float().data.numpy() * 100.0
     return {"classif_accuracy": accuracy}
 
 
