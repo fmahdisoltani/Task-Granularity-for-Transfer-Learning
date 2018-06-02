@@ -20,7 +20,7 @@ def caption_accuracy(outputs):
 def caption_level_accuracy(captions, predictions):
     _, caption_len = captions.size()
     equal_values = torch.sum(captions.eq(predictions), dim=1)
-    accuracy = equal_values.eq(caption_len).float().mean().data.numpy()[0] * 100.0
+    accuracy = equal_values.eq(caption_len).float().mean().data.numpy() * 100.0
     return accuracy
 
 
@@ -41,7 +41,7 @@ def gmeasure(precision, recall):
 
 
 def loss_to_numpy(score_attr):
-    return {"loss": score_attr.loss.data.cpu().numpy()[0]}
+    return {"loss": score_attr.loss.data.cpu().numpy()}
 
 
 def safe_div(x,y):
@@ -58,7 +58,7 @@ def token_accuracy(outputs, num_tokens=None):
 
 def token_level_accuracy(captions, predictions, num_tokens=None):
     equal_values = captions[:, 0:num_tokens].eq(predictions[:, 0:num_tokens])
-    accuracy = equal_values.float().mean().data.numpy()[0] * 100.0
+    accuracy = equal_values.float().mean().data.numpy() * 100.0
     return accuracy
 
 
