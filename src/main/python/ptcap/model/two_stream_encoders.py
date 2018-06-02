@@ -43,7 +43,7 @@ class TwoStreamEncoder(Encoder):
             cnn_features.append(c3d_features)
         h = torch.cat(cnn_features, 2)
 
-        self.lstm.flatten_parameters()
+        #self.lstm.flatten_parameters()
         lstm_outputs, _ = self.lstm(h)  # lstm_outputs:[8*48*512]
 
         return self.dropout(self.relu(self.fc(lstm_outputs)))
