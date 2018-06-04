@@ -28,10 +28,8 @@ class Checkpointer(object):
 
         return False
 
-    def load_model(self, model, classif_layer, optimizer, folder=None, filename=None,
-                   load_encoder_only=False):
-        pretrained_path = None if not folder or not filename else (
-            os.path.join(folder, filename))
+    def load_model(self, model, optimizer, pretrained_path=None,
+                   submodel=None):
         init_epoch = 0
         if pretrained_path is None:
             print("Running the model from scratch")
@@ -40,26 +38,27 @@ class Checkpointer(object):
             init_epoch = checkpoint["epoch"]
             state_dict = checkpoint["model"]
 
-            if load_encoder_only:
-                encoder_state_dict = {key.replace('encoder.', ''):
+            if submodel:
+                print(submodel+".")
+                state_dict = {key.replace(submodel+".", ''):
                                   value for key, value in
-                checkpoint['model'].items() if 'module.encoder' in key}
+                checkpoint['model'].items() if submodel in key}
 
-            model.load_state_dict(encoder_state_dict)
+            model.load_state_dict(state_dict)
             self.set_best_score(checkpoint["score"])
-            cls_state_dict = {key.replace('module.classif_layer.', ''):
-                                  value for key, value in
-                checkpoint['model'].items() if 'module.classif_layer' in key}
+            #cls_state_dict = {key.replace('module.classif_layer.', ''):
+            #                      value for key, value in
+            #    checkpoint['model'].items() if 'module.classif_layer' in key}
 
 
-            classif_layer.load_state_dict(cls_state_dict)
+            #classif_layer.load_state_dict(cls_state_dict)
 
             #optimizer.load_state_dict(checkpoint["optimizer"])
             print("Loaded checkpoint {} @ epoch {}"
                   .format(pretrained_path, checkpoint["epoch"]))
         else:
             print("No checkpoint found at {}".format(pretrained_path))
-        return init_epoch, model, classif_layer, optimizer
+        return init_epoch, model, optimizer
 
     def save_best(self, state, folder=None, filename="model.best"):
         if not folder:
