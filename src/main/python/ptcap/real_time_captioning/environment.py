@@ -13,13 +13,18 @@ class Environment(nn.Module):
     STATUS_READ = 'read'
     STATUS_DONE = 'done'
 
-    def __init__(self, encoder, classif_layer):
+    def __init__(self, encoder, classif_layer, correct_w_reward,
+                 correct_r_reward, incorrect_w_reward, incorrect_r_reward):
         super().__init__()
 
         self.encoder = encoder
         self.classif_layer = classif_layer
 
         self.logsoftmax = nn.LogSoftmax(dim=-1)
+        self.correct_w_reward = correct_w_reward
+        self.correct_r_reward = correct_r_reward
+        self.incorrect_w_reward = incorrect_w_reward
+        self.incorrect_r_reward = incorrect_r_reward
 
         #self.reset()
 
@@ -32,6 +37,13 @@ class Environment(nn.Module):
         # first frame of video
 
         #self.input_buffer = self.vid_encoding[:, 0, :]
+
+    def set_rewards(self, correct_w_reward, correct_r_reward,
+                    incorrect_w_reward, incorrect_r_reward):
+        self.correct_w_reward = correct_w_reward
+        self.correct_r_reward =  correct_r_reward,
+        self.incorrect_w_reward = incorrect_w_reward
+        self.incorrect_r_reward = incorrect_r_reward
 
     def get_state(self):
         return {
@@ -71,10 +83,10 @@ class Environment(nn.Module):
 
     def give_reward(self, status, value_prob=None):
         r =  {
-            Environment.STATUS_CORRECT_WRITE: 100,
-            Environment.STATUS_INCORRECT_WRITE: -1000,
-            Environment.STATUS_READ: 0,
-            Environment.STATUS_INVALID_READ: -10,
+            Environment.STATUS_CORRECT_WRITE: self.correct_w_reward,
+            Environment.STATUS_READ: self.correct_r_reward,
+            Environment.STATUS_INCORRECT_WRITE: self.incorrect_w_reward,
+            Environment.STATUS_INVALID_READ: self.incorrect_r_reward,
         }[status]
         #r = r if value_prob is None else (-1/(1+value_prob)) * r
         return r
