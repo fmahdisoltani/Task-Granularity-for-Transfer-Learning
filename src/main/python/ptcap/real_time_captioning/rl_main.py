@@ -20,9 +20,11 @@ import torch.nn as nn
 import ptcap.data.preprocessing as prep
 import ptcap.model.captioners
 
-
+from ptcap.loggers import CustomLogger
 from ptcap.data.annotation_parser import V2Parser
 from ptcap.data.config_parser import YamlConfig
+from ptcap.real_time_captioning.environment import Environment
+from ptcap.real_time_captioning.agent import Agent
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.dataset import  GulpVideoDataset
@@ -92,6 +94,23 @@ if __name__ == "__main__":
     val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
                                **config_obj.get("dataloaders", "kwargs"))
 
+
+    pretrained_encoder_path = config_obj.get("pretrained",
+                                             "pretrained_encoder_path")
+    pretrained_path = config_obj.get("pretrained", "pretrained_path")
+
+    checkpoint_folder = os.path.join(
+        relative_path, config_obj.get("paths", "checkpoint_folder"))
+    higher_is_better = config_obj.get("criteria", "higher_is_better")
+    checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
+
+    # reinforce stuff from config
+    correct_w_reward = config_obj.get("reinforce","correct_w_reward")
+    correct_r_reward = config_obj.get("reinforce", "correct_r_reward")
+    incorrect_w_reward = config_obj.get("reinforce", "incorrect_w_reward")
+    incorrect_r_reward = config_obj.get("reinforce", "incorrect_r_reward")
+
+
     gpus = config_obj.get("device", "gpus")
     encoder_type = config_obj.get("model", "encoder")
     encoder_args = config_obj.get("model", "encoder_args")
@@ -107,32 +126,45 @@ if __name__ == "__main__":
         DataParallelWrapper(encoder, device_ids=gpus).cuda(gpus[0])
     )
 
-    pretrained_encoder = config_obj.get("pretrained", "pretrained_encoder")
-    pretrained_encoder = os.path.join(relative_path, pretrained_encoder
-                                     ) if pretrained_encoder else None
-    pretrained_file = config_obj.get("pretrained", "pretrained_file")
-
     classif_layer = \
         nn.Linear(encoder.module.encoder_output_size, 178)
+    classif_layer = classif_layer if gpus is None else(
+        DataParallelWrapper(classif_layer, device_ids=gpus).cuda(gpus[0])
+    )
 
-    checkpoint_folder = os.path.join(
-                relative_path, config_obj.get("paths", "checkpoint_folder"))
-    higher_is_better = config_obj.get("criteria", "higher_is_better")
-    checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
+    if pretrained_encoder_path:
+        _, encoder, _ = checkpointer.load_model(encoder, None,
+                                        pretrained_path=pretrained_encoder_path,
+                                        submodel="encoder")
 
+        _, classif_layer, _ = checkpointer.load_model(classif_layer, None,
+                                        pretrained_path=pretrained_encoder_path,
+                                        submodel="classif_layer")
 
-    init_state = checkpointer.load_model(encoder, classif_layer,
-                                         None,
-                                         folder=pretrained_encoder,
-                                         filename=pretrained_file,
-                                         load_encoder_only=True)
-    _, encoder,classif_layer,  _ = init_state
+    env = Environment(encoder, classif_layer,  correct_w_reward, correct_r_reward,
+                    incorrect_w_reward, incorrect_r_reward)
+    agent = Agent()
+
+    if pretrained_path:
+        ckpt = torch.load(pretrained_path)
+        print("loaded environment from ckpt")
+        env_state_dict = ckpt["env"]
+        env.load_state_dict(env_state_dict)
+
+        print("loaded agent from ckpt")
+        agent_state_dict = ckpt["agent"]
+        agent.load_state_dict(agent_state_dict)
+
+    if gpus is not None:
+        env = env.cuda(gpus[0])
+        agent = agent.cuda(gpus[0])
 
     # Setup the logger
-    from ptcap.loggers import CustomLogger
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
-    rl_trainer = RLTrainer(encoder, classif_layer.cuda(), checkpointer, logger, gpus=gpus)
-    rl_trainer.train(train_dataloader, val_dataloader, criteria="classif_accuracy"
-                     )
+    rl_trainer = RLTrainer(env, agent,
+                           checkpointer, logger, gpus=gpus)
+    rl_trainer.train(train_dataloader, val_dataloader,
+                     criteria="classif_accuracy")
+
 
