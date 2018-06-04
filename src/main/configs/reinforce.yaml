@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/RL2/
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/RL3/
 
   pretrained_file: model.best
 
@@ -11,9 +11,9 @@ paths:
 
 
 pretrained:
-  pretrained_encoder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif1_cap0_feat47
-  pretrained_decoder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9
-  pretrained_file: model.best
+  pretrained_path:
+  pretrained_encoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif1_cap0/model.latest"
+
   load_encoder_only: True
 
 device:
@@ -21,7 +21,7 @@ device:
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 3, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
@@ -88,3 +88,9 @@ preprocess:
   crop_size: [48, 96, 96]
   scale: 64.
   input_resize: [128, 128]
+
+reinforce:
+  correct_w_reward: 100
+  correct_r_reward: 0
+  incorrect_w_reward: -1000
+  incorrect_r_reward: -10
