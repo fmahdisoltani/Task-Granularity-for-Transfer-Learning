@@ -19,14 +19,14 @@ from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
 
 
 class RLTrainer(object):
-    def __init__(self, encoder, classif_layer, checkpointer, logger, gpus=None):
+    def __init__(self, env, agent, checkpointer, logger, gpus=None):
 
         self.gpus = gpus
         self.use_cuda = True if gpus else False
         self.logger = logger
-        self.env = Environment(encoder, classif_layer)
+        self.env = env #Environment(encoder, classif_layer)
 
-        self.agent = Agent().cuda()
+        self.agent = agent # Agent().cuda()
 
         params = list(self.agent.parameters())
                 # list(self.env.parameters()) \
@@ -38,12 +38,7 @@ class RLTrainer(object):
         self.checkpointer = checkpointer
         self.num_epochs = 0
 
-        #path = "/home/farzaneh/PycharmProjects/pytorch-captioning/results/RL/model.best"
-        #ckpt = torch.load(path)
-        #env_state_dict = ckpt["env"]
-        #self.env.load_state_dict(env_state_dict)
-        #agent_state_dict = ckpt["agent"]
-        #self.agent.load_state_dict(agent_state_dict)
+
 
     def get_function_dict(self, is_training=True):
         scoring_functions = []
@@ -54,7 +49,6 @@ class RLTrainer(object):
 
         return scoring_functions
 
-
     def train(self, dataloader, val_dataloader, criteria):
         print("*"*10)
         running_reward = 0
@@ -64,6 +58,7 @@ class RLTrainer(object):
         epoch = 0
 
         while not stop_training:
+
             if epoch % valid_frequency == 0:
                 valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
 
@@ -87,7 +82,7 @@ class RLTrainer(object):
             #stop_training = self.update_stop_training(epoch, max_num_epochs)
 
 
-        self.logger.on_train_end(self.scheduler.best)
+#        self.logger.on_train_end(self.scheduler.best)
 
     def get_trainer_state(self):
         return {
