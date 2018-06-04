@@ -103,6 +103,7 @@ if __name__ == "__main__":
         relative_path, config_obj.get("paths", "checkpoint_folder"))
     higher_is_better = config_obj.get("criteria", "higher_is_better")
     checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
+    Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
 
     # reinforce stuff from config
     correct_w_reward = config_obj.get("reinforce","correct_w_reward")
