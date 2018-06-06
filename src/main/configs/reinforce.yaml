@@ -21,7 +21,7 @@ device:
   gpus: &gpus [0, 1]
 
 dataloaders:
-  kwargs: {batch_size: 3, num_workers: 8, pin_memory: False}
+  kwargs: {batch_size: 16, num_workers: 8, pin_memory: False}
 
 model:
   type: EncoderDecoder
