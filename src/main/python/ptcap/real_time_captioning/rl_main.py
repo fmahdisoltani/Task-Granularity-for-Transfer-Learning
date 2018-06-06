@@ -50,6 +50,7 @@ if __name__ == "__main__":
                                    config_obj.get("paths", "validation_annot"))
     videos_folder = config_obj.get("paths", "videos_folder")
 
+    valid_frequency = config_obj.get("validation", "frequency")
 
     # Preprocess
     crop_size = config_obj.get("preprocess", "crop_size")
@@ -77,6 +78,8 @@ if __name__ == "__main__":
     tokenizer.build_dictionaries(
         training_parser.get_captions_from_tmp_and_lbl())
 
+
+
     training_set = GulpVideoDataset(annotation_parser=training_parser,
                                     tokenizer=tokenizer,
                                     preprocess=preprocessor,
@@ -89,9 +92,16 @@ if __name__ == "__main__":
                                       gulp_dir=videos_folder,
                                       size=input_resize)
 
-    train_dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
-                                  **config_obj.get("dataloaders", "kwargs"))
-    val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
+    from ptcap.utils import CustomSubsetSampler
+
+    sampler = CustomSubsetSampler(subset_size=50, total_size=len(training_set))
+
+
+    train_dataloader = DataLoader(training_set,  drop_last=False,
+                                  sampler=sampler,
+                                  **config_obj.get("dataloaders", "kwargs")
+                                  )
+    val_dataloader = DataLoader(validation_set, shuffle=False, drop_last=False,
                                **config_obj.get("dataloaders", "kwargs"))
 
 
@@ -166,6 +176,6 @@ if __name__ == "__main__":
     rl_trainer = RLTrainer(env, agent,
                            checkpointer, logger, gpus=gpus)
     rl_trainer.train(train_dataloader, val_dataloader,
-                     criteria="classif_accuracy")
+                     criteria="classif_accuracy", valid_frequency=valid_frequency)
 
 
