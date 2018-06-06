@@ -49,12 +49,11 @@ class RLTrainer(object):
 
         return scoring_functions
 
-    def train(self, dataloader, val_dataloader, criteria):
+    def train(self, dataloader, val_dataloader, criteria, valid_frequency=1):
         print("*"*10)
         running_reward = 0
         logging_interval = 1000
         stop_training = False
-        valid_frequency = 5
         epoch = 0
 
         while not stop_training:
@@ -73,10 +72,10 @@ class RLTrainer(object):
             self.num_epochs += 1
             epoch += 1
             train_average_scores = self.run_epoch(dataloader, epoch, is_training=True)
-            train_avg_loss = train_average_scores["avg_"+criteria]
+            self.score = train_average_scores["avg_"+criteria]
             state_dict = self.get_trainer_state()
             self.checkpointer.save_latest(state_dict)
-            self.checkpointer.save_value_csv([epoch, train_avg_loss],
+            self.checkpointer.save_value_csv([epoch, self.score ],
                                              filename="train_loss")
 
             #stop_training = self.update_stop_training(epoch, max_num_epochs)
@@ -114,7 +113,7 @@ class RLTrainer(object):
 
         return action_seq, reward_seq, logprob_seq, classif_probs
 
-    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000, batch_size=4):
+    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000):
         self.logger.on_epoch_begin(epoch)
         if is_training:
             self.env.train()
@@ -145,13 +144,14 @@ class RLTrainer(object):
 
                 returns, policy_loss, classif_loss = \
                     self.agent.compute_losses(reward_seq,
-                                          logprob_seq,
-                                          classif_probs,
-                                          classif_targets)
+                                              logprob_seq,
+                                              classif_probs,
+                                              classif_targets)
 
                 loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
                 wait_time = len(action_seq)
                 running_reward += returns[0]
+
 
 
             # self.checkpointer.save_value_csv([epoch, train_avg_loss],
