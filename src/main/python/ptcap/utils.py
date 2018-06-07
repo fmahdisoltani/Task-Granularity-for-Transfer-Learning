@@ -30,10 +30,11 @@ class CustomSubsetSampler(Sampler):
         subset = self.ids[0:end_index]
         if len(self.ids) > self.subset_size:
             self.ids = self.ids[end_index:]
+            return iter(subset)
         else:
             self.reset_ids()
-        print(subset)
-        return iter(subset)
+            #last subset will be dropped. TODO: add option
+
 
     def __len__(self):
         return self.subset_size

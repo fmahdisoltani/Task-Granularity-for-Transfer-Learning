@@ -192,7 +192,7 @@ class RLTrainer(object):
             self.optimizer.zero_grad()
             loss = 0
 
-        self.logger.on_epoch_end(average_scores_dict, True,
+        self.logger.on_epoch_end(average_scores_dict, is_training,
                                      total_samples=len(dataloader))
         return average_scores_dict
 

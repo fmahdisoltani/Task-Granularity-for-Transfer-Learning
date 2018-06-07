@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     from ptcap.utils import CustomSubsetSampler
 
-    sampler = CustomSubsetSampler(subset_size=50, total_size=len(training_set))
+    sampler = CustomSubsetSampler(subset_size=42000, total_size=len(training_set))
 
 
     train_dataloader = DataLoader(training_set,  drop_last=False,
