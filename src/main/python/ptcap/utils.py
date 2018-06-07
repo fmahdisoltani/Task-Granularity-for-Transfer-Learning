@@ -17,23 +17,29 @@ class DataParallelWrapper(nn.DataParallel):
 
 class CustomSubsetSampler(Sampler):
 
-    def __init__(self, subset_size, total_size):
+    def __init__(self, subset_size, total_size, drop_last=False):
         self.subset_size = subset_size
         self.total_size = total_size
-        self.reset_ids()
+        self.drop_last = drop_last
+        self.reset_inds()
 
-    def reset_ids(self):
-        self.ids = torch.randperm(self.total_size)
+    def reset_inds(self):
+        self.inds = torch.randperm(self.total_size)
 
     def __iter__(self):
-        end_index = min(self.subset_size, len(self.ids))
-        subset = self.ids[0:end_index]
-        if len(self.ids) > self.subset_size:
-            self.ids = self.ids[end_index:]
-            return iter(subset)
-        else:
-            self.reset_ids()
-            #last subset will be dropped. TODO: add option
+        if len(self.inds) < self.subset_size:
+            new_indices = self.reset_inds()
+            self.inds = self.inds + new_indices
+        subset = self.inds[0:self.subset_size]
+        self.inds = self.inds[self.subset_size:]
+
+        #if len(self.inds) == 0:
+        #    self.reset_inds()
+        #end_index = min(self.subset_size, len(self.inds))
+        #self.inds = self.inds[end_index:]
+        #subset = self.inds[0:end_index]
+
+        return iter(subset)
 
 
     def __len__(self):
