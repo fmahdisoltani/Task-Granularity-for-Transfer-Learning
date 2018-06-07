@@ -52,6 +52,8 @@ if __name__ == "__main__":
 
     valid_frequency = config_obj.get("validation", "frequency")
 
+
+
     # Preprocess
     crop_size = config_obj.get("preprocess", "crop_size")
     scale = config_obj.get("preprocess", "scale")
@@ -73,11 +75,20 @@ if __name__ == "__main__":
                                  os.path.join(relative_path,
                                               videos_folder),
                                  caption_type=caption_type)
+
+    pretrained_encoder_path = config_obj.get("pretrained", "pretrained_encoder_path")
+    pretrained_decoder_path = config_obj.get("pretrained", "pretrained_decoder_path")
+    pretrained_path = config_obj.get("pretrained", "pretrained_path")
+
+    # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
-
-    tokenizer.build_dictionaries(
-        training_parser.get_captions_from_tmp_and_lbl())
-
+    if pretrained_decoder_path:
+        tokenizer.load_dictionaries(pretrained_decoder_path)
+        print("Inside pretrained", tokenizer.get_vocab_size())
+        print("pretty fucked up")
+    else:
+        tokenizer.build_dictionaries(
+            training_parser.get_captions_from_tmp_and_lbl())
 
 
     training_set = GulpVideoDataset(annotation_parser=training_parser,
@@ -94,20 +105,17 @@ if __name__ == "__main__":
 
     from ptcap.utils import CustomSubsetSampler
 
-    sampler = CustomSubsetSampler(subset_size=50000, total_size=len(training_set))
+    # sampler = CustomSubsetSampler(subset_size=50000, total_size=len(training_set))
 
 
     train_dataloader = DataLoader(training_set,  drop_last=False,
-                                  sampler=sampler,
+                                  # sampler=sampler,
                                   **config_obj.get("dataloaders", "kwargs")
                                   )
     val_dataloader = DataLoader(validation_set, shuffle=False, drop_last=False,
                                **config_obj.get("dataloaders", "kwargs"))
 
 
-    pretrained_encoder_path = config_obj.get("pretrained",
-                                             "pretrained_encoder_path")
-    pretrained_path = config_obj.get("pretrained", "pretrained_path")
 
     checkpoint_folder = os.path.join(
         relative_path, config_obj.get("paths", "checkpoint_folder"))
@@ -143,6 +151,17 @@ if __name__ == "__main__":
         DataParallelWrapper(classif_layer, device_ids=gpus).cuda(gpus[0])
     )
 
+    decoder_type = config_obj.get("model", "decoder")
+    decoder_args = config_obj.get("model", "decoder_args")
+    decoder_kwargs = config_obj.get("model", "decoder_kwargs")
+    decoder_args = decoder_args or ()
+    decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
+
+    decoder = getattr(ptcap.model.decoders, decoder_type)(
+        *decoder_args,
+        **decoder_kwargs)
+
+
     if pretrained_encoder_path:
         _, encoder, _ = checkpointer.load_model(encoder, None,
                                         pretrained_path=pretrained_encoder_path,
@@ -152,7 +171,7 @@ if __name__ == "__main__":
                                         pretrained_path=pretrained_encoder_path,
                                         submodel="classif_layer")
 
-    env = Environment(encoder, classif_layer,  correct_w_reward, correct_r_reward,
+    env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward)
     agent = Agent()
 
@@ -174,7 +193,7 @@ if __name__ == "__main__":
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     rl_trainer = RLTrainer(env, agent,
-                           checkpointer, logger, gpus=gpus)
+                           checkpointer, logger, tokenizer, gpus=gpus)
     rl_trainer.train(train_dataloader, val_dataloader,
                      criteria="classif_accuracy", valid_frequency=valid_frequency)
 

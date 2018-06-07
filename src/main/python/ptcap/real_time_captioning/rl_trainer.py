@@ -19,7 +19,7 @@ from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
 
 
 class RLTrainer(object):
-    def __init__(self, env, agent, checkpointer, logger, gpus=None):
+    def __init__(self, env, agent, checkpointer, logger, tokenizer, gpus=None):
 
         self.gpus = gpus
         self.use_cuda = True if gpus else False
@@ -37,7 +37,7 @@ class RLTrainer(object):
 
         self.checkpointer = checkpointer
         self.num_epochs = 0
-
+        self.tokenizer = tokenizer
 
 
     def get_function_dict(self, is_training=True):
@@ -91,7 +91,7 @@ class RLTrainer(object):
             "epoch": self.num_epochs
         }
 
-    def run_episode(self, i_episode, videos, classif_targets, is_training):
+    def run_episode(self, i_episode, videos, classif_targets, captions_targets, is_training):
 
 
         #print("episode{}".format(i_episode))
@@ -107,7 +107,7 @@ class RLTrainer(object):
             action, logprob = self.agent.select_action(state)
             action_seq.append(action)
             logprob_seq.append(logprob)
-            reward, classif_probs = self.env.update_state(action, action_seq, classif_targets)
+            reward, classif_probs, caption_probs = self.env.update_state(action, action_seq, classif_targets, captions_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
@@ -127,20 +127,22 @@ class RLTrainer(object):
                                "classif_targets classif_probs")
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
-        for i_episode, (videos_b, _, _, classif_targets_b) in enumerate(dataloader):
+        for i_episode, (videos_b, _, captions_b, classif_targets_b) in enumerate(dataloader):
             videos_b = Variable(videos_b)
 
             if self.use_cuda:
                 videos_b = videos_b.cuda(self.gpus[0])
                 classif_targets_b = classif_targets_b.cuda(self.gpus[0])
+                captions_b = captions_b.cuda(self.gpus[0])
 
             self.logger.on_batch_begin()
             num_samples = videos_b.size()[0]
             for i_sample in range(num_samples):
                 videos = videos_b[i_sample:i_sample+1]
                 classif_targets = classif_targets_b[i_sample:i_sample+1]
+                captions_targets = captions_b[i_sample:i_sample+1]
                 action_seq, reward_seq, logprob_seq, classif_probs = \
-                    self.run_episode(i_episode, videos, classif_targets, is_training)
+                    self.run_episode(i_episode, videos, classif_targets, captions_targets, is_training)
 
                 returns, policy_loss, classif_loss = \
                     self.agent.compute_losses(reward_seq,
