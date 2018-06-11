@@ -1,7 +1,8 @@
 import os
 import yaml
 
-import ptcap.data.preprocessing as prep
+import ptcap.data.preprocessing
+import ptcap.data.dataset
 
 from torchvision.transforms import Compose
 
@@ -35,10 +36,24 @@ class YamlConfig(object):
         for prep_dict in self.get("preprocess", key):
             args = prep_dict["args"] or ()
             prep_list.append(
-                getattr(prep, prep_dict["type"])(*args))
+                getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
 
         preprocessor = Compose(prep_list)
         return preprocessor
+
+    def get_dataset(self, key, parser, tokenizer, preprocessor):
+        """
+        :param key: should be either "train" or "valid"
+        """
+        dataset_type = self.get("dataset", key+"_dataset_type")
+        dataset_kwargs = self.get("dataset", key+"_dataset_kwargs")
+        dataset_kwargs = dataset_kwargs or {}
+        dataset = getattr(ptcap.data.dataset, dataset_type)(
+            annotation_parser=parser,
+            tokenizer=tokenizer,
+            preprocess=preprocessor,
+            **dataset_kwargs)
+        return dataset
 
     @classmethod
     def dump(cls, path, config_dict):

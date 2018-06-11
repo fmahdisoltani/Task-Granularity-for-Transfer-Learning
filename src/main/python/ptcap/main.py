@@ -69,16 +69,16 @@ def train_model(config_obj, relative_path=""):
 
     # Load Json annotation files
     if annot_type == "json":
-        training_parser = JsonParser(training_path, os.path.join(relative_path,
+        train_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
-        validation_parser = JsonParser(validation_path, os.path.join(relative_path,
+        valid_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    videos_folder), caption_type=caption_type)
     elif annot_type == "v2":
 
-        training_parser = V2Parser(training_path, os.path.join(relative_path,
+        train_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
                                      caption_type=caption_type)
-        validation_parser = V2Parser(validation_path,
+        valid_parser = V2Parser(validation_path,
                                        os.path.join(relative_path,
                                                     videos_folder),
                                        caption_type=caption_type)
@@ -94,39 +94,19 @@ def train_model(config_obj, relative_path=""):
         tokenizer.load_dictionaries(pretrained_folder)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
-
-    # Train preprocessor, dataset, and data_loader
-    # prep_list = []
-    # for prep_dict in config_obj.get("preprocess", "train"):
-    #     args = prep_dict["args"] or ()
-    #     prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
+        tokenizer.build_dictionaries(train_parser.get_captions_from_tmp_and_lbl())
 
     train_preprocessor = config_obj.get_preprocessor("train")
+    train_set = config_obj.get_dataset("train", train_parser, tokenizer,
+                                           train_preprocessor)
+    train_dataloader = DataLoader(train_set, shuffle=True, drop_last=False,
+                                  **config_obj.get("dataloaders", "kwargs"))
 
-    train_dataset_type = config_obj.get("dataset", "train_dataset_type")
-    train_dataset_kwargs = config_obj.get("dataset", "train_dataset_kwargs")
-    train_dataset_kwargs = train_dataset_kwargs or {}
-    train_dataset = getattr(ptcap.data.dataset, train_dataset_type)(
-                            annotation_parser=training_parser,
-                            tokenizer=tokenizer,
-                            preprocess=train_preprocessor,
-                            **train_dataset_kwargs)
-    train_dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
-                            **config_obj.get("dataloaders", "kwargs"))
-
-    val_preprocessor = config_obj.get_preprocessor("valid")
-    val_dataset_type = config_obj.get("dataset", "val_dataset_type")
-    val_dataset_kwargs = config_obj.get("dataset", "val_dataset_kwargs")
-    val_dataset_kwargs = val_dataset_kwargs or {}
-    val_dataset = getattr(ptcap.data.dataset, val_dataset_type)(
-                            annotation_parser=validation_parser,
-                            tokenizer=tokenizer,
-                            preprocess=val_preprocessor,
-                            **val_dataset_kwargs)
-
-    val_dataloader = DataLoader(val_dataset, shuffle=True, drop_last=False,
-                                **config_obj.get("dataloaders", "kwargs"))
+    valid_preprocessor = config_obj.get_preprocessor("valid")
+    valid_set = config_obj.get_dataset("valid", valid_parser, tokenizer,
+                                           valid_preprocessor)
+    valid_dataloader = DataLoader(valid_set, shuffle=True, drop_last=False,
+                                  **config_obj.get("dataloaders", "kwargs"))
 
     # TODO: FIX TEST
     # test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
@@ -159,7 +139,7 @@ def train_model(config_obj, relative_path=""):
     caption_loss_kwargs = {}
     if balanced_loss:
         caption_loss_kwargs["token_freqs"] = \
-            tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
+            tokenizer.get_token_freqs(train_parser.get_captions_from_tmp_and_lbl())
     #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
 
     caption_loss_function = getattr(ptcap.losses, caption_loss_type)(kwargs=caption_loss_kwargs)
@@ -196,7 +176,7 @@ def train_model(config_obj, relative_path=""):
 
     # Train the Model
     valid_captions, valid_preds = trainer.train(
-        train_dataloader, val_dataloader, criteria, num_epoch, frequency_valid,
+        train_dataloader, valid_dataloader, criteria, num_epoch, frequency_valid,
         teacher_force_train, teacher_force_valid, verbose_train, verbose_valid)
 
     return valid_captions, valid_preds, tokenizer

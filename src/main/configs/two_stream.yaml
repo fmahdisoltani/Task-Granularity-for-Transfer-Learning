@@ -106,8 +106,8 @@ dataset:
   train_dataset_type: GulpVideoDataset
   train_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
-  val_dataset_type: GulpVideoDataset
-  val_dataset_kwargs: {gulp_dir: *vidpath,
+  valid_dataset_type: GulpVideoDataset
+  valid_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
 
 preprocess2:
