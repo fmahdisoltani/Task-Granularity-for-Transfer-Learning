@@ -97,12 +97,12 @@ def train_model(config_obj, relative_path=""):
         tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
 
     # Train preprocessor, dataset, and data_loader
-    prep_list = []
-    for prep_dict in config_obj.get("preprocess", "train"):
-        args = prep_dict["args"] or ()
-        prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
+    # prep_list = []
+    # for prep_dict in config_obj.get("preprocess", "train"):
+    #     args = prep_dict["args"] or ()
+    #     prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
 
-    train_preprocessor = Compose(prep_list)
+    train_preprocessor = config_obj.get_preprocessor("train")
 
     train_dataset_type = config_obj.get("dataset", "train_dataset_type")
     train_dataset_kwargs = config_obj.get("dataset", "train_dataset_kwargs")
@@ -115,13 +115,7 @@ def train_model(config_obj, relative_path=""):
     train_dataloader = DataLoader(train_dataset, shuffle=True, drop_last=False,
                             **config_obj.get("dataloaders", "kwargs"))
 
-    # Valid preprocessor, dataset, and data_loader
-    val_prep_list = []
-    for prep_dict in config_obj.get("preprocess", "valid"):
-        args = prep_dict["args"] or ()
-        val_prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
-
-    val_preprocessor = Compose(val_prep_list)
+    val_preprocessor = config_obj.get_preprocessor("valid")
     val_dataset_type = config_obj.get("dataset", "val_dataset_type")
     val_dataset_kwargs = config_obj.get("dataset", "val_dataset_kwargs")
     val_dataset_kwargs = val_dataset_kwargs or {}

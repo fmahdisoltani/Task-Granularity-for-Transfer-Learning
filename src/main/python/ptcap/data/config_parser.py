@@ -1,6 +1,10 @@
 import os
 import yaml
 
+import ptcap.data.preprocessing as prep
+
+from torchvision.transforms import Compose
+
 
 class YamlConfig(object):
 
@@ -22,6 +26,19 @@ class YamlConfig(object):
     def save(self, folder, filename="config.yaml"):
         with open(os.path.join(folder, filename), "w") as f:
             yaml.dump(self.config_dict, f)
+
+    def get_preprocessor(self, key):
+        """
+        :param key: should be either "valid" or "train"
+        """
+        prep_list = []
+        for prep_dict in self.get("preprocess", key):
+            args = prep_dict["args"] or ()
+            prep_list.append(
+                getattr(prep, prep_dict["type"])(*args))
+
+        preprocessor = Compose(prep_list)
+        return preprocessor
 
     @classmethod
     def dump(cls, path, config_dict):
