@@ -14,7 +14,8 @@ from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
 from ptcap.data.annotation_parser import JsonParser, V2Parser
-from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset)
+from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset,
+                                NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.loggers import CustomLogger
 from ptcap.tensorboardY import Seq2seqAdapter
@@ -51,8 +52,6 @@ def train_model(config_obj, relative_path=""):
     teacher_force_valid = config_obj.get("validation", "teacher_force")
     verbose_train = config_obj.get("training", "verbose")
     verbose_valid = config_obj.get("validation", "verbose")
-    # annot_parser = config_obj.get("annot_type")
-    annot_type = "v2"
 
     # Get model, loss, optimizer, scheduler, and criteria from config_file
     model_type = config_obj.get("model", "type")
@@ -66,24 +65,20 @@ def train_model(config_obj, relative_path=""):
     criteria = config_obj.get("criteria", "score")
     videos_folder = config_obj.get("paths", "videos_folder")
 
-    # Preprocess
-    crop_size = config_obj.get("preprocess", "crop_size")
-    scale = config_obj.get("preprocess", "scale")
-    input_resize = config_obj.get("preprocess", "input_resize")
+    annot_type = config_obj.get("paths","annot_type")
 
     # Load Json annotation files
-    if annot_type=="json":
-        training_parser = JsonParser(training_path, os.path.join(relative_path,
+    if annot_type == "json":
+        train_parser = JsonParser(training_path, os.path.join(relative_path,
                                  videos_folder), caption_type=caption_type)
-        validation_parser = JsonParser(validation_path, os.path.join(relative_path,
+        valid_parser = JsonParser(validation_path, os.path.join(relative_path,
                                    videos_folder), caption_type=caption_type)
+    elif annot_type == "v2":
 
-        test_parser = validation_parser #TODO: FIX THIS
-    elif annot_type=="v2":
-        training_parser = V2Parser(training_path, os.path.join(relative_path,
+        train_parser = V2Parser(training_path, os.path.join(relative_path,
                                                                  videos_folder),
                                      caption_type=caption_type)
-        validation_parser = V2Parser(validation_path,
+        valid_parser = V2Parser(validation_path,
                                        os.path.join(relative_path,
                                                     videos_folder),
                                        caption_type=caption_type)
@@ -99,46 +94,23 @@ def train_model(config_obj, relative_path=""):
         tokenizer.load_dictionaries(pretrained_folder)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
-        tokenizer.build_dictionaries(training_parser.get_captions_from_tmp_and_lbl())
+        tokenizer.build_dictionaries(train_parser.get_captions_from_tmp_and_lbl())
 
-        #tokenizer.build_dictionaries(training_parser.get_captions())
-    preprocessor = Compose([prep.RandomCrop(crop_size),
-                            prep.PadVideo(crop_size),
-                            prep.Float32Converter(scale),
-                            prep.PytorchTransposer()])
+    train_preprocessor = config_obj.get_preprocessor("train")
+    train_set = config_obj.get_dataset("train", train_parser, tokenizer,
+                                           train_preprocessor)
+    train_dataloader = DataLoader(train_set, shuffle=True, drop_last=False,
+                                  **config_obj.get("dataloaders", "kwargs"))
 
-    val_preprocessor = Compose([CenterCropper(crop_size),
-                                prep.PadVideo(crop_size),
-                                prep.Float32Converter(scale),
-                                prep.PytorchTransposer()])
+    valid_preprocessor = config_obj.get_preprocessor("valid")
+    valid_set = config_obj.get_dataset("valid", valid_parser, tokenizer,
+                                           valid_preprocessor)
+    valid_dataloader = DataLoader(valid_set, shuffle=True, drop_last=False,
+                                  **config_obj.get("dataloaders", "kwargs"))
 
-    training_set = GulpVideoDataset(annotation_parser=training_parser,
-                                    tokenizer=tokenizer,
-                                    preprocess=preprocessor,
-                                    gulp_dir=videos_folder,
-                                    size=input_resize)
-
-    validation_set = GulpVideoDataset(annotation_parser=validation_parser,
-                                      tokenizer=tokenizer,
-                                      preprocess=val_preprocessor,
-                                      gulp_dir=videos_folder,
-                                      size=input_resize)
-
-    test_set = GulpVideoDataset(annotation_parser=test_parser,
-                                      tokenizer=tokenizer,
-                                      preprocess=val_preprocessor,
-                                      gulp_dir=videos_folder,
-                                      size=input_resize) #TODO: This is shit, fix the shit
-
-
-    dataloader = DataLoader(training_set, shuffle=True, drop_last=False,
-                            **config_obj.get("dataloaders", "kwargs"))
-
-    val_dataloader = DataLoader(validation_set, shuffle=True, drop_last=False,
-                                **config_obj.get("dataloaders", "kwargs"))
-
-    test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
-                                **config_obj.get("dataloaders", "kwargs"))
+    # TODO: FIX TEST
+    # test_dataloader = DataLoader(test_set, shuffle=True, drop_last=False,
+    #                             **config_obj.get("dataloaders", "kwargs"))
 
     encoder_type = config_obj.get("model", "encoder")
     decoder_type = config_obj.get("model", "decoder")
@@ -147,7 +119,6 @@ def train_model(config_obj, relative_path=""):
     decoder_args = config_obj.get("model", "decoder_args")
     decoder_kwargs = config_obj.get("model", "decoder_kwargs")
     decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
-    # decoder_kwargs["go_token"] = tokenizer.encode_token(tokenizer.GO)
 
     # TODO: Remove GPUs?
     gpus = config_obj.get("device", "gpus")
@@ -167,8 +138,10 @@ def train_model(config_obj, relative_path=""):
     # loss_function = getattr(ptcap.losses, loss_type)()
     caption_loss_kwargs = {}
     if balanced_loss:
-        caption_loss_kwargs["token_freqs"]= tokenizer.get_token_freqs(training_parser.get_captions_from_tmp_and_lbl())
+        caption_loss_kwargs["token_freqs"] = \
+            tokenizer.get_token_freqs(train_parser.get_captions_from_tmp_and_lbl())
     #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
+
     caption_loss_function = getattr(ptcap.losses, caption_loss_type)(kwargs=caption_loss_kwargs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()
 
@@ -185,26 +158,25 @@ def train_model(config_obj, relative_path=""):
 
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
                             config_obj.get("logging", "tensorboard_frequency"))
+
     # Prepare checkpoint directory and save config
     Checkpointer.save_meta(checkpoint_folder, config_obj, tokenizer)
-
     checkpointer = Checkpointer(checkpoint_folder, higher_is_better)
 
     # Setup the logger
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
 
     # Trainer
-    trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
-                      writer, checkpointer, load_encoder_only, folder=pretrained_folder,
-                      filename=pretrained_file, gpus=gpus, clip_grad=clip_grad,
+    trainer = Trainer(model, caption_loss_function, w_caption_loss, scheduler,
+                      tokenizer, logger, writer, checkpointer, load_encoder_only,
+                      folder=pretrained_folder, filename=pretrained_file,
+                      gpus=gpus, clip_grad=clip_grad,
                       classif_loss_function=classif_loss_function, 
                       w_classif_loss=w_classif_loss)
 
     # Train the Model
-    trainer.train(dataloader, val_dataloader, criteria, num_epoch,
-                 frequency_valid, teacher_force_train, teacher_force_valid,
-                 verbose_train, verbose_valid)
+    valid_captions, valid_preds = trainer.train(
+        train_dataloader, valid_dataloader, criteria, num_epoch, frequency_valid,
+        teacher_force_train, teacher_force_valid, verbose_train, verbose_valid)
 
-
-
-    trainer.test(test_dataloader )
+    return valid_captions, valid_preds, tokenizer

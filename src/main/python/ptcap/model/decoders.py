@@ -136,7 +136,7 @@ class LSTMDecoder(DecoderBase):
             lstm_hidden = self.init_hidden(features)
         embedded_captions = self.embedding(captions)
 
-        self.lstm.flatten_parameters()
+        #self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(embedded_captions, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space
@@ -166,7 +166,7 @@ class CoupledLSTMDecoder(DecoderBase):
         embedded_captions = self.embedding(captions)
         lstm_input = self.prepare_lstm_input(embedded_captions, pooled_features)
 
-        self.lstm.flatten_parameters()
+        #self.lstm.flatten_parameters()
         lstm_output, lstm_hidden = self.lstm(lstm_input, lstm_hidden)
 
         # Project features in a 'vocab_size'-dimensional space

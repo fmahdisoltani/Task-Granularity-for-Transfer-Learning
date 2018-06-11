@@ -6,8 +6,8 @@ import pandas as pd
 
 class AnnotationParser(object):
 
-    def __init__(self, annot_path, video_root,
-                 file_path="file", caption_type="template", object_list=None):
+    def __init__(self, annot_path, video_root, file_path="file",
+                 caption_type="template", object_list=None):
         self.video_root = video_root
         self.file_path = file_path
         self.caption_type = caption_type
@@ -132,6 +132,7 @@ class CSVParser(AnnotationParser):
     def get_video_paths(self):
         return self.get_video_ids()
 
+
 class V2Parser(JsonParser):
 
     def get_video_ids(self):
@@ -139,9 +140,41 @@ class V2Parser(JsonParser):
         ids = [str(i)+".webm" for i in self.annotations["id"]]
         return ids
 
-
     def get_video_paths(self):
-        return [file for file in self.get_video_ids()]
+        ids = self.get_video_ids()
+        return [os.path.join(self.video_root, id_) for id_ in ids]
 
 
+class JsonV2Parser(JsonParser):
 
+    def get_captions(self, caption_type=None):
+        if caption_type is None:
+            caption_type = self.caption_type
+        return self.process_captions(caption_type)
+
+    def process_captions(self, caption_type):
+        if caption_type == "template":
+            return self.annotations[caption_type].tolist()
+        elif caption_type == "label":
+            templates = self.annotations["template"]
+            placeholders_series = self.annotations["placeholders"]
+            labels = [self.sub(template, placeholders, self.single_object) for
+                      template, placeholders in zip(templates,
+                                                    placeholders_series)]
+            return labels
+        else:
+            print("The input caption_type is not recognized")
+            raise NotImplementedError
+
+    @classmethod
+    def sub(self, template, placeholders, single_object=False,
+            pattern_tokens=("[", "]")):
+        j = 0
+        while any([True if sub in template else False for sub in pattern_tokens]):
+            start = template.lower().find(pattern_tokens[0])
+            end = template.lower().find(pattern_tokens[1])
+            placeholder = (placeholders[j].split()[-1] if single_object
+                           else placeholders[j])
+            template = template[:start] + placeholder + template[end + 1:]
+            j += 1
+        return template
