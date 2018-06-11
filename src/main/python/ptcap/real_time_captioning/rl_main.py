@@ -105,11 +105,11 @@ if __name__ == "__main__":
 
     from ptcap.utils import CustomSubsetSampler
 
-    # sampler = CustomSubsetSampler(subset_size=50000, total_size=len(training_set))
+    sampler = CustomSubsetSampler(subset_size=50000, total_size=len(training_set))
 
 
     train_dataloader = DataLoader(training_set,  drop_last=False,
-                                  # sampler=sampler,
+                                  sampler=sampler,
                                   **config_obj.get("dataloaders", "kwargs")
                                   )
     val_dataloader = DataLoader(validation_set, shuffle=False, drop_last=False,

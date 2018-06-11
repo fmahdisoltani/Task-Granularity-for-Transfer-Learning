@@ -45,7 +45,9 @@ class RLTrainer(object):
         scoring_functions.append(get_wait_time)
         scoring_functions.append(policy_loss_to_numpy)
         scoring_functions.append(classif_loss_to_numpy)
+        scoring_functions.append(caption_accuracy)
         scoring_functions.append(classif_accuracy)
+        scoring_functions.append(caption_accuracy)
 
         return scoring_functions
 
@@ -58,7 +60,7 @@ class RLTrainer(object):
 
         while not stop_training:
 
-            if epoch % valid_frequency == 0:
+            if epoch % valid_frequency == 10:
                 valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
 
                 # remember best loss and save checkpoint
@@ -107,11 +109,12 @@ class RLTrainer(object):
             action, logprob = self.agent.select_action(state)
             action_seq.append(action)
             logprob_seq.append(logprob)
-            reward, classif_probs, caption_probs = self.env.update_state(action, action_seq, classif_targets, captions_targets)
+            reward, classif_probs, caption_probs = \
+                self.env.update_state(action, action_seq, classif_targets, captions_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
 
-        return action_seq, reward_seq, logprob_seq, classif_probs
+        return action_seq, reward_seq, logprob_seq, classif_probs, caption_probs
 
     def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000):
         self.logger.on_epoch_begin(epoch)
@@ -124,7 +127,8 @@ class RLTrainer(object):
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
                                "get_wait_time policy_loss classif_loss preds "
-                               "classif_targets classif_probs")
+                               "classif_targets classif_probs "
+                               "captions predictions")
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
         for i_episode, (videos_b, _, captions_b, classif_targets_b) in enumerate(dataloader):
@@ -141,16 +145,18 @@ class RLTrainer(object):
                 videos = videos_b[i_sample:i_sample+1]
                 classif_targets = classif_targets_b[i_sample:i_sample+1]
                 captions_targets = captions_b[i_sample:i_sample+1]
-                action_seq, reward_seq, logprob_seq, classif_probs = \
+                action_seq, reward_seq, logprob_seq, classif_probs, caption_probs = \
                     self.run_episode(i_episode, videos, classif_targets, captions_targets, is_training)
 
-                returns, policy_loss, classif_loss = \
+                returns, policy_loss, classif_loss, caption_loss = \
                     self.agent.compute_losses(reward_seq,
                                               logprob_seq,
                                               classif_probs,
-                                              classif_targets)
+                                              classif_targets,
+                                              caption_probs,
+                                              captions_targets)
 
-                loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda()
+                loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda() +caption_loss.cuda()
                 wait_time = len(action_seq)
                 running_reward += returns[0]
 
@@ -169,7 +175,11 @@ class RLTrainer(object):
                                         classif_loss.cpu(),
                                         predictions,
                                         classif_targets.cpu(),
-                                        classif_probs.cpu())
+                                        classif_probs.cpu(),
+                                        captions_targets[:,0:1].long().cpu(),
+                                        caption_probs.long().cpu()
+
+                                       )
 
                 scores_dict = scores.compute_scores(episode_outputs,
                                                     i_episode + 1)

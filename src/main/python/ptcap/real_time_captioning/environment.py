@@ -32,8 +32,8 @@ class Environment(nn.Module):
     def reset(self, video=None, caption=None, classif=None):
         self.read_count = 0
         self.write_count = 0
-
         self.vid_encoding = self.encoder.extract_features(video)
+        self.output_buffer = []
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
@@ -69,13 +69,18 @@ class Environment(nn.Module):
                 self.read_count += 1
 
         if action == 1:  # WRITE
+
             self.write_count += 1
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
-
             cap_value_prob, cap_prediction = torch.max(caption_probs, dim=2)
+            gg = cap_prediction.cpu().numpy()[0][0]
+            self.output_buffer.append(gg)
+
 
             # if torch.equal(prediction, classif_targets):
+            #from pycocoevalcap.bleu.bleu import Bleu
+            #partial_bleu = Bleu()
             if torch.equal(cap_prediction, caption_targets[:, self.write_count:self.write_count+1]):
                 status = Environment.STATUS_CORRECT_WRITE
             else:
@@ -87,7 +92,7 @@ class Environment(nn.Module):
         return reward, classif_probs, caption_probs
 
     def check_finished(self):
-        return self.write_count == 1 or self.read_count == 48
+        return self.write_count == 13
 
     def give_reward(self, status, value_prob=None):
         r =  {
