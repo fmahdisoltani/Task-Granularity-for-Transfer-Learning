@@ -20,15 +20,12 @@ class Trainer(object):
     def __init__(self, model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
                  writer, checkpointer, load_encoder_only, folder=None, filename=None,
                  gpus=None, clip_grad=None, classif_loss_function=None,
-                 w_classif_loss=0):
+                 w_classif_loss=0, compute_metrics=False):
 
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
         self.load_encoder_only = load_encoder_only
-
-        # model = DataParallelWrapper(model, device_ids=gpus).cuda(gpus[0])
-
 
         self.model = model if self.gpus is None else(
             DataParallelWrapper(model, device_ids=self.gpus).cuda(gpus[0])
@@ -56,11 +53,11 @@ class Trainer(object):
         self.tensorboard_frequency = 1
         self.logger = logger
 
-        #self.multiscore_adapter = MultiScoreAdapter(
-        #    MultiScorer(aggregator=Fudge(), BLEU=Bleu(4), ROUGE_L=Rouge(),
-        #                METEOR=Meteor()), self.tokenizer)
-
         self.logger.on_train_init(folder, filename)
+        if compute_metrics:
+            self.multiscore_adapter = MultiScoreAdapter(
+                MultiScorer(aggregator=Fudge(), BLEU=Bleu(4),
+                            ROUGE_L=Rouge(), METEOR=Meteor()), self.tokenizer)
 
     def train(self, train_dataloader, valid_dataloader, criteria,
               max_num_epochs=None, frequency_valid=1, teacher_force_train=True,
@@ -184,11 +181,10 @@ class Trainer(object):
             input_captions = self.get_input_captions(captions,
                                                      use_teacher_forcing)
 
-            videos, captions, input_captions, classif_targets = (
-            Variable(videos),
-            Variable(captions),
-            Variable(input_captions),
-            Variable(classif_targets))
+            videos, captions, input_captions, classif_targets = list(
+                map(Variable,
+                    [videos, captions, input_captions, classif_targets]))
+
             if self.use_cuda:
                 videos = videos.cuda(self.gpus[0])
                 captions = captions.cuda(self.gpus[0])
