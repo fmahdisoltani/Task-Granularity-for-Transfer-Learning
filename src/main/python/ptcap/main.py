@@ -98,9 +98,9 @@ def train_model(config_obj, relative_path=""):
 
     # Train preprocessor, dataset, and data_loader
     prep_list = []
-    for i in config_obj.get("preprocess", "train"):
-        args = i["args"] or ()
-        prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
+    for prep_dict in config_obj.get("preprocess", "train"):
+        args = prep_dict["args"] or ()
+        prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
 
     train_preprocessor = Compose(prep_list)
 
@@ -117,9 +117,9 @@ def train_model(config_obj, relative_path=""):
 
     # Valid preprocessor, dataset, and data_loader
     val_prep_list = []
-    for i in config_obj.get("preprocess", "valid"):
-        args = i["args"] or ()
-        val_prep_list.append(getattr(ptcap.data.preprocessing, i["type"])(*args))
+    for prep_dict in config_obj.get("preprocess", "valid"):
+        args = prep_dict["args"] or ()
+        val_prep_list.append(getattr(ptcap.data.preprocessing, prep_dict["type"])(*args))
 
     val_preprocessor = Compose(val_prep_list)
     val_dataset_type = config_obj.get("dataset", "val_dataset_type")
