@@ -22,6 +22,7 @@ class FixedSizeCrop1D(object):
         start = int((length - self.cropsize) / 2)
         return x[start: start + self.cropsize]
 
+
 class CenterCropper(object):
     def __init__(self, cropsize):
         self.cropsize = cropsize
@@ -31,8 +32,6 @@ class CenterCropper(object):
         dpos, hpos, wpos = (np.array(video.shape[0:3])
                             - np.array([depth, height, width])) / 2.
         dpos, hpos, wpos = int(max(dpos, 0)), int(max(hpos, 0)), int(max(wpos, 0))
-        # return random_crop(video, depth, height, width, int(dpos), int(hpos),
-        #                    int(wpos))
 
         return video[dpos:dpos + depth, hpos:hpos + height, wpos:wpos + width]
 
