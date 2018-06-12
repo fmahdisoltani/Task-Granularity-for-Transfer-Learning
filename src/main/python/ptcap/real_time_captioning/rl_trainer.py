@@ -197,7 +197,6 @@ class RLTrainer(object):
                  is_training, total_samples=len(dataloader), verbose=False)
 
             #if i_episode % 3 ==0:
-            state_dict = self.get_trainer_state()
             if is_training:
                 loss.backward()
 
