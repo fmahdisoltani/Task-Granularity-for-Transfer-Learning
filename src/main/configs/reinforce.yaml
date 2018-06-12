@@ -83,7 +83,7 @@ tokenizer:
 
 logging:
   verbose: True
-  tensorboard_frequency: 1000
+  tensorboard_frequency: 1
 
 preprocess:
   crop_size: [48, 96, 96]
@@ -93,5 +93,5 @@ preprocess:
 reinforce:
   correct_w_reward: 100
   correct_r_reward: 0
-  incorrect_w_reward: -1000
+  incorrect_w_reward: -1
   incorrect_r_reward: -10

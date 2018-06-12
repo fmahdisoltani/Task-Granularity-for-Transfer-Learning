@@ -4,14 +4,21 @@ import torch
 from collections import OrderedDict
 
 
+def get_reward(score_attr):
+    return {"reward": score_attr.reward}
+
+
 def get_wait_time(score_attr):
-    return {"get_wait_time":score_attr.get_wait_time}
+    return {"wait_time": score_attr.wait_time}
+
 
 def classif_loss_to_numpy(score_attr):
-    return {"classif_loss_to_numpy":score_attr.classif_loss.data.cpu().numpy()}
+    return {"classif_loss":score_attr.classif_loss.data.cpu().numpy()}
+
 
 def policy_loss_to_numpy(score_attr):
-    return {"policy_loss_to_numpy":score_attr.policy_loss.data.cpu().numpy()}
+    return {"policy_loss":score_attr.policy_loss.data.cpu().numpy()}
+
 
 def classif_accuracy(outputs):
     _, class_index = torch.max(outputs.classif_probs, dim=1)

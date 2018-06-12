@@ -15,11 +15,11 @@ from ptcap.utils import DataParallelWrapper
 from torch.autograd import Variable
 from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
                           first_token_accuracy, policy_loss_to_numpy, classif_loss_to_numpy,
-                          token_accuracy, get_wait_time)
+                          token_accuracy, get_wait_time, get_reward)
 
 
 class RLTrainer(object):
-    def __init__(self, env, agent, checkpointer, logger, tokenizer, gpus=None):
+    def __init__(self, env, agent, checkpointer, logger, tokenizer, writer, gpus=None):
 
         self.gpus = gpus
         self.use_cuda = True if gpus else False
@@ -28,9 +28,8 @@ class RLTrainer(object):
 
         self.agent = agent # Agent().cuda()
 
-        params = list(self.agent.parameters())
-                # list(self.env.parameters()) \
-                 # + list(self.env.module.classif_layer.parameters())
+        params = list(self.agent.parameters())+ list(self.env.parameters()) \
+                  + list(self.env.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
@@ -38,7 +37,7 @@ class RLTrainer(object):
         self.checkpointer = checkpointer
         self.num_epochs = 0
         self.tokenizer = tokenizer
-
+        self.writer = writer
 
     def get_function_dict(self, is_training=True):
         scoring_functions = []
@@ -48,6 +47,7 @@ class RLTrainer(object):
         scoring_functions.append(caption_accuracy)
         scoring_functions.append(classif_accuracy)
         scoring_functions.append(caption_accuracy)
+        scoring_functions.append(get_reward)
 
         return scoring_functions
 
@@ -126,7 +126,7 @@ class RLTrainer(object):
             self.agent.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
-                               "get_wait_time policy_loss classif_loss preds "
+                               "wait_time reward policy_loss classif_loss preds "
                                "classif_targets classif_probs "
                                "captions predictions")
         scores = ScoresOperator(self.get_function_dict())
@@ -162,15 +162,16 @@ class RLTrainer(object):
 
 
 
-            # self.checkpointer.save_value_csv([epoch, train_avg_loss],
-            #                                  filename="train_loss")
+                # self.checkpointer.save_value_csv([epoch, train_avg_loss],
+                #                                  filename="train_loss")
 
-            # convert probabilities to predictions
+                # convert probabilities to predictions
                 _, predictions = torch.max(classif_probs, dim=1)
                 predictions = predictions.cpu()
 
                 episode_outputs = ScoreAttr(
                                         wait_time,
+                                        running_reward,
                                         policy_loss,
                                         classif_loss.cpu(),
                                         predictions,
@@ -196,6 +197,7 @@ class RLTrainer(object):
                  is_training, total_samples=len(dataloader), verbose=False)
 
             #if i_episode % 3 ==0:
+            state_dict = self.get_trainer_state()
             if is_training:
                 loss.backward()
 
@@ -204,8 +206,12 @@ class RLTrainer(object):
             self.optimizer.zero_grad()
             loss = 0
 
+
+
         self.logger.on_epoch_end(average_scores_dict, is_training,
                                      total_samples=len(dataloader))
+
+        self.writer.add_scalars(average_scores_dict, epoch, is_training)
         return average_scores_dict
 
 

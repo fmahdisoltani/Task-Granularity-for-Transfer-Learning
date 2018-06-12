@@ -14,7 +14,8 @@ class Environment(nn.Module):
     STATUS_DONE = 'done'
 
     def __init__(self, encoder, decoder, classif_layer, correct_w_reward,
-                 correct_r_reward, incorrect_w_reward, incorrect_r_reward):
+                 correct_r_reward, incorrect_w_reward, incorrect_r_reward,
+                 tokenizer):
         super().__init__()
 
         self.encoder = encoder
@@ -27,6 +28,7 @@ class Environment(nn.Module):
         self.incorrect_w_reward = incorrect_w_reward
         self.incorrect_r_reward = incorrect_r_reward
         self.output_buffer = []
+        self.tokenizer = tokenizer
         #self.reset()
 
     def reset(self, video=None, caption=None, classif=None):
@@ -70,13 +72,12 @@ class Environment(nn.Module):
 
         if action == 1:  # WRITE
 
-            self.write_count += 1
+
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
             cap_value_prob, cap_prediction = torch.max(caption_probs, dim=2)
             gg = cap_prediction.cpu().numpy()[0][0]
             self.output_buffer.append(gg)
-
 
             # if torch.equal(prediction, classif_targets):
             #from pycocoevalcap.bleu.bleu import Bleu
@@ -86,6 +87,7 @@ class Environment(nn.Module):
             else:
                 status = Environment.STATUS_INCORRECT_WRITE
 
+            self.write_count += 1
 
         reward = self.give_reward(status, value_prob)
     #    reward = torch.sum(classif_probs)
@@ -95,7 +97,7 @@ class Environment(nn.Module):
         return self.write_count == 13
 
     def give_reward(self, status, value_prob=None):
-        r =  {
+        r = {
             Environment.STATUS_CORRECT_WRITE: self.correct_w_reward,
             Environment.STATUS_READ: self.correct_r_reward,
             Environment.STATUS_INCORRECT_WRITE: self.incorrect_w_reward,

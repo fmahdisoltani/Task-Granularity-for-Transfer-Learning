@@ -31,6 +31,7 @@ from ptcap.data.dataset import  GulpVideoDataset
 from ptcap.data.tokenizer import Tokenizer
 from ptcap.model.two_stream_encoders import TwoStreamEncoder
 from ptcap.real_time_captioning.rl_trainer import RLTrainer
+from ptcap.tensorboardY import Seq2seqAdapter
 from ptcap.utils import DataParallelWrapper
 from rtorchn.data.preprocessing import CenterCropper
 
@@ -172,7 +173,7 @@ if __name__ == "__main__":
                                         submodel="classif_layer")
 
     env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
-                    incorrect_w_reward, incorrect_r_reward)
+                    incorrect_w_reward, incorrect_r_reward, tokenizer)
     agent = Agent()
 
     if pretrained_path:
@@ -191,9 +192,11 @@ if __name__ == "__main__":
 
     # Setup the logger
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
+    writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
+                            config_obj.get("logging", "tensorboard_frequency"))
 
     rl_trainer = RLTrainer(env, agent,
-                           checkpointer, logger, tokenizer, gpus=gpus)
+                           checkpointer, logger, tokenizer, writer, gpus=gpus)
     rl_trainer.train(train_dataloader, val_dataloader,
                      criteria="classif_accuracy", valid_frequency=valid_frequency)
 
