@@ -20,6 +20,9 @@ def set_properties(project):
     project.depends_on('pyfackel')
     project.depends_on('rtorchn', url=('git+ssh://git@github.com/TwentyBN/'
                                        '20bn-rtorchn.git'))
+
+    project.depends_on('pycocoevalcap', url=('git+ssh://git@github.com/'
+                                             'TwentyBN/pycocoevalcap.git'))
     project.depends_on('tensorboard-pytorch')
     project.depends_on('testfixtures')
 

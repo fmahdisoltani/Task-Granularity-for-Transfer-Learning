@@ -2,6 +2,40 @@ import numpy as np
 from rtorchn.data.preprocessing import pad_video
 
 
+class FixedSizeCrop1D(object):
+    """
+    FixedSizeCrop1D expects an input tensor of size T x C and returns a
+    tensor of size self.cropsize x C. If T > self.cropsize, it extracts the
+    centered features. If T < self.cropsize, it pads the input on both sides.
+    """
+
+    def __init__(self, cropsize, mode='edge'):
+        self.cropsize = cropsize
+        self.mode = mode
+
+    def __call__(self, x):
+        length = x.shape[0]
+        if length < self.cropsize:
+            left = int((self.cropsize - length) / 2)
+            right = self.cropsize - length - left
+            return np.pad(x, [(left, right), (0, 0)], mode=self.mode)
+        start = int((length - self.cropsize) / 2)
+        return x[start: start + self.cropsize]
+
+
+class CenterCropper(object):
+    def __init__(self, cropsize):
+        self.cropsize = cropsize
+
+    def __call__(self, video):
+        depth, height, width = self.cropsize
+        dpos, hpos, wpos = (np.array(video.shape[0:3])
+                            - np.array([depth, height, width])) / 2.
+        dpos, hpos, wpos = int(max(dpos, 0)), int(max(hpos, 0)), int(max(wpos, 0))
+
+        return video[dpos:dpos + depth, hpos:hpos + height, wpos:wpos + width]
+
+
 class RandomCrop(object):
 
     def __init__(self, cropsize):
