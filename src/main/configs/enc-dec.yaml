@@ -1,17 +1,16 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif1_cap0
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/enc-dec/
   pretrained_file: model.best
 
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train-single.json
   validation_annot: /data/20bn-something-something-v2/v2-test-single.json
   test_annot: /data/20bn-something-something-v2/v2-test-single.json
-  annot_type: v2
 
 
 pretrained:
-  pretrained_folder:
+  pretrained_folder: 
   pretrained_file: model.best
   load_encoder_only: True
 
@@ -24,11 +23,11 @@ dataloaders:
 
 model:
   type: EncoderDecoder
-  encoder: C3dLSTMEncoder
-  encoder_args:
+  encoder: LSTMEncoder
+  encoder_args: 
   encoder_kwargs: {encoder_output_size: 1024,
-                   rnn_output_size: 512,
-                   causal: True}
+                   rnn_output_size: 1024
+                   }
   decoder: CoupledLSTMDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
@@ -39,10 +38,10 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0
+  w_caption_loss: 0.9
 
   classif_loss: CrossEntropy
-  w_classif_loss: 1
+  w_classif_loss: 0.1
 
 
 
@@ -67,10 +66,10 @@ training:
 validation:
   frequency: 1
   teacher_force: False
-  verbose: True
+  verbose: False
 
 criteria:
-  score: classif_accuracy
+  score: caption_accuracy
   higher_is_better: True
 
 targets:
@@ -84,26 +83,6 @@ logging:
   tensorboard_frequency: 1000
 
 preprocess:
-    train: &train_video_prep
-      [
-        {type: PadVideo, args:  [[48, 96, 96]]},
-        {type: RandomCrop, args:  [[48, 96, 96]]},
-        {type: Float32Converter, args: [64.]},
-        {type: PytorchTransposer, args:}
-      ]
-    valid: &valid_video_prep
-      [
-        {type: PadVideo, args:  [[48, 96, 96]]},
-        {type: CenterCropper, args:  [[48, 96, 96]]},
-        {type: Float32Converter, args: [64.]},
-        {type: PytorchTransposer, args:}
-      ]
-    test: *valid_video_prep
-
-dataset:
-  train_dataset_type: GulpVideoDataset
-  train_dataset_kwargs: {gulp_dir: *vidpath,
-                         size: [128, 128]}
-  valid_dataset_type: GulpVideoDataset
-  valid_dataset_kwargs: {gulp_dir: *vidpath,
-                         size: [128, 128]}
+  crop_size: [48, 96, 96]
+  scale: 64.
+  input_resize: [128, 128]
