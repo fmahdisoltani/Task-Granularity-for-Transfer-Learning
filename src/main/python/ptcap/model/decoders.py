@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch import nn
 from torch.autograd import Variable
 
+from ptcap.model.layers import StatefulLSTM
 from ptcap.tensorboardY import forward_hook_closure
 
 
@@ -184,3 +185,12 @@ class CoupledLSTMDecoder(DecoderBase):
         expanded_features = unsqueezed_features.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
         return lstm_input
+
+
+class StatefulDecoder(CoupledLSTMDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.lstm = StatefulLSTM(self.embedding_size+self.hidden_size,
+                            self.hidden_size, self.num_lstm_layers,
+                            batch_first=True)
