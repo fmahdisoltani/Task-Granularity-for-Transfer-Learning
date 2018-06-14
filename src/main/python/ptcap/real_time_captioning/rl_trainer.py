@@ -116,7 +116,7 @@ class RLTrainer(object):
             action_seq.append(action)
             logprob_seq.append(logprob)
             reward, classif_probs, caption_probs = \
-                self.env.update_state(action, action_seq, classif_targets, captions_targets)
+                self.env.update_state_classif(action, action_seq, classif_targets, captions_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
             if caption_probs is not None:
