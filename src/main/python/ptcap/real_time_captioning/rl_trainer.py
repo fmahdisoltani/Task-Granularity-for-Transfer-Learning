@@ -66,7 +66,9 @@ class RLTrainer(object):
         while not stop_training:
 
             if epoch % valid_frequency == 0:
-                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
+                self.env.toggle_training_mode()
+
+                valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=self.env.is_training)
 
                 # remember best loss and save checkpoint
                 #self.score = valid_average_scores["avg_" + criteria]
@@ -75,15 +77,18 @@ class RLTrainer(object):
                 self.checkpointer.save_best(state_dict)
                 self.checkpointer.save_value_csv([epoch, self.score],
                                                  filename="valid_loss")
+                self.env.toggle_training_mode()
 
             self.num_epochs += 1
             epoch += 1
-            train_average_scores = self.run_epoch(dataloader, epoch, is_training=True)
+            train_average_scores = self.run_epoch(dataloader, epoch, is_training=self.env.is_training)
             self.score = train_average_scores["avg_"+criteria]
             state_dict = self.get_trainer_state()
             self.checkpointer.save_latest(state_dict)
             self.checkpointer.save_value_csv([epoch, self.score ],
                                              filename="train_loss")
+
+
 
             #stop_training = self.update_stop_training(epoch, max_num_epochs)
 
@@ -116,7 +121,7 @@ class RLTrainer(object):
             action_seq.append(action)
             logprob_seq.append(logprob)
             reward, classif_probs, caption_probs = \
-                self.env.update_state_classif(action, action_seq, classif_targets, captions_targets)
+                self.env.update_state(action, action_seq, classif_targets, captions_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
             if caption_probs is not None:
@@ -199,8 +204,8 @@ class RLTrainer(object):
                                         captions_targets.long().cpu(),
                     cap_predictions.cpu(),
                                        )
-                #print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
-                #print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
+                print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
+                print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
 
                 scores_dict = scores.compute_scores(episode_outputs,
                                                     i_episode + 1)
