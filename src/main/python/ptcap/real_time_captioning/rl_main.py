@@ -176,10 +176,10 @@ if __name__ == "__main__":
                                         pretrained_path=pretrained_encoder_path,
                                         submodel="classif_layer")
 
-    if pretrained_decoder_path:
-        _, decoder, _ = checkpointer.load_model(decoder, None,
-                                        pretrained_path=pretrained_decoder_path,
-                                        submodel="decoder")
+    # if pretrained_decoder_path:
+    #     _, decoder, _ = checkpointer.load_model(decoder, None,
+    #                                     pretrained_path=pretrained_decoder_path,
+    #                                     submodel="decoder")
 
     env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward, tokenizer)
