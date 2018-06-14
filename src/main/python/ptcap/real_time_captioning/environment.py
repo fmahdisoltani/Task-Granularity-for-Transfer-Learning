@@ -29,7 +29,11 @@ class Environment(nn.Module):
         self.incorrect_r_reward = incorrect_r_reward
         self.output_buffer = []
         self.tokenizer = tokenizer
+        self.is_training = True
         #self.reset()
+
+    def toggle_training_mode(self):
+        self.is_training = not self.is_training
 
     def reset(self, video=None, caption=None, classif=None):
         self.read_count = 0
@@ -56,7 +60,7 @@ class Environment(nn.Module):
             "output_buffer": self.output_buffer
         }
 
-    def update_state(self, action, action_seq=[], classif_targets=None, caption_targets=None):
+    def update_state(self, action, action_seq=[], classif_targets=None, caption_targets=None, non_tf_input=None):
         status = ""
         classif_probs = self.classify()
         caption_probs = None
@@ -72,17 +76,24 @@ class Environment(nn.Module):
 
         if action == 1:  # WRITE
             input_captions = self.get_input_captions(caption_targets, True)
-            caption_probs = self.step_decoder(input_captions)
-            value_prob, prediction = torch.max(classif_probs, dim=1)
+            if self.is_training: #teacher_force
+                input_captions = input_captions[:, self.write_count:self.write_count + 1]
+            else:
+                input_captions = non_tf_input
 
-            cap_value_prob, cap_prediction = torch.max(caption_probs, dim=2)
-            gg = cap_prediction.cpu().numpy()[0][0]
-            self.output_buffer.append(gg)
+            caption_probs = self.step_decoder(input_captions, self.is_training)
 
+            # classif_value_prob, classif_preds = torch.max(classif_probs, dim=1)
+            cap_value_probs, cap_preds = torch.max(caption_probs, dim=2)
+            non_tf_input = cap_preds
             # if torch.equal(prediction, classif_targets):
             #from pycocoevalcap.bleu.bleu import Bleu
             #partial_bleu = Bleu()
-            if torch.equal(cap_prediction, caption_targets[:, self.write_count:self.write_count+1]):
+
+            gg = cap_preds.cpu().numpy()[0][0]
+            self.output_buffer.append(gg)
+
+            if torch.equal(cap_preds, caption_targets[:, self.write_count:self.write_count+1]):
                 status = Environment.STATUS_CORRECT_WRITE
             else:
                 status = Environment.STATUS_INCORRECT_WRITE
@@ -124,16 +135,15 @@ class Environment(nn.Module):
         return input_captions
 
     def step_decoder(self, input_captions, teacher_force=False):
-
-        if teacher_force:
-            o = self.decoder(self.vid_encoding, input_captions[self.write_count])
-        else:
             #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
             caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
-                         input_captions[:, self.write_count:self.write_count + 1])
-           #TODO: for not teacher-forcing should feed previous model output
-
-
+                         input_captions)
             return caption_probs
+
+    def run_decoder_multi_step(self, input_captions):
+        caption_probs = self.decoder(self.vid_encoding, input_captions)
+
+        return caption_probs
+
 
 
