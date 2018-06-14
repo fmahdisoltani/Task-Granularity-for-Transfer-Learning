@@ -59,7 +59,7 @@ class Environment(nn.Module):
     def update_state(self, action, action_seq=[], classif_targets=None, caption_targets=None):
         status = ""
         classif_probs = self.classify()
-        caption_probs = self.step_decoder(caption_targets)
+        caption_probs = None
         value_prob = None
 
         if action == 0:  # READ
@@ -71,8 +71,8 @@ class Environment(nn.Module):
                 self.read_count += 1
 
         if action == 1:  # WRITE
-
-
+            input_captions = self.get_input_captions(caption_targets, True)
+            caption_probs = self.step_decoder(input_captions)
             value_prob, prediction = torch.max(classif_probs, dim=1)
 
             cap_value_prob, cap_prediction = torch.max(caption_probs, dim=2)
@@ -115,13 +115,24 @@ class Environment(nn.Module):
 
         return probs
 
+
+    def get_input_captions(self, captions, use_teacher_forcing):
+        batch_size = captions.size(0)
+        input_captions = torch.LongTensor(batch_size, 1).zero_().cuda()
+        if use_teacher_forcing:
+            input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
+        return input_captions
+
     def step_decoder(self, input_captions, teacher_force=False):
+
         if teacher_force:
             o = self.decoder(self.vid_encoding, input_captions[self.write_count])
         else:
             #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
             caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
                          input_captions[:, self.write_count:self.write_count + 1])
+           #TODO: for not teacher-forcing should feed previous model output
+
 
             return caption_probs
 
