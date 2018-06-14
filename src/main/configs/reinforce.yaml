@@ -5,8 +5,8 @@ paths:
 
   pretrained_file: model.best
 
-  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
-  validation_annot: /data/20bn-something-something-v2/v2-validation.json
+  train_annot: &train_annot /data/20bn-something-something-v2-annotations/v2-train.json
+  validation_annot: /data/20bn-something-something-v2-annotations/v2-validation.json
   test_annot: /data/20bn-something-something-v2/v2-test.json
 
 
@@ -30,7 +30,7 @@ model:
   encoder_args:
   encoder_kwargs: {encoder_output_size: 1024,
                    rnn_output_size: 512}
-  decoder: CoupledLSTMDecoder
+  decoder: StatefulDecoder
   decoder_args:
   decoder_kwargs: {embedding_size: 256,
                    hidden_size: 1024,

@@ -27,7 +27,7 @@ class Environment(nn.Module):
         self.correct_r_reward = correct_r_reward
         self.incorrect_w_reward = incorrect_w_reward
         self.incorrect_r_reward = incorrect_r_reward
-        self.output_buffer = []
+        self.output_buffer = [0]
         self.tokenizer = tokenizer
         self.is_training = True
         #self.reset()
@@ -39,7 +39,7 @@ class Environment(nn.Module):
         self.read_count = 0
         self.write_count = 0
         self.vid_encoding = self.encoder.extract_features(video)
-        self.output_buffer = []
+        self.output_buffer = [0]
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
@@ -60,7 +60,7 @@ class Environment(nn.Module):
             "output_buffer": self.output_buffer
         }
 
-    def update_state(self, action, action_seq=[], classif_targets=None, caption_targets=None, non_tf_input=None):
+    def update_state(self, action, action_seq=[], classif_targets=None, caption_targets=None):
         status = ""
         classif_probs = self.classify()
         caption_probs = None
@@ -75,17 +75,16 @@ class Environment(nn.Module):
                 self.read_count += 1
 
         if action == 1:  # WRITE
-            input_captions = self.get_input_captions(caption_targets, True)
             if self.is_training: #teacher_force
+                input_captions = self.get_input_captions(caption_targets, self.is_training)
                 input_captions = input_captions[:, self.write_count:self.write_count + 1]
             else:
-                input_captions = non_tf_input
+                input_captions = torch.LongTensor([[self.output_buffer[-1]]])
 
             caption_probs = self.step_decoder(input_captions, self.is_training)
 
             # classif_value_prob, classif_preds = torch.max(classif_probs, dim=1)
             cap_value_probs, cap_preds = torch.max(caption_probs, dim=2)
-            non_tf_input = cap_preds
             # if torch.equal(prediction, classif_targets):
             #from pycocoevalcap.bleu.bleu import Bleu
             #partial_bleu = Bleu()
@@ -135,10 +134,10 @@ class Environment(nn.Module):
         return input_captions
 
     def step_decoder(self, input_captions, teacher_force=False):
-            #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
-            caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
-                         input_captions)
-            return caption_probs
+        #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
+        caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
+                     input_captions)
+        return caption_probs
 
     def run_decoder_multi_step(self, input_captions):
         caption_probs = self.decoder(self.vid_encoding, input_captions)
