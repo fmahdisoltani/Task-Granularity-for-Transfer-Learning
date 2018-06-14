@@ -5,15 +5,15 @@ paths:
 
   pretrained_file: model.best
 
-  train_annot: &train_annot /data/20bn-something-something-v2/v2-train-single.json
-  validation_annot: /data/20bn-something-something-v2/v2-test-single.json
-  test_annot: /data/20bn-something-something-v2/v2-test-single.json
+  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
+  validation_annot: /data/20bn-something-something-v2/v2-validation.json
+  test_annot: /data/20bn-something-something-v2/v2-test.json
 
 
 pretrained:
   pretrained_path:
-  pretrained_encoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif1_cap0/model.latest"
-  pretrained_decoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif1_cap0"
+  pretrained_encoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif0.9_cap0.1/model.best"
+  pretrained_decoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif0.9_cap0.1/model.best"
 
   load_encoder_only: True
 
@@ -76,7 +76,7 @@ criteria:
   higher_is_better: True
 
 targets:
-  caption_type: label
+  caption_type: template
 
 tokenizer:
   kwargs: {user_maxlen: 13, cutoff: 5}
@@ -91,7 +91,7 @@ preprocess:
   input_resize: [128, 128]
 
 reinforce:
-  correct_w_reward: 100
+  correct_w_reward: 1
   correct_r_reward: 0
   incorrect_w_reward: -1
   incorrect_r_reward: -10
