@@ -19,7 +19,8 @@ from ptcap.scores import (ScoresOperator, caption_accuracy, classif_accuracy,
 
 
 class RLTrainer(object):
-    def __init__(self, env, agent, checkpointer, logger, tokenizer, writer, gpus=None):
+    def __init__(self, env, agent, checkpointer, logger, tokenizer, writer,
+                 w_classif, w_captioning, gpus=None):
 
         self.gpus = gpus
         self.use_cuda = True if gpus else False
@@ -28,8 +29,9 @@ class RLTrainer(object):
 
         self.agent = agent # Agent().cuda()
 
-        params = list(self.agent.parameters())+ list(self.env.parameters()) \
-                  + list(self.env.classif_layer.parameters())
+        params = list(self.agent.parameters())\
+                 + list(self.env.decoder.parameters()) \
+                 # + list(self.env.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
                          self.optimizer, step_size=10000, gamma=0.9)
@@ -38,6 +40,8 @@ class RLTrainer(object):
         self.num_epochs = 0
         self.tokenizer = tokenizer
         self.writer = writer
+        self.w_classif = w_classif
+        self.w_captioning = w_captioning
 
     def get_function_dict(self, is_training=True):
         scoring_functions = []
@@ -48,6 +52,7 @@ class RLTrainer(object):
         scoring_functions.append(classif_accuracy)
         scoring_functions.append(caption_accuracy)
         scoring_functions.append(get_reward)
+        scoring_functions.append(token_accuracy)
 
         return scoring_functions
 
@@ -60,7 +65,7 @@ class RLTrainer(object):
 
         while not stop_training:
 
-            if epoch % valid_frequency == 10:
+            if epoch % valid_frequency == 0:
                 valid_average_scores = self.run_epoch(val_dataloader, epoch, is_training=False)
 
                 # remember best loss and save checkpoint
@@ -103,6 +108,7 @@ class RLTrainer(object):
         reward_seq = []
         action_seq = []
         logprob_seq = []
+        caption_probs_seq = []
         while not finished:
 
             state = self.env.get_state()
@@ -113,8 +119,10 @@ class RLTrainer(object):
                 self.env.update_state(action, action_seq, classif_targets, captions_targets)
             reward_seq.append(reward)
             finished = self.env.check_finished()
+            if caption_probs is not None:
+                caption_probs_seq.append(caption_probs)
 
-        return action_seq, reward_seq, logprob_seq, classif_probs, caption_probs
+        return action_seq, reward_seq, logprob_seq, classif_probs, torch.cat(caption_probs_seq, dim=1)
 
     def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000):
         self.logger.on_epoch_begin(epoch)
@@ -126,9 +134,10 @@ class RLTrainer(object):
             self.agent.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
-                               "wait_time reward policy_loss classif_loss preds "
-                               "classif_targets classif_probs "
-                               "captions predictions")
+                           "wait_time reward policy_loss classif_loss "
+                           "classif_targets classif_probs "
+                           "captions predictions")
+
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
         for i_episode, (videos_b, _, captions_b, classif_targets_b) in enumerate(dataloader):
@@ -145,18 +154,23 @@ class RLTrainer(object):
                 videos = videos_b[i_sample:i_sample+1]
                 classif_targets = classif_targets_b[i_sample:i_sample+1]
                 captions_targets = captions_b[i_sample:i_sample+1]
-                action_seq, reward_seq, logprob_seq, classif_probs, caption_probs = \
-                    self.run_episode(i_episode, videos, classif_targets, captions_targets, is_training)
+
+                action_seq, reward_seq, logprob_seq, classif_probs, caption_probs_seq= \
+                    self.run_episode(i_episode, videos, classif_targets,
+                                     captions_targets,
+                                     is_training)
 
                 returns, policy_loss, classif_loss, caption_loss = \
                     self.agent.compute_losses(reward_seq,
                                               logprob_seq,
                                               classif_probs,
                                               classif_targets,
-                                              caption_probs,
+                                              caption_probs_seq,
                                               captions_targets)
 
-                loss = loss + policy_loss.cuda() * 0.01 + classif_loss.cuda() +caption_loss.cuda()
+                loss = loss + policy_loss.cuda() * 0.01 + \
+                       self.w_classif* classif_loss.cuda() + \
+                       self.w_captioning * caption_loss.cuda()
                 wait_time = len(action_seq)
                 running_reward += returns[0]
 
@@ -169,18 +183,24 @@ class RLTrainer(object):
                 _, predictions = torch.max(classif_probs, dim=1)
                 predictions = predictions.cpu()
 
+                # convert probabilities to predictions
+                _, cap_predictions = torch.max(caption_probs_seq, dim=2)
+
+
+
                 episode_outputs = ScoreAttr(
                                         wait_time,
                                         running_reward,
                                         policy_loss,
                                         classif_loss.cpu(),
-                                        predictions,
+
                                         classif_targets.cpu(),
                                         classif_probs.cpu(),
-                                        captions_targets[:,0:1].long().cpu(),
-                                        caption_probs.long().cpu()
-
+                                        captions_targets.long().cpu(),
+                    cap_predictions.cpu(),
                                        )
+                #print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
+                #print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
 
                 scores_dict = scores.compute_scores(episode_outputs,
                                                     i_episode + 1)
