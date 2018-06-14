@@ -83,10 +83,10 @@ if __name__ == "__main__":
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
-    if pretrained_decoder_path:
-        tokenizer.load_dictionaries(pretrained_decoder_path)
+    if pretrained_path:
+
+        tokenizer.load_dictionaries(pretrained_path)
         print("Inside pretrained", tokenizer.get_vocab_size())
-        print("pretty fucked up")
     else:
         tokenizer.build_dictionaries(
             training_parser.get_captions_from_tmp_and_lbl())
@@ -162,6 +162,10 @@ if __name__ == "__main__":
         *decoder_args,
         **decoder_kwargs)
 
+    decoder = decoder if gpus is None else(
+        DataParallelWrapper(decoder, device_ids=gpus).cuda(gpus[0])
+    )
+
 
     if pretrained_encoder_path:
         _, encoder, _ = checkpointer.load_model(encoder, None,
@@ -171,6 +175,11 @@ if __name__ == "__main__":
         _, classif_layer, _ = checkpointer.load_model(classif_layer, None,
                                         pretrained_path=pretrained_encoder_path,
                                         submodel="classif_layer")
+
+    if pretrained_decoder_path:
+        _, decoder, _ = checkpointer.load_model(decoder, None,
+                                        pretrained_path=pretrained_decoder_path,
+                                        submodel="decoder")
 
     env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward, tokenizer)
@@ -190,13 +199,17 @@ if __name__ == "__main__":
         env = env.cuda(gpus[0])
         agent = agent.cuda(gpus[0])
 
+    w_classif = config_obj.get("loss", "w_classif_loss")
+    w_captioning = config_obj.get("loss", "w_caption_loss")
+
     # Setup the logger
     logger = CustomLogger(folder=checkpoint_folder, tokenizer=tokenizer)
     writer = Seq2seqAdapter(os.path.join(checkpoint_folder, "runs"),
                             config_obj.get("logging", "tensorboard_frequency"))
 
     rl_trainer = RLTrainer(env, agent,
-                           checkpointer, logger, tokenizer, writer, gpus=gpus)
+                           checkpointer, logger, tokenizer, writer, w_classif,
+                           w_captioning, gpus=gpus)
     rl_trainer.train(train_dataloader, val_dataloader,
                      criteria="classif_accuracy", valid_frequency=valid_frequency)
 
