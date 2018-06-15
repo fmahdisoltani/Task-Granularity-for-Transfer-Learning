@@ -77,7 +77,7 @@ class Agent(nn.Module):
         return G
 
     def compute_losses(self, reward_seq, logprobs_seq, classif_probs, classif_targets,
-                       caption_probs, caption_targets, gamma=1.0):
+                     gamma=1.0):
 
         policy_loss = []
         returns = self.compute_returns(reward_seq, gamma)
@@ -90,11 +90,8 @@ class Agent(nn.Module):
         policy_loss = torch.stack(policy_loss).sum() * 0.01
         classif_loss = self.classif_loss_function(classif_probs,
                                                   classif_targets)
-        caption_loss = self.caption_loss_function(caption_probs,
-                                                  caption_targets)
-
 
 
         self.lstm_hidden = None
 
-        return returns, policy_loss, classif_loss, caption_loss
+        return returns, policy_loss, classif_loss

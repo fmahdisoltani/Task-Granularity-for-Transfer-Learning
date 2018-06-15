@@ -24,6 +24,8 @@ from ptcap.loggers import CustomLogger
 from ptcap.data.annotation_parser import V2Parser
 from ptcap.data.config_parser import YamlConfig
 from ptcap.real_time_captioning.environment import Environment
+from ptcap.real_time_captioning.classif_env import ClassifEnv
+
 from ptcap.real_time_captioning.agent import Agent
 
 from ptcap.checkpointers import Checkpointer
@@ -181,7 +183,7 @@ if __name__ == "__main__":
                                         pretrained_path=pretrained_decoder_path,
                                         submodel="decoder")
 
-    env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
+    env = ClassifEnv(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward, tokenizer)
     agent = Agent()
 
