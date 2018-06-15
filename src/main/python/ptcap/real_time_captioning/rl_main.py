@@ -80,7 +80,6 @@ if __name__ == "__main__":
                                  caption_type=caption_type)
 
     pretrained_encoder_path = config_obj.get("pretrained", "pretrained_encoder_path")
-    pretrained_decoder_path = config_obj.get("pretrained", "pretrained_decoder_path")
     pretrained_path = config_obj.get("pretrained", "pretrained_path")
 
     # Build a tokenizer that contains all captions from annotation files
@@ -154,20 +153,6 @@ if __name__ == "__main__":
         DataParallelWrapper(classif_layer, device_ids=gpus).cuda(gpus[0])
     )
 
-    decoder_type = config_obj.get("model", "decoder")
-    decoder_args = config_obj.get("model", "decoder_args")
-    decoder_kwargs = config_obj.get("model", "decoder_kwargs")
-    decoder_args = decoder_args or ()
-    decoder_kwargs["vocab_size"] = tokenizer.get_vocab_size()
-
-    decoder = getattr(ptcap.model.decoders, decoder_type)(
-        *decoder_args,
-        **decoder_kwargs)
-
-    decoder = decoder if gpus is None else(
-        DataParallelWrapper(decoder, device_ids=gpus).cuda(gpus[0])
-    )
-
 
     if pretrained_encoder_path:
         _, encoder, _ = checkpointer.load_model(encoder, None,
@@ -178,12 +163,9 @@ if __name__ == "__main__":
                                         pretrained_path=pretrained_encoder_path,
                                         submodel="classif_layer")
 
-    if pretrained_decoder_path:
-        _, decoder, _ = checkpointer.load_model(decoder, None,
-                                        pretrained_path=pretrained_decoder_path,
-                                        submodel="decoder")
 
-    env = ClassifEnv(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
+
+    env = ClassifEnv(encoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward, tokenizer)
     agent = Agent()
 

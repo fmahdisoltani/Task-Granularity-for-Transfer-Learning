@@ -13,13 +13,12 @@ class ClassifEnv(nn.Module):
     STATUS_READ = 'read'
     STATUS_DONE = 'done'
 
-    def __init__(self, encoder, decoder, classif_layer, correct_w_reward,
+    def __init__(self, encoder, classif_layer, correct_w_reward,
                  correct_r_reward, incorrect_w_reward, incorrect_r_reward,
                  tokenizer):
         super().__init__()
 
         self.encoder = encoder
-        self.decoder = decoder
         self.classif_layer = classif_layer
 
         self.logsoftmax = nn.LogSoftmax(dim=-1)

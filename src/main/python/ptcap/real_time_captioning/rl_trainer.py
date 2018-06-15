@@ -28,7 +28,7 @@ class RLTrainer(object):
         self.agent = agent # Agent().cuda()
 
         params = list(self.agent.parameters())\
-                 + list(self.env.decoder.parameters()) \
+                 # + list(self.env.decoder.parameters()) \
                  # + list(self.env.classif_layer.parameters())
         self.optimizer = optim.Adam(params, lr=0.0001)
         self.scheduler = optim.lr_scheduler.StepLR(
