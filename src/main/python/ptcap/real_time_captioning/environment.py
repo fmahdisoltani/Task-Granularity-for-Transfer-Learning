@@ -36,6 +36,7 @@ class Environment(nn.Module):
         self.is_training = not self.is_training
 
     def reset(self, video=None, caption=None, classif=None):
+        #self.decoder.module.reset_lstm()
         self.read_count = 0
         self.write_count = 0
         self.vid_encoding = self.encoder.extract_features(video)
@@ -81,7 +82,7 @@ class Environment(nn.Module):
             else:
                 input_captions = torch.LongTensor([[self.output_buffer[-1]]])
 
-            caption_probs = self.step_decoder(input_captions, self.is_training)
+            caption_probs, lstm_hidden = self.step_decoder(input_captions, self.is_training)
 
             # classif_value_prob, classif_preds = torch.max(classif_probs, dim=1)
             cap_value_probs, cap_preds = torch.max(caption_probs, dim=2)
