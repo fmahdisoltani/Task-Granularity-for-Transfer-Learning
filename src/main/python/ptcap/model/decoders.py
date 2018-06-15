@@ -3,6 +3,8 @@ import torch.nn.functional as F
 
 from torch import nn
 from torch.autograd import Variable
+from ptcap.model.layers import StatefulLSTM
+
 
 from ptcap.tensorboardY import forward_hook_closure
 
@@ -184,3 +186,48 @@ class CoupledLSTMDecoder(DecoderBase):
         expanded_features = unsqueezed_features.expand(*expansion_size)
         lstm_input = torch.cat([embedded_captions, expanded_features], dim=2)
         return lstm_input
+
+
+class StatefulDecoder(CoupledLSTMDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.lstm = StatefulLSTM(self.embedding_size+self.hidden_size,
+                            self.hidden_size, self.num_lstm_layers,
+                            batch_first=True)
+
+    def apply_lstm(self, features, captions):
+        relued_features = F.relu(self.mapping(features))
+        pooled_features = relued_features.mean(dim=1)
+        embedded_captions = self.embedding(captions)
+        lstm_input = self.prepare_lstm_input(embedded_captions, pooled_features)
+
+        # self.lstm.flatten_parameters()
+        lstm_output, lstm_hidden = self.lstm(lstm_input)
+
+        # Project features in a 'vocab_size'-dimensional space
+        lstm_out_projected = torch.stack([self.linear(h)
+                                          for h in lstm_output], 0)
+        probs = torch.stack([self.logsoftmax(h) for h in lstm_out_projected], 0)
+
+        return probs, lstm_hidden
+
+    def predict(self, features, go_tokens, num_step=1):
+        lstm_input = go_tokens
+        output_probs = []
+        lstm_hidden = None
+
+        for i in range(num_step):
+            probs, lstm_hidden = self.apply_lstm(features, lstm_input)
+
+            output_probs.append(probs)
+            # Greedy decoding
+            _, preds = torch.max(probs, dim=2)
+
+            lstm_input = preds
+
+        concatenated_probs = torch.cat(output_probs, dim=1)
+        return concatenated_probs
+
+    def reset_lstm(self):
+        self.lstm.reset()
