@@ -76,3 +76,19 @@ class CausalC3dLayer(nn.Module):
             h = self.batchnorm(h)
 
         return self.activation(h)
+
+
+class StatefulLSTM(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.lstm = nn.LSTM(*args, **kwargs)
+
+        self.lstm_hidden = None
+
+    def forward(self, lstm_input):
+        lstm_output, lstm_hidden = self.lstm(lstm_input, self.lstm_hidden)
+        self.lstm_hidden = lstm_hidden
+        return lstm_output, lstm_hidden
+
+    def reset(self):
+        self.lstm_hidden = None
