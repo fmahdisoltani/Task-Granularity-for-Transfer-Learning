@@ -28,8 +28,9 @@ class CustomSubsetSampler(Sampler):
 
     def __iter__(self):
         if len(self.inds) < self.subset_size:
-            new_indices = self.reset_inds()
-            self.inds = list(self.inds) + list(new_indices)
+            old_inds = self.inds
+            self.reset_inds()
+            self.inds = list(old_inds) + list(self.inds)
         subset = self.inds[0:self.subset_size]
         self.inds = self.inds[self.subset_size:]
 
