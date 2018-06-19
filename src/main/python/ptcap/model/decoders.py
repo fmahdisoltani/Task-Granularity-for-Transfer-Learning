@@ -32,7 +32,7 @@ class DecoderBase(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_size)
         self.linear = nn.Linear(hidden_size, vocab_size)
         # for resnet use 512
-        self.mapping = nn.Linear(fc_size, hidden_size) #TODO: Fix this number
+        self.mapping = nn.Linear(fc_size+178, hidden_size) #TODO: Fix this number
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.num_step = num_step
 
@@ -53,7 +53,7 @@ class DecoderBase(nn.Module):
 
         return h0.contiguous() , c0.contiguous()
 
-    def forward(self, features, captions, use_teacher_forcing=False):
+    def forward(self, features, captions, use_teacher_forcing=False, classif_probs=None):
         """
         This method computes the forward pass of the decoder with or without
         teacher forcing. It should be noted that the <GO> token is assumed to be
@@ -66,6 +66,12 @@ class DecoderBase(nn.Module):
             The probability distribution over the vocabulary across the entire
             sequence.
         """
+        seq_len = features.size()[1]
+        if classif_probs is not None:
+
+            expanded_classif_probs = classif_probs.unsqueeze(dim=1).expand(
+                [-1, seq_len, -1])
+            features = torch.cat([expanded_classif_probs, features], dim=2)
         batch_size, _ = captions.size()
 
         if use_teacher_forcing:

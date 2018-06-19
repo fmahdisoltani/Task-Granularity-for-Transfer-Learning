@@ -50,7 +50,7 @@ class EncoderDecoder(Captioner):
         self.num_groups = 50
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = \
-            nn.Linear(self.encoder.encoder_output_size, self.num_classes)
+            nn.Linear(self.encoder.encoder_output_size+50, self.num_classes)
         self.group_layer = \
             nn.Linear(self.encoder.encoder_output_size, self.num_groups)
 
@@ -60,8 +60,9 @@ class EncoderDecoder(Captioner):
 
 
         group_probs = self.predict_group_from_features(features)
-        classif_probs = self.predict_from_encoder_features(features)
-        probs = self.decoder(features, captions, use_teacher_forcing)
+        classif_probs = self.predict_class_from_features(features, group_probs)
+        #concat features to group _
+        probs = self.decoder(features, captions, use_teacher_forcing, classif_probs)
 
         return probs, classif_probs, group_probs
 
@@ -69,11 +70,12 @@ class EncoderDecoder(Captioner):
         self.activations = dict(self.encoder.activations,
                                 **self.decoder.activations)
         
-    def predict_class_from_features(self, features):
-        group_probs = self.predict_group_from_features()
-
-        pre_activation = self.classif_layer(features)
-
+    def predict_class_from_features(self, features, group_probs):
+        seq_len = features.size()[1]
+        expanded_group_probs = group_probs.unsqueeze(dim=1).expand([-1, seq_len, -1])
+        new_features = torch.cat([expanded_group_probs, features], dim=2)
+        pre_activation = self.classif_layer(new_features)
+        batch_size, seq_len, _ = features.size()
         probs = self.logsoftmax(pre_activation)
         #probs = probs.permute(2,1,0)
         if probs.ndimension() == 3:

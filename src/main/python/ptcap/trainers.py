@@ -20,7 +20,7 @@ class Trainer(object):
     def __init__(self, model, caption_loss_function, w_caption_loss, scheduler, tokenizer, logger,
                  writer, checkpointer, load_encoder_only, folder=None, filename=None,
                  gpus=None, clip_grad=None, classif_loss_function=None,
-                 w_classif_loss=0, compute_metrics=False):
+                 w_classif_loss=0, w_group_loss = 0, compute_metrics=False):
 
         self.group_loss_function = classif_loss_function
         self.use_cuda = True if gpus else False
@@ -40,9 +40,9 @@ class Trainer(object):
             else(classif_loss_function.cuda(gpus[0]))
         self.group_loss_function = classif_loss_function if self.gpus is None \
             else(classif_loss_function.cuda(gpus[0]))
-        self.w_caption_loss = 0#w_caption_loss
-        self.w_classif_loss = 0 #w_classif_loss
-        self.w_group_loss = 1
+        self.w_caption_loss = w_caption_loss
+        self.w_classif_loss = w_classif_loss
+        self.w_group_loss = w_group_loss
 
         init_state = self.checkpointer.load_model(self.model, scheduler.optimizer,
                                                   folder, filename,

@@ -60,6 +60,8 @@ def train_model(config_obj, relative_path=""):
     w_caption_loss = config_obj.get("loss", "w_caption_loss")
     classif_loss_type = config_obj.get("loss", "classif_loss")
     w_classif_loss = config_obj.get("loss", "w_classif_loss")
+    w_group_loss = config_obj.get("loss", "w_group_loss")
+
     optimizer_type = config_obj.get("optimizer", "type")
     scheduler_type = config_obj.get("scheduler", "type")
     criteria = config_obj.get("criteria", "score")
@@ -185,7 +187,7 @@ def train_model(config_obj, relative_path=""):
                       folder=pretrained_folder, filename=pretrained_file,
                       gpus=gpus, clip_grad=clip_grad,
                       classif_loss_function=classif_loss_function, 
-                      w_classif_loss=w_classif_loss)
+                      w_classif_loss=w_classif_loss, w_group_loss= w_group_loss)
 
     # Train the Model
     valid_captions, valid_preds = trainer.train(

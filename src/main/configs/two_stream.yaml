@@ -1,7 +1,7 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9_redo
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/hierarchichal_groups
   pretrained_file: model.best
 
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
@@ -41,10 +41,13 @@ model:
 loss:
   caption_loss: SequenceCrossEntropy
   balanced: False
-  w_caption_loss: 0.9
+  w_caption_loss: 0
 
   classif_loss: CrossEntropy
-  w_classif_loss: 0.1
+  w_classif_loss: 0
+
+  group_loss: CrossEntropy
+  w_group_loss: 1
 
 
 
