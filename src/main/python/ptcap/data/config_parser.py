@@ -49,10 +49,10 @@ class YamlConfig(object):
         dataset_kwargs = self.get("dataset", key+"_dataset_kwargs")
         dataset_kwargs = dataset_kwargs or {}
         dataset = getattr(ptcap.data.dataset, dataset_type)(
-            annotation_parser=parser,
-            tokenizer=tokenizer,
-            preprocess=preprocessor,
-            **dataset_kwargs)
+                          annotation_parser=parser,
+                          tokenizer=tokenizer,
+                          preprocess=preprocessor,
+                          **dataset_kwargs)
         return dataset
 
     @classmethod

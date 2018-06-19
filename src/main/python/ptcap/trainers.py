@@ -12,7 +12,7 @@ from torch.autograd import Variable
 
 from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
                           classif_accuracy, first_token_accuracy, loss_to_numpy,
-                          token_accuracy)
+                          token_accuracy, group_accuracy)
 from ptcap.utils import DataParallelWrapper
 
 
@@ -22,6 +22,7 @@ class Trainer(object):
                  gpus=None, clip_grad=None, classif_loss_function=None,
                  w_classif_loss=0, compute_metrics=False):
 
+        self.group_loss_function = classif_loss_function
         self.use_cuda = True if gpus else False
         self.gpus = gpus
         self.checkpointer = checkpointer
@@ -33,10 +34,15 @@ class Trainer(object):
         self.loss_function = caption_loss_function if self.gpus is None else(
             caption_loss_function.cuda(gpus[0])
         )
-        self.w_caption_loss = w_caption_loss
+
+
         self.classif_loss_function = classif_loss_function if self.gpus is None \
             else(classif_loss_function.cuda(gpus[0]))
-        self.w_classif_loss = w_classif_loss
+        self.group_loss_function = classif_loss_function if self.gpus is None \
+            else(classif_loss_function.cuda(gpus[0]))
+        self.w_caption_loss = 0#w_caption_loss
+        self.w_classif_loss = 0 #w_classif_loss
+        self.w_group_loss = 1
 
         init_state = self.checkpointer.load_model(self.model, scheduler.optimizer,
                                                   folder, filename,
@@ -148,6 +154,7 @@ class Trainer(object):
         scoring_functions.append(first_token_accuracy)
         scoring_functions.append(caption_accuracy)
         scoring_functions.append(classif_accuracy)
+        scoring_functions.append(group_accuracy)
         #if not is_training:
         #    scoring_functions.append(self.multiscore_adapter)
             #scoring_functions.append(LCS([fscore, gmeasure], self.tokenizer))
@@ -171,11 +178,13 @@ class Trainer(object):
             self.model.eval()
 
         ScoreAttr = namedtuple("ScoresAttr",
-                               "loss string_captions captions predictions classif_targets classif_probs")
+                               "loss string_captions captions predictions "
+                               "classif_targets classif_probs "
+                               "group_targets group_probs")
         scores = ScoresOperator(self.get_function_dict(is_training))
 
-        for sample_counter, (videos, string_captions, captions, classif_targets) in enumerate(
-                dataloader):
+        for sample_counter, (videos, string_captions, captions, classif_targets
+                             ,group_targets) in enumerate(dataloader):
             self.logger.on_batch_begin()
 
             input_captions = self.get_input_captions(captions,
@@ -190,15 +199,20 @@ class Trainer(object):
                 captions = captions.cuda(self.gpus[0])
                 input_captions = input_captions.cuda(self.gpus[0])
                 classif_targets = classif_targets.cuda(self.gpus[0])
+                group_targets = group_targets.cuda(self.gpus[0])
 
-            probs, classif_probs = \
+            probs, classif_probs, group_probs = \
                 self.model((videos, input_captions), use_teacher_forcing)
+
+            group_loss = self.group_loss_function(group_probs, group_targets)
 
             classif_loss = self.classif_loss_function(classif_probs,
                                                       classif_targets)
             captioning_loss = self.loss_function(probs, captions)
 
-            loss = self.w_classif_loss * classif_loss + self.w_caption_loss * captioning_loss
+            loss = self.w_classif_loss * classif_loss +\
+                   self.w_caption_loss * captioning_loss + \
+                   self.w_group_loss * group_loss
 
             # print(">>>>>>>>>>>>>>>>>>> classif_loss: {}".format( classif_loss))
             # print(">>>>>>>>>>>>>>>>>>> captioning_loss: {}".format(captioning_loss))
@@ -232,8 +246,12 @@ class Trainer(object):
             classif_targets = classif_targets.cpu()
             classif_probs = classif_probs.cpu()
 
-            batch_outputs = ScoreAttr(loss, string_captions, captions, predictions,
-                                      classif_targets, classif_probs)
+            group_targets = group_targets.cpu()
+            group_probs = group_probs.cpu()
+
+            batch_outputs = ScoreAttr(loss, string_captions, captions,
+                                      predictions, classif_targets,
+                                      classif_probs, group_targets, group_probs)
 
             scores_dict = scores.compute_scores(batch_outputs,
                                                 sample_counter + 1)

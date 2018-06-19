@@ -1,17 +1,17 @@
 paths:
   videos_folder: &vidpath /data-ssd/v2-gulp-160/
 
-  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV//home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9_redo
+  checkpoint_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif0.1_cap0.9_redo
   pretrained_file: model.best
 
   train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
   validation_annot: /data/20bn-something-something-v2/v2-validation.json
   test_annot: /data/20bn-something-something-v2/v2-validation.json
-  annot_type: v2
+  annot_type: hierarchichal
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif1_cap0
+  pretrained_folder:
   pretrained_file: model.best
   load_encoder_only: True
 
@@ -103,10 +103,10 @@ preprocess:
     test: *valid_video_prep
 
 dataset:
-  train_dataset_type: GulpVideoDataset
+  train_dataset_type: HierarchichalDataset
   train_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
-  valid_dataset_type: GulpVideoDataset
+  valid_dataset_type: HierarchichalDataset
   valid_dataset_kwargs: {gulp_dir: *vidpath,
                          size: [128, 128]}
 

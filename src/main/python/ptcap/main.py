@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from ptcap.checkpointers import Checkpointer
-from ptcap.data.annotation_parser import JsonParser, V2Parser
+from ptcap.data.annotation_parser import JsonParser, V2Parser, HierarchichalParser
 from ptcap.data.dataset import (JpegVideoDataset, GulpVideoDataset,
                                 NumpyVideoDataset)
 from ptcap.data.tokenizer import Tokenizer
@@ -88,6 +88,20 @@ def train_model(config_obj, relative_path=""):
                                               videos_folder),
                                  caption_type=caption_type)
 
+    elif annot_type == "hierarchichal":
+        train_parser = HierarchichalParser(training_path, os.path.join(relative_path,
+                                                            videos_folder),
+                                caption_type=caption_type)
+        valid_parser = HierarchichalParser(validation_path,
+                                os.path.join(relative_path,
+                                             videos_folder),
+                                caption_type=caption_type)
+
+        test_parser = HierarchichalParser(test_path,
+                               os.path.join(relative_path,
+                                            videos_folder),
+                               caption_type=caption_type)
+
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
     if pretrained_folder:
@@ -98,7 +112,7 @@ def train_model(config_obj, relative_path=""):
 
     train_preprocessor = config_obj.get_preprocessor("train")
     train_set = config_obj.get_dataset("train", train_parser, tokenizer,
-                                           train_preprocessor)
+                                       train_preprocessor)
     train_dataloader = DataLoader(train_set, shuffle=True, drop_last=False,
                                   **config_obj.get("dataloaders", "kwargs"))
 
@@ -140,7 +154,6 @@ def train_model(config_obj, relative_path=""):
     if balanced_loss:
         caption_loss_kwargs["token_freqs"] = \
             tokenizer.get_token_freqs(train_parser.get_captions_from_tmp_and_lbl())
-    #loss_function = WeightedSequenceCrossEntropy(kwargs=loss_kwargs)
 
     caption_loss_function = getattr(ptcap.losses, caption_loss_type)(kwargs=caption_loss_kwargs)
     classif_loss_function = getattr(ptcap.losses, classif_loss_type)()

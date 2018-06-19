@@ -3,6 +3,8 @@ import os
 
 import pandas as pd
 
+from class_mappings import action_groups
+
 
 class AnnotationParser(object):
 
@@ -28,11 +30,25 @@ class AnnotationParser(object):
     def get_captions_from_tmp_and_lbl(self):
         return self.get_captions("template") + self.get_captions("label")
 
-    def get_labels(self):
+    def get_labels(self, use_action_groups=False):
         all_templates = sorted(set(self.annotations["template"]))
+        all_groups = sorted(set(action_groups.values()))
+
         print("Number of different classes: ", len(all_templates))
-        class_dict = {k: idx for idx, k in enumerate(all_templates)}
-        return [class_dict[p] for p in self.annotations["template"]]
+
+        # TODO: Merge the following two cases
+        if not use_action_groups:
+            class2int = {k: idx for idx, k in enumerate(all_templates)}
+            labels = [class2int[p] for p in self.annotations["template"]]
+        else:
+            grp2int = {k: idx for idx, k in enumerate(all_groups)}
+            labels = [
+                grp2int[action_groups[p.replace("[", "").replace("]", "")]]
+                for p in self.annotations["template"]]
+
+        return labels
+        # class_dict = {k: idx for idx, k in enumerate(all_templates)}
+        # return [class_dict[p] for p in self.annotations["template"]]
     
     def get_samples_by_objects(self, objects):
         """
@@ -178,3 +194,24 @@ class JsonV2Parser(JsonParser):
             template = template[:start] + placeholder + template[end + 1:]
             j += 1
         return template
+
+
+class HierarchichalParser(V2Parser):
+
+    def get_labels(self, use_action_groups=False):
+        all_templates = sorted(set(self.annotations["template"]))
+        all_groups = sorted(set(action_groups.values()))
+
+        print("Number of different classes: ", len(all_templates))
+
+        class2int = {k: idx for idx, k in enumerate(all_templates)}
+        categories = [class2int[p] for p in self.annotations["template"]]
+        grp2int = {k: idx for idx, k in enumerate(all_groups)}
+        groups = [
+            grp2int[action_groups[p.replace("[", "").replace("]", "")]]
+            for p in self.annotations["template"]]
+
+        return categories, groups
+
+
+

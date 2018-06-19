@@ -10,6 +10,12 @@ def classif_accuracy(outputs):
     accuracy = equal_values.float().data.numpy() * 100.0
     return {"classif_accuracy": accuracy}
 
+def group_accuracy(outputs):
+    _, group_index = torch.max(outputs.group_probs, dim=1)
+    equal_values = torch.mean(group_index.eq(outputs.group_targets).float())
+    accuracy = equal_values.float().data.numpy() * 100.0
+    return {"group_accuracy": accuracy}
+
 
 def caption_accuracy(outputs):
     caption_level_accuracy_ = caption_level_accuracy(outputs.captions,

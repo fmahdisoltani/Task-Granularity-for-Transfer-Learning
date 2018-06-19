@@ -47,25 +47,33 @@ class EncoderDecoder(Captioner):
         self.register_forward_hook(self.merge_activations)
 
         self.num_classes = 178
+        self.num_groups = 50
         self.logsoftmax = nn.LogSoftmax(dim=-1)
         self.classif_layer = \
             nn.Linear(self.encoder.encoder_output_size, self.num_classes)
+        self.group_layer = \
+            nn.Linear(self.encoder.encoder_output_size, self.num_groups)
 
     def forward(self, video_batch, use_teacher_forcing):
         videos, captions = video_batch
         features = self.encoder.extract_features(videos)
 
+
+        group_probs = self.predict_group_from_features(features)
         classif_probs = self.predict_from_encoder_features(features)
         probs = self.decoder(features, captions, use_teacher_forcing)
 
-        return probs, classif_probs
+        return probs, classif_probs, group_probs
 
     def merge_activations(self, module, input_tensor, output_tensor):
         self.activations = dict(self.encoder.activations,
                                 **self.decoder.activations)
         
-    def predict_from_encoder_features(self, features):
+    def predict_class_from_features(self, features):
+        group_probs = self.predict_group_from_features()
+
         pre_activation = self.classif_layer(features)
+
         probs = self.logsoftmax(pre_activation)
         #probs = probs.permute(2,1,0)
         if probs.ndimension() == 3:
@@ -73,17 +81,11 @@ class EncoderDecoder(Captioner):
             
         return probs
 
+    def predict_group_from_features(self, features):
+        pre_activation = self.group_layer(features)
+        probs = self.logsoftmax(pre_activation)
+        # probs = probs.permute(2,1,0)
+        if probs.ndimension() == 3:
+            probs = probs.mean(dim=1)  # probs: [8*48*50]
 
-# class CNN3dLSTM(EncoderDecoder):
-#     def __init__(self, encoder_output_size=256, embedding_size=31,
-#                  vocab_size=33, num_hidden_lstm=71, go_token=0, gpus=None):
-# 
-#         decoder_args = (embedding_size, encoder_output_size,
-#                         vocab_size, num_hidden_lstm, go_token, gpus)
-# 
-#         encoder_args = (encoder_output_size, gpus)
-# 
-#         super(CNN3dLSTM, self).__init__(CNN3dLSTMEncoder, LSTMDecoder,
-#                                         encoder_args=encoder_args,
-#                                         decoder_args=decoder_args,
-#                                         gpus=gpus)
+        return probs
