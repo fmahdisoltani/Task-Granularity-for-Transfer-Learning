@@ -194,3 +194,7 @@ class StatefulDecoder(CoupledLSTMDecoder):
         self.lstm = StatefulLSTM(self.embedding_size+self.hidden_size,
                             self.hidden_size, self.num_lstm_layers,
                             batch_first=True)
+
+
+    def reset_hidden(self):
+        self.lstm.lstm_hidden = None
