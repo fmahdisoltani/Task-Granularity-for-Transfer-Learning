@@ -85,7 +85,8 @@ class StatefulLSTM(nn.Module):
 
         self.lstm_hidden = None
 
-    def forward(self, lstm_input):
+    def forward(self, lstm_input, lstm_hidden):
+        # lstm_hidden will be ignored
         lstm_output, lstm_hidden = self.lstm(lstm_input, self.lstm_hidden)
         self.lstm_hidden = lstm_hidden
         return lstm_output, lstm_hidden
