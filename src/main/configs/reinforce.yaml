@@ -5,15 +5,15 @@ paths:
 
   pretrained_file: model.best
 
-  train_annot: &train_annot /data/20bn-something-something-v2/v2-train.json
-  validation_annot: /data/20bn-something-something-v2/v2-validation.json
-  test_annot: /data/20bn-something-something-v2/v2-test.json
+  train_annot: &train_annot /data/20bn-something-something-v2/v2-train-single.json
+  validation_annot: /data/20bn-something-something-v2/v2-validation-single.json
+  test_annot: /data/20bn-something-something-v2/v2-test-single.json
 
 
 pretrained:
-  pretrained_path:
-  pretrained_encoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif0.9_cap0.1/model.best"
-  pretrained_decoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/Causal/v2_gulp160_causal_labels_cutoff5_classif0.9_cap0.1/model.best"
+  pretrained_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/rl_read_penalty0_encoder_fixed_ii/model.best"
+  pretrained_encoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/causal_stateful_classif0.1_caption0.9/model.latest"
+  pretrained_decoder_path: "/home/farzaneh/PycharmProjects/pytorch-captioning/results/causal_stateful_classif0.1_caption0.9/model.latest"
 
   load_encoder_only: True
 
