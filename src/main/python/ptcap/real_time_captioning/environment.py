@@ -45,6 +45,10 @@ class Environment(nn.Module):
 
         #self.input_buffer = self.vid_encoding[:, 0, :]
 
+        self.tf_input = self.get_input_captions(caption, True)  # shifted_targets
+        self.non_tf_input = self.get_input_captions(caption, False) # <go> tokens only
+        self.decoder.module.reset_hidden()
+
     def set_rewards(self, correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward):
         self.correct_w_reward = correct_w_reward
@@ -75,17 +79,16 @@ class Environment(nn.Module):
                 self.read_count += 1
 
         if action == 1:  # WRITE
-            input_captions = self.get_input_captions(caption_targets, True)
             if self.is_training: #teacher_force
-                input_captions = input_captions[:, self.write_count:self.write_count + 1]
+                decoder_input = self.tf_input[:, self.write_count:self.write_count + 1]
             else:
-                input_captions = non_tf_input
+                decoder_input = self.non_tf_input
 
-            caption_probs = self.step_decoder(input_captions, self.is_training)
+            caption_probs = self.step_decoder(decoder_input)
 
             # classif_value_prob, classif_preds = torch.max(classif_probs, dim=1)
             cap_value_probs, cap_preds = torch.max(caption_probs, dim=2)
-            non_tf_input = cap_preds
+            self.non_tf_input = cap_preds
             # if torch.equal(prediction, classif_targets):
             #from pycocoevalcap.bleu.bleu import Bleu
             #partial_bleu = Bleu()
@@ -134,11 +137,11 @@ class Environment(nn.Module):
             input_captions = torch.cat([input_captions, captions[:, :-1]], 1)
         return input_captions
 
-    def step_decoder(self, input_captions, teacher_force=False):
-            #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
-            caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
-                         input_captions)
-            return caption_probs
+    def step_decoder(self, input_captions):
+        #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
+        caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
+                     input_captions)
+        return caption_probs
 
     def run_decoder_multi_step(self, input_captions):
         caption_probs = self.decoder(self.vid_encoding, input_captions)
