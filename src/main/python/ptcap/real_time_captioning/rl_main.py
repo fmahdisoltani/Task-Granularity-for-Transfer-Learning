@@ -83,9 +83,9 @@ if __name__ == "__main__":
 
     # Build a tokenizer that contains all captions from annotation files
     tokenizer = Tokenizer(**config_obj.get("tokenizer", "kwargs"))
-    if pretrained_path:
-
-        tokenizer.load_dictionaries(pretrained_path)
+    if pretrained_decoder_path:
+        path = "/home/farzaneh/PycharmProjects/pytorch-captioning/results/causal_stateful_classif0.1_caption0.9/"
+        tokenizer.load_dictionaries(path)
         print("Inside pretrained", tokenizer.get_vocab_size())
     else:
         tokenizer.build_dictionaries(
@@ -176,10 +176,10 @@ if __name__ == "__main__":
                                         pretrained_path=pretrained_encoder_path,
                                         submodel="classif_layer")
 
-    # if pretrained_decoder_path:
-    #     _, decoder, _ = checkpointer.load_model(decoder, None,
-    #                                     pretrained_path=pretrained_decoder_path,
-    #                                     submodel="decoder")
+    if pretrained_decoder_path:
+         _, decoder, _ = checkpointer.load_model(decoder, None,
+                                         pretrained_path=pretrained_decoder_path,
+                                         submodel="decoder")
 
     env = Environment(encoder, decoder, classif_layer,  correct_w_reward, correct_r_reward,
                     incorrect_w_reward, incorrect_r_reward, tokenizer)
@@ -187,9 +187,9 @@ if __name__ == "__main__":
 
     if pretrained_path:
         ckpt = torch.load(pretrained_path)
-        print("loaded environment from ckpt")
-        env_state_dict = ckpt["env"]
-        env.load_state_dict(env_state_dict)
+        #print("loaded environment from ckpt")
+        #env_state_dict = ckpt["env"]
+        #env.load_state_dict(env_state_dict)
 
         print("loaded agent from ckpt")
         agent_state_dict = ckpt["agent"]
