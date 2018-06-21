@@ -107,7 +107,7 @@ class RLTrainer(object):
 
 
         #print("episode{}".format(i_episode))
-        self.env.reset(videos)
+        self.env.reset(videos, captions_targets)
 
         finished = False
         reward_seq = []
@@ -204,8 +204,8 @@ class RLTrainer(object):
                                         captions_targets.long().cpu(),
                     cap_predictions.cpu(),
                                        )
-                print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
-                print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
+                #print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
+                #print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
 
                 scores_dict = scores.compute_scores(episode_outputs,
                                                     i_episode + 1)
