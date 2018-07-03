@@ -68,7 +68,7 @@ class Environment(nn.Module):
         value_prob = None
 
         if action == 0:  # READ
-            if self.read_count == 47:
+            if self.read_count >= 47:
                 status = Environment.STATUS_INVALID_READ
             else:
                 status = Environment.STATUS_READ
