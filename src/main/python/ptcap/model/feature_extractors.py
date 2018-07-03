@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from torch.autograd import Variable
 
-from ptcap.model.layers import CNN3dLayer, CausalC3dLayer
+from ptcap.model.layers import CNN3dLayer, CausalC3dLayer,SlantedC3dLayer
 from ptcap.tensorboardY import forward_hook_closure
 
 
@@ -11,7 +11,7 @@ class C3dExtractor(nn.Module):
     def __init__(self, out_ch=32):
         super().__init__()
 
-        self.conv1 = CNN3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
+        self.conv1 = SlantedC3dLayer(3, out_ch, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)
         self.conv2 = CNN3dLayer(out_ch, 2 * out_ch, (3, 3, 3), nn.ReLU(),
                                 stride=1, padding=1)

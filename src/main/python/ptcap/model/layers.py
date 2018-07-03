@@ -92,3 +92,40 @@ class StatefulLSTM(nn.Module):
 
     def reset(self):
         self.lstm_hidden = None
+
+class SlantedC3dLayer(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, activation,
+                 stride=1, padding=0, dilation=1, groups=1, bias=True,
+                  batchnorm=True):
+
+        super().__init__()
+
+        self.conv = nn.Conv3d(in_channels, out_channels, (3,5,5),
+                              stride, padding, dilation, groups, bias)
+        self.conv.weight[:, :, 0, 0, 0] = 0.
+        for dim0 in range(out_channels):
+            for dim1 in range(in_channels):
+                for dim2 in range(3):
+                    for dim3 in (3, 4):
+                        for dim4 in range(5):
+                            self.conv.weight[dim0,dim1,dim2, dim3, dim4] = 0
+                            self.conv.weight[dim0,dim1,dim2, dim4, dim3] = 0
+                            self.conv.weight[dim0, dim1, dim2, dim4, dim3].detach()
+                            self.conv.weight[dim0, dim1, dim2, dim3, dim4].detach()
+
+
+
+        self.activation = activation
+
+        if batchnorm:
+            self.batchnorm = nn.BatchNorm3d(out_channels)
+        else:
+            self.batchnorm = None
+
+    def forward(self, x):
+        h = self.conv(x)
+        if self.batchnorm:
+            h = self.batchnorm(h)
+
+        return self.activation(h)
+
