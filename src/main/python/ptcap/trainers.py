@@ -70,7 +70,7 @@ class Trainer(object):
         while not stop_training:
 
             # we need a first round of evaluation without any training
-            if epoch % frequency_valid == 0:
+            if epoch % frequency_valid == 10:
                 valid_average_scores, valid_captions, valid_preds = (
                     self.run_epoch(valid_dataloader, epoch, is_training=False,
                                    use_teacher_forcing=teacher_force_valid,
@@ -219,6 +219,7 @@ class Trainer(object):
                 self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
+                self.model.module.encoder.c3d_extractor.conv1.slant()
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)

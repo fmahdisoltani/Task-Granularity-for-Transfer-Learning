@@ -11,7 +11,8 @@ paths:
 
 
 pretrained:
-  pretrained_folder: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif1_cap0
+  pretrained_folder:
+  gg: /home/farzaneh/PycharmProjects/pytorch-captioning/results/ECCV/v2_gulp160_two_stream_c2_0_c3_32_labels_cutoff5_classif1_cap0
   pretrained_file: model.best
   load_encoder_only: True
 

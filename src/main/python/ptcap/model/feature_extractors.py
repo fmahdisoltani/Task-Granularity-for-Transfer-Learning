@@ -31,7 +31,7 @@ class C3dExtractor(nn.Module):
         self.conv6 = CNN3dLayer(8 * out_ch, 8 * out_ch, (3, 3, 3),
                                 nn.ReLU(), stride=1, padding=(1, 0, 0))
 
-        self.pool4 = nn.MaxPool3d((1, 6, 6))
+        self.pool4 = nn.MaxPool3d((1, 5, 5))
 
         self.activations = self.register_forward_hooks()
 
