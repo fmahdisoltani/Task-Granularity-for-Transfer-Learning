@@ -51,7 +51,10 @@ class Agent(nn.Module):
         x = torch.unsqueeze(policy_input, dim=1)
         return x
 
-    def select_action(self, state):
+    def select_action(self, state, rc ):
+        if rc >=47:
+            return 1, 1
+
         action_probs = self.get_action_probs(state)
         dist = torch.distributions.Categorical(action_probs)
         action = dist.sample()
