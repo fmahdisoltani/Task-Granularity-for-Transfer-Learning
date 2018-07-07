@@ -54,7 +54,7 @@ class Agent(nn.Module):
     def select_action(self, state ):
         rc = state['read_count']
         if rc >=47:
-            return 1, 1
+            return 1,torch.FloatTensor(1)[0].cuda()
 
         action_probs = self.get_action_probs(state)
         dist = torch.distributions.Categorical(action_probs)
