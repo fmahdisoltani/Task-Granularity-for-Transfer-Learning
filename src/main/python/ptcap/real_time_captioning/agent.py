@@ -51,7 +51,8 @@ class Agent(nn.Module):
         x = torch.unsqueeze(policy_input, dim=1)
         return x
 
-    def select_action(self, state, rc ):
+    def select_action(self, state ):
+        rc = state['read_count']
         if rc >=47:
             return 1, 1
 
