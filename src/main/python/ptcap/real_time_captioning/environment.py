@@ -123,7 +123,7 @@ class Environment(nn.Module):
 
     def classify(self):
         #features = self.input_buffer[-1]
-        pre_activation = self.classif_layer(self.vid_encoding[:, self.read_count, :])
+        pre_activation = self.classif_layer(self.vid_encoding[:, min(self.read_count,47), :])
         probs = self.logsoftmax(pre_activation)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)  # probs: [8*48*178]
