@@ -108,7 +108,8 @@ class Environment(nn.Module):
         return reward, classif_probs, caption_probs
 
     def check_finished(self):
-        return self.write_count == 13
+        return self.write_count == 13 or \
+               (self.read_count + self.write_count)>=60
 
     def give_reward(self, status, value_prob=None):
         r = {
