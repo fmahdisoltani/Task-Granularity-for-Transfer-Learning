@@ -60,7 +60,7 @@ class Environment(nn.Module):
         return {
             "read_count": self.read_count,
             "write_count": self.write_count,
-            "input_buffer": self.vid_encoding[:, self.read_count, :],
+            "input_buffer": self.vid_encoding[:, min(self.read_count, 47), :],
             "output_buffer": self.output_buffer
         }
 
