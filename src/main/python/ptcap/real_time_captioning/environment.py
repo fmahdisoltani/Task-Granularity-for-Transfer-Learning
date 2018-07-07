@@ -76,7 +76,7 @@ class Environment(nn.Module):
             else:
                 status = Environment.STATUS_READ
                 #self.input_buffer = self.vid_encoding[:, self.read_count, :]
-                self.read_count += 1
+            self.read_count += 1
 
         if action == 1:  # WRITE
             if self.is_training: #teacher_force
