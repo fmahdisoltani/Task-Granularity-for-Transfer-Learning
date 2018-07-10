@@ -129,7 +129,7 @@ class RLTrainer(object):
 
         return action_seq, reward_seq, logprob_seq, classif_probs, torch.cat(caption_probs_seq, dim=1)
 
-    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1000):
+    def run_epoch(self, dataloader, epoch, is_training, logging_interval=1):
         self.logger.on_epoch_begin(epoch)
         if is_training:
             self.env.train()
@@ -139,9 +139,9 @@ class RLTrainer(object):
             self.agent.eval()
         running_reward = 0
         ScoreAttr = namedtuple("ScoresAttr",
-                           "wait_time reward policy_loss classif_loss "
-                           "classif_targets classif_probs "
-                           "captions predictions")
+                               "wait_time reward policy_loss classif_loss "
+                               "classif_targets classif_probs "
+                               "captions predictions")
 
         scores = ScoresOperator(self.get_function_dict())
         loss = 0
@@ -204,8 +204,8 @@ class RLTrainer(object):
                                         captions_targets.long().cpu(),
                     cap_predictions.cpu(),
                                        )
-                #print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
-                #print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
+                print(self.tokenizer.decode_caption(captions_targets[0].data.cpu().numpy()))
+                print(self.tokenizer.decode_caption(cap_predictions[0].data.cpu().numpy()))
 
                 scores_dict = scores.compute_scores(episode_outputs,
                                                     i_episode + 1)
