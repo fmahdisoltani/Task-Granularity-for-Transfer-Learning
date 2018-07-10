@@ -91,7 +91,7 @@ preprocess:
   input_resize: [128, 128]
 
 reinforce:
-  correct_w_reward: 1
-  correct_r_reward: -1
+  correct_w_reward: 0.1
+  correct_r_reward: -0.001
   incorrect_w_reward: -1
-  incorrect_r_reward: -10
+  incorrect_r_reward: -0.1
