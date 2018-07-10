@@ -43,7 +43,7 @@ class Environment(nn.Module):
         # input buffer contains the seen video frames, in the beginning only the
         # first frame of video
 
-        #self.input_buffer = self.vid_encoding[:, 0, :]
+        self.input_buffer = self.vid_encoding[:, 0, :]
 
         self.tf_input = self.get_input_captions(caption, True)  # shifted_targets
         self.non_tf_input = self.get_input_captions(caption, False) # <go> tokens only
@@ -60,7 +60,7 @@ class Environment(nn.Module):
         return {
             "read_count": self.read_count,
             "write_count": self.write_count,
-            "input_buffer": self.vid_encoding[:, min(self.read_count, 47), :],
+            "input_buffer": self.input_buffer,
             "output_buffer": self.output_buffer
         }
 
@@ -71,12 +71,14 @@ class Environment(nn.Module):
         value_prob = None
 
         if action == 0:  # READ
+            self.read_count += 1
             if self.read_count >= 47:
                 status = Environment.STATUS_INVALID_READ
             else:
                 status = Environment.STATUS_READ
-                #self.input_buffer = self.vid_encoding[:, self.read_count, :]
-            self.read_count += 1
+
+                self.input_buffer = self.vid_encoding[:, self.read_count, :]
+
 
         if action == 1:  # WRITE
             if self.is_training: #teacher_force
@@ -122,7 +124,7 @@ class Environment(nn.Module):
 
     def classify(self):
         #features = self.input_buffer[-1]
-        pre_activation = self.classif_layer(self.vid_encoding[:, min(self.read_count,47), :])
+        pre_activation = self.classif_layer(self.input_buffer)
         probs = self.logsoftmax(pre_activation)
         if probs.ndimension() == 3:
             probs = probs.mean(dim=1)  # probs: [8*48*178]
@@ -139,7 +141,7 @@ class Environment(nn.Module):
 
     def step_decoder(self, input_captions):
         #self.decoder(self.vid_encoding, self.output_buffer[self.write_count-1])
-        caption_probs = self.decoder(self.vid_encoding[:, self.read_count:self.read_count+1, :],
+        caption_probs = self.decoder(self.input_buffer.unsqueeze(1),
                      input_captions)
         return caption_probs
 
