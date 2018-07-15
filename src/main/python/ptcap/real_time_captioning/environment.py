@@ -100,20 +100,21 @@ class Environment(nn.Module):
 
             self.write_count += 1
 
-        reward = self.give_reward(status, value_prob)
+        reward = self.give_reward(status, value_prob, classif_probs, classif_targets)
     #    reward = torch.sum(classif_probs)
         return reward, classif_probs, caption_probs
 
     def check_finished(self):
         return self.write_count == 13
 
-    def give_reward(self, status, value_prob=None):
+    def give_reward(self, status, value_prob=None, classif_targets=None):
         r = {
             Environment.STATUS_CORRECT_WRITE: self.correct_w_reward,
             Environment.STATUS_READ: self.correct_r_reward,
             Environment.STATUS_INCORRECT_WRITE: self.incorrect_w_reward,
             Environment.STATUS_INVALID_READ: self.incorrect_r_reward,
         }[status]
+        r = r if value_prob is None else np.sum(value_prob*classif_targets) * r #<<<<<<============here
         #r = r if value_prob is None else (-1/(1+value_prob)) * r
         return r
 
