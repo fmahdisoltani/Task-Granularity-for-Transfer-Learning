@@ -104,15 +104,19 @@ class SlantedC3dLayer(nn.Module):
         self.conv = nn.Conv3d(in_channels, out_channels, (3,5,5),
                               stride, padding, dilation, groups, bias)
         #self.conv.weight[:, :, 0, 0, 0] = 0.
+        self.kernel_size = kernel_size
+        self.depth = self.kernel_size[0]
+        self.width = self.kernel_size[1]
+        self.height = self.kernel_size[2]
 
-        for dim0 in range(out_channels):
-            for dim1 in range(in_channels):
-                for dim2 in range(3):
-                    for dim3 in (3, 4):
-                        for dim4 in range(5):
-                            self.conv.weight[
-                                dim0, dim1, dim2, dim3, dim4].data = torch.Tensor(
-                                [0])
+        # for dim0 in range(out_channels):
+        #     for dim1 in range(in_channels):
+        #         for dim2 in range(3):
+        #             for dim3 in (3, 4):
+        #                 for dim4 in range(5):
+        #                     self.conv.weight[
+        #                         dim0, dim1, dim2, dim3, dim4].data = torch.Tensor(
+        #                         [0])
 
                             #self.conv.weight[dim0,dim1,dim2, dim4, dim3] = 0
                             #var_no_grad = self.conv.weight[dim0, dim1, dim2, dim4, dim3].detach()
@@ -140,13 +144,30 @@ class SlantedC3dLayer(nn.Module):
 
         return self.activation(h)
 
-    def slant(self):
-        for dim0 in range(self.out_channels):
-            for dim1 in range(self.in_channels):
-                for dim2 in range(3):
-                    for dim3 in (3, 4):
-                        for dim4 in range(5):
-                            self.conv.weight[
-                                dim0, dim1, dim2, dim3, dim4].data = torch.Tensor(
-                                [0])
+    def slant(self, index_list, x_coord, y_coord):
+        # forces elements to zero
+
+        if x_coord == 1 and y_coord == 0:
+            for d in range(self.depth-1):
+                self.conv.weight.data[index_list, :, d+1, 0:d+1, :] = 0
+                self.conv.weight.data[index_list, :, d, -self.depth+1+d:, :] = 0
+
+        if x_coord == 0 and y_coord == 1:
+            for d in range(self.depth-1):
+                self.conv.weight.data[index_list, :, d, 0:self.depth-1-d, :] = 0
+                self.conv.weight.data[index_list, :, d+1:, -d-1:, :] = 0
+
+
+
+
+
+
+        # for dim0 in range(self.out_channels):
+        #     for dim1 in range(self.in_channels):
+        #         for dim2 in range(3):
+        #             for dim3 in (3, 4):
+        #                 for dim4 in range(5):
+        #                     self.conv.weight[
+        #                         dim0, dim1, dim2, dim3, dim4].data = torch.Tensor(
+        #                         [0])
 

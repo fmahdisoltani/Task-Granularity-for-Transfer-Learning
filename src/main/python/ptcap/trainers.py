@@ -3,11 +3,11 @@ import numpy as np
 
 from collections import namedtuple
 from collections import OrderedDict
-from pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.fudge.fudge import Fudge
-from pycocoevalcap.meteor.meteor import Meteor
-from pycocoevalcap.metrics import MultiScorer
-from pycocoevalcap.rouge.rouge import Rouge
+# from pycocoevalcap.bleu.bleu import Bleu
+# from pycocoevalcap.fudge.fudge import Fudge
+# from pycocoevalcap.meteor.meteor import Meteor
+# from pycocoevalcap.metrics import MultiScorer
+# from pycocoevalcap.rouge.rouge import Rouge
 from torch.autograd import Variable
 
 from ptcap.scores import (MultiScoreAdapter, ScoresOperator, caption_accuracy,
@@ -219,7 +219,9 @@ class Trainer(object):
                 self.writer.add_gradients(self.model, global_step)
 
                 self.scheduler.optimizer.step()
-                self.model.module.encoder.c3d_extractor.conv1.slant()
+                self.model.module.encoder.c3d_extractor.conv1.slant(index_list=list(range(16)), x_coord=1, y_coord=0)
+                self.model.module.encoder.c3d_extractor.conv1.slant(index_list=list(range(16,32)), x_coord=1, y_coord=0)
+
 
             # convert probabilities to predictions
             _, predictions = torch.max(probs, dim=2)
