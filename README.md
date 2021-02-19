@@ -3,6 +3,7 @@
 A repo containing experiments to show the effect of task granularity on the performance of video classification and captioning. 
 More details can be found in our paper:
 https://arxiv.org/pdf/1804.09235.pdf
+
 To understand the code structure of this repo, the inheritance and data flow diagrams are provided below.
 
 ##### Inheritance Diagram
